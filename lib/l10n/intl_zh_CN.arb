@@ -1,0 +1,10 @@
+{
+  "@@locale": "zh",
+  "title": "知行合一",
+  "appName": "知行合一",
+  "todoList": "待办事项列表",
+  "notes": "笔记",
+  "language": "语言",
+  "theme": "主题",
+  "addNewTodo": "添加新的待办事项"
+}
