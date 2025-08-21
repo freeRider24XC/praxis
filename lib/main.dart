@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
+import 'package:praxis/common/services/index.dart';
 import 'package:praxis/generated/l10n.dart';
-import 'package:praxis/pages/home/index.dart'; // 导入 HomePage
+import 'package:praxis/pages/main/main_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize database
+  await DatabaseService.init();
+  
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  
   runApp(const MyApp());
 }
 
@@ -15,6 +28,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: "Praxis",
+      debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         S.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -25,11 +39,10 @@ class MyApp extends StatelessWidget {
         Locale('en', 'US'), // 美国英语
         Locale('zh', 'CN'), // 中文简体
       ],
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
-      home: const HomePage(),
+      theme: ThemeService.getThemeData(isDark: false),
+      darkTheme: ThemeService.getThemeData(isDark: true),
+      themeMode: ThemeService.themeMode,
+      home: const MainPage(),
     );
   }
 }
