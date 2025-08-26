@@ -2,9 +2,80 @@
   "@@locale": "zh",
   "title": "知行合一",
   "appName": "知行合一",
+  
+  "bottomNavHome": "首页",
+  "bottomNavProjects": "项目", 
+  "bottomNavGoals": "目标",
+  "bottomNavTodos": "待办",
+  "bottomNavStats": "统计",
+  
+  "projectManagement": "项目管理",
+  "goalManagement": "目标管理",
   "todoList": "待办事项列表",
-  "notes": "笔记",
+  "statistics": "统计",
+  "settings": "设置",
+  
+  "allProjects": "全部项目",
+  "filterByStatus": "按状态筛选",
+  "createProject": "创建项目",
+  "noProjectsFound": "未找到项目",
+  "noProjectsWithStatus": "没有{status}的项目",
+  "notCreatedAnyProjects": "还没有创建任何项目",
+  
+  "projectStatusPlanning": "计划中",
+  "projectStatusActive": "进行中", 
+  "projectStatusOnHold": "暂停",
+  "projectStatusCompleted": "已完成",
+  "projectStatusCancelled": "已取消",
+  "projectStatusArchived": "已归档",
+  
+  "projectHealthGood": "良好",
+  "projectHealthAtRisk": "有风险",
+  "projectHealthCritical": "严重",
+  
+  "daysRemaining": "{days}天",
+  "progressPercentage": "{percentage}%",
+  "taskCount": "{count}个任务",
+  
+  "gridView": "网格视图",
+  "listView": "列表视图",
+  
+  "addNewTodo": "添加新的待办事项",
+  "addNewGoal": "添加新目标",
+  "addNewProject": "添加新项目",
+  
   "language": "语言",
+  "english": "English",
+  "chinese": "中文",
+  
   "theme": "主题",
-  "addNewTodo": "添加新的待办事项"
+  "lightTheme": "浅色",
+  "darkTheme": "深色",
+  "systemTheme": "跟随系统",
+  
+  "save": "保存",
+  "cancel": "取消",
+  "delete": "删除",
+  "edit": "编辑",
+  "add": "添加",
+  "confirm": "确认",
+  
+  "projectName": "项目名称",
+  "projectDescription": "项目描述",
+  "projectIcon": "项目图标",
+  "projectColor": "项目颜色",
+  "startDate": "开始日期",
+  "endDate": "结束日期",
+  "priority": "优先级",
+  
+  "highPriority": "高",
+  "mediumPriority": "中", 
+  "lowPriority": "低",
+  
+  "iconWork": "工作",
+  "iconPersonal": "个人",
+  "iconStudy": "学习",
+  "iconHealth": "健康",
+  "iconFinance": "财务",
+  "iconOther": "其他"
 }

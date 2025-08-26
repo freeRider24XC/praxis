@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/generated/l10n.dart';
+import 'package:praxis/common/widgets/language_switcher.dart';
+import 'package:praxis/pages/settings/settings_page.dart';
 
 import 'index.dart';
 
@@ -27,6 +29,8 @@ class _HomeViewGetX extends GetView<HomeController> {
 
   // 主视图
   Widget _buildView() {
+    final s = S.of(Get.context!);
+    
     return Column(
       children: [
         Expanded(
@@ -55,8 +59,8 @@ class _HomeViewGetX extends GetView<HomeController> {
               Expanded(
                 child: TextField(
                   controller: controller.textEditingController,
-                  decoration: const InputDecoration(
-                    hintText: '添加新的待办事项',
+                  decoration: InputDecoration(
+                    hintText: s.addNewTodo,
                   ),
                   onSubmitted: (_) => controller.addTodo(),
                 ),
@@ -74,6 +78,8 @@ class _HomeViewGetX extends GetView<HomeController> {
 
   // 抽屉视图
   Widget _buildDrawer() {
+    final s = S.of(Get.context!);
+    
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -82,45 +88,88 @@ class _HomeViewGetX extends GetView<HomeController> {
             decoration: BoxDecoration(
               color: Theme.of(Get.context!).primaryColor,
             ),
-            child: Text(
-              S.of(Get.context!).appName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.appName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  s.title,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.note),
-            title: Text(S.of(Get.context!).notes),
+            leading: const Icon(Icons.home),
+            title: Text(s.bottomNavHome),
             onTap: () {
-              // 处理笔记功能
               Get.back();
             },
           ),
           ListTile(
-            leading: const Icon(Icons.language),
-            title: Text(S.of(Get.context!).language),
+            leading: const Icon(Icons.folder),
+            title: Text(s.bottomNavProjects),
             onTap: () {
-              // 处理语言切换功能
               Get.back();
+              // 导航到项目页面
             },
           ),
-          ExpansionTile(
-            leading: const Icon(Icons.color_lens),
-            title: Text(S.of(Get.context!).theme),
-            children: List.generate(
-              controller.themeColors.length,
-              (index) => ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: controller.themeColors[index],
+          ListTile(
+            leading: const Icon(Icons.track_changes),
+            title: Text(s.bottomNavGoals),
+            onTap: () {
+              Get.back();
+              // 导航到目标页面
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.checklist),
+            title: Text(s.bottomNavTodos),
+            onTap: () {
+              Get.back();
+              // 当前就在待办页面
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.analytics),
+            title: Text(s.bottomNavStats),
+            onTap: () {
+              Get.back();
+              // 导航到统计页面
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: Text(s.settings),
+            onTap: () {
+              Get.back();
+              Get.to(() => const SettingsPage());
+            },
+          ),
+          // 内联语言切换
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.language),
+                const SizedBox(width: 32),
+                Expanded(
+                  child: Text(s.language),
                 ),
-                title: Text(controller.themeNames[index]),
-                onTap: () {
-                  controller.changeTheme(index);
-                  Get.back();
-                },
-              ),
+                const LanguageSwitcher(),
+              ],
             ),
           ),
         ],
@@ -134,9 +183,10 @@ class _HomeViewGetX extends GetView<HomeController> {
       init: HomeController(),
       id: "home",
       builder: (_) {
+        final s = S.of(context);
         return Scaffold(
           appBar: AppBar(
-            title: Text(S.of(context).todoList),
+            title: Text(s.todoList),
             leading: Builder(
               builder: (BuildContext context) {
                 return IconButton(
