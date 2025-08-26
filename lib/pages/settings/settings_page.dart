@@ -3,19 +3,17 @@ import 'package:get/get.dart';
 import 'package:praxis/common/services/locale_service.dart';
 import 'package:praxis/common/services/theme_service.dart';
 import 'package:praxis/common/widgets/language_switcher.dart';
-import 'package:praxis/generated/l10n.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
     final themeService = Get.find<ThemeService>();
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.settings),
+        title: Text('settings'.tr),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -38,12 +36,12 @@ class SettingsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    s.theme,
+                    'theme'.tr,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 16),
                   RadioListTile<ThemeMode>(
-                    title: Text(s.lightTheme),
+                    title: Text('lightTheme'.tr),
                     value: ThemeMode.light,
                     groupValue: themeService.themeMode,
                     onChanged: (value) {
@@ -54,7 +52,7 @@ class SettingsPage extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                   ),
                   RadioListTile<ThemeMode>(
-                    title: Text(s.darkTheme),
+                    title: Text('darkTheme'.tr),
                     value: ThemeMode.dark,
                     groupValue: themeService.themeMode,
                     onChanged: (value) {
@@ -65,7 +63,7 @@ class SettingsPage extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                   ),
                   RadioListTile<ThemeMode>(
-                    title: Text(s.systemTheme),
+                    title: Text('systemTheme'.tr),
                     value: ThemeMode.system,
                     groupValue: themeService.themeMode,
                     onChanged: (value) {
@@ -90,20 +88,20 @@ class SettingsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'App Info',
+                    'appInfo'.tr,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 16),
                   ListTile(
                     leading: const Icon(Icons.info_outline),
-                    title: Text(s.appName),
-                    subtitle: const Text('Version 1.0.0'),
+                    title: Text('appName'.tr),
+                    subtitle: Text('version'.trParams({'version': '1.0.0'})),
                     contentPadding: EdgeInsets.zero,
                   ),
                   ListTile(
                     leading: const Icon(Icons.description),
-                    title: const Text('Description'),
-                    subtitle: Text(s.title),
+                    title: Text('description'.tr),
+                    subtitle: Text('title'.tr),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ],

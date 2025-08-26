@@ -44,9 +44,10 @@ class LocaleService extends GetxService {
       
       // 如果没有保存的语言设置，使用系统语言
       final systemLocale = Get.deviceLocale;
-      if (systemLocale != null && supportedLocales.contains(systemLocale)) {
-        _locale.value = systemLocale;
-        Get.updateLocale(systemLocale);
+      if (systemLocale != null && _isSupportedLocale(systemLocale)) {
+        final supportedLocale = _findSupportedLocale(systemLocale);
+        _locale.value = supportedLocale;
+        Get.updateLocale(supportedLocale);
       } else {
         // 回退到默认语言
         _locale.value = _fallbackLocale;
@@ -56,6 +57,20 @@ class LocaleService extends GetxService {
       _locale.value = _fallbackLocale;
       Get.updateLocale(_fallbackLocale);
     }
+  }
+  
+  bool _isSupportedLocale(Locale locale) {
+    return supportedLocales.any((supported) => 
+        supported.languageCode == locale.languageCode);
+  }
+  
+  Locale _findSupportedLocale(Locale locale) {
+    for (final supported in supportedLocales) {
+      if (supported.languageCode == locale.languageCode) {
+        return supported;
+      }
+    }
+    return _fallbackLocale;
   }
   
   Future<void> changeLocale(Locale locale) async {
@@ -68,7 +83,6 @@ class LocaleService extends GetxService {
       _locale.value = locale;
       Get.updateLocale(locale);
     } catch (e) {
-      // 处理保存错误
       print('Failed to save locale: $e');
     }
   }

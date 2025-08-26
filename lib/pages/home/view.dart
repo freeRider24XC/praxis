@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/generated/l10n.dart';
 import 'package:praxis/common/widgets/language_switcher.dart';
 import 'package:praxis/pages/settings/settings_page.dart';
 
@@ -29,8 +28,6 @@ class _HomeViewGetX extends GetView<HomeController> {
 
   // 主视图
   Widget _buildView() {
-    final s = S.of(Get.context!);
-    
     return Column(
       children: [
         Expanded(
@@ -60,7 +57,7 @@ class _HomeViewGetX extends GetView<HomeController> {
                 child: TextField(
                   controller: controller.textEditingController,
                   decoration: InputDecoration(
-                    hintText: s.addNewTodo,
+                    hintText: 'addNewTodo'.tr,
                   ),
                   onSubmitted: (_) => controller.addTodo(),
                 ),
@@ -78,8 +75,6 @@ class _HomeViewGetX extends GetView<HomeController> {
 
   // 抽屉视图
   Widget _buildDrawer() {
-    final s = S.of(Get.context!);
-    
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -92,7 +87,7 @@ class _HomeViewGetX extends GetView<HomeController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  s.appName,
+                  'appName'.tr,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -101,7 +96,7 @@ class _HomeViewGetX extends GetView<HomeController> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  s.title,
+                  'title'.tr,
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 16,
@@ -112,14 +107,14 @@ class _HomeViewGetX extends GetView<HomeController> {
           ),
           ListTile(
             leading: const Icon(Icons.home),
-            title: Text(s.bottomNavHome),
+            title: Text('bottomNavHome'.tr),
             onTap: () {
               Get.back();
             },
           ),
           ListTile(
             leading: const Icon(Icons.folder),
-            title: Text(s.bottomNavProjects),
+            title: Text('bottomNavProjects'.tr),
             onTap: () {
               Get.back();
               // 导航到项目页面
@@ -127,7 +122,7 @@ class _HomeViewGetX extends GetView<HomeController> {
           ),
           ListTile(
             leading: const Icon(Icons.track_changes),
-            title: Text(s.bottomNavGoals),
+            title: Text('bottomNavGoals'.tr),
             onTap: () {
               Get.back();
               // 导航到目标页面
@@ -135,7 +130,7 @@ class _HomeViewGetX extends GetView<HomeController> {
           ),
           ListTile(
             leading: const Icon(Icons.checklist),
-            title: Text(s.bottomNavTodos),
+            title: Text('bottomNavTodos'.tr),
             onTap: () {
               Get.back();
               // 当前就在待办页面
@@ -143,7 +138,7 @@ class _HomeViewGetX extends GetView<HomeController> {
           ),
           ListTile(
             leading: const Icon(Icons.analytics),
-            title: Text(s.bottomNavStats),
+            title: Text('bottomNavStats'.tr),
             onTap: () {
               Get.back();
               // 导航到统计页面
@@ -152,7 +147,7 @@ class _HomeViewGetX extends GetView<HomeController> {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.settings),
-            title: Text(s.settings),
+            title: Text('settings'.tr),
             onTap: () {
               Get.back();
               Get.to(() => const SettingsPage());
@@ -166,7 +161,7 @@ class _HomeViewGetX extends GetView<HomeController> {
                 const Icon(Icons.language),
                 const SizedBox(width: 32),
                 Expanded(
-                  child: Text(s.language),
+                  child: Text('language'.tr),
                 ),
                 const LanguageSwitcher(),
               ],
@@ -183,10 +178,9 @@ class _HomeViewGetX extends GetView<HomeController> {
       init: HomeController(),
       id: "home",
       builder: (_) {
-        final s = S.of(context);
         return Scaffold(
           appBar: AppBar(
-            title: Text(s.todoList),
+            title: Text('todoList'.tr),
             leading: Builder(
               builder: (BuildContext context) {
                 return IconButton(

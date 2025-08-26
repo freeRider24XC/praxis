@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/services/locale_service.dart';
-import 'package:praxis/generated/l10n.dart';
 
 class LanguageSwitcher extends StatelessWidget {
   const LanguageSwitcher({super.key});
@@ -9,11 +8,10 @@ class LanguageSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localeService = Get.find<LocaleService>();
-    final s = S.of(context);
     
     return Obx(() => PopupMenuButton<Locale>(
       icon: const Icon(Icons.language),
-      tooltip: s.language,
+      tooltip: 'language'.tr,
       onSelected: (locale) => localeService.changeLocale(locale),
       itemBuilder: (context) => LocaleService.supportedLocales.map((locale) {
         final isSelected = localeService.isCurrentLocale(locale);
@@ -41,13 +39,12 @@ class LanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localeService = Get.find<LocaleService>();
-    final s = S.of(context);
     
     return Obx(() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          s.language,
+          'language'.tr,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 16),

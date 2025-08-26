@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/generated/l10n.dart';
 
 class ProjectPage extends StatefulWidget {
   const ProjectPage({super.key});
@@ -17,11 +16,9 @@ class _ProjectPageState extends State<ProjectPage> {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-    
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.projectManagement),
+        title: Text('projectManagement'.tr),
         actions: [
           IconButton(
             icon: Icon(_currentView == ProjectView.grid 
@@ -45,12 +42,12 @@ class _ProjectPageState extends State<ProjectPage> {
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: null,
-                child: Text(s.allProjects),
+                child: Text('allProjects'.tr),
               ),
               const PopupMenuDivider(),
               ...ProjectStatus.values.map((status) => PopupMenuItem(
                 value: status,
-                child: Text(_getStatusDisplayName(status, s)),
+                child: Text(_getStatusDisplayName(status)),
               )),
             ],
           ),
@@ -104,7 +101,6 @@ class _ProjectPageState extends State<ProjectPage> {
 
   Widget _buildProjectGridCard(Project project) {
     final theme = Theme.of(context);
-    final s = S.of(context);
     final color = _parseColor(project.color);
 
     return Card(
@@ -167,14 +163,18 @@ class _ProjectPageState extends State<ProjectPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        s.progressPercentage((project.progress * 100).toInt()),
+                        'progressPercentage'.trParams({
+                          'percentage': (project.progress * 100).toInt().toString()
+                        }),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       if (project.daysRemaining > 0)
                         Text(
-                          s.daysRemaining(project.daysRemaining),
+                          'daysRemaining'.trParams({
+                            'days': project.daysRemaining.toString()
+                          }),
                           style: theme.textTheme.bodySmall,
                         ),
                     ],
@@ -199,7 +199,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _getStatusDisplayName(project.status, s),
+                  _getStatusDisplayName(project.status),
                   style: TextStyle(
                     fontSize: 12,
                     color: _getStatusColor(project.status),
@@ -215,7 +215,6 @@ class _ProjectPageState extends State<ProjectPage> {
 
   Widget _buildProjectListCard(Project project) {
     final theme = Theme.of(context);
-    final s = S.of(context);
     final color = _parseColor(project.color);
 
     return Card(
@@ -302,7 +301,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            _getStatusDisplayName(project.status, s),
+                            _getStatusDisplayName(project.status),
                             style: TextStyle(
                               fontSize: 12,
                               color: _getStatusColor(project.status),
@@ -314,7 +313,9 @@ class _ProjectPageState extends State<ProjectPage> {
                         
                         // Progress percentage
                         Text(
-                          s.progressPercentage((project.progress * 100).toInt()),
+                          'progressPercentage'.trParams({
+                            'percentage': (project.progress * 100).toInt().toString()
+                          }),
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -331,7 +332,9 @@ class _ProjectPageState extends State<ProjectPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            s.taskCount(project.totalTasks),
+                            'taskCount'.trParams({
+                              'count': project.totalTasks.toString()
+                            }),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.disabledColor,
                             ),
@@ -348,7 +351,9 @@ class _ProjectPageState extends State<ProjectPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            s.daysRemaining(project.daysRemaining),
+                            'daysRemaining'.trParams({
+                              'days': project.daysRemaining.toString()
+                            }),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.disabledColor,
                             ),
@@ -367,8 +372,6 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Widget _buildEmptyState() {
-    final s = S.of(context);
-    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -381,8 +384,10 @@ class _ProjectPageState extends State<ProjectPage> {
           const SizedBox(height: 16),
           Text(
             _statusFilter != null 
-              ? s.noProjectsWithStatus(_getStatusDisplayName(_statusFilter!, s))
-              : s.notCreatedAnyProjects,
+              ? 'noProjectsWithStatus'.trParams({
+                  'status': _getStatusDisplayName(_statusFilter!)
+                })
+              : 'notCreatedAnyProjects'.tr,
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
@@ -392,7 +397,7 @@ class _ProjectPageState extends State<ProjectPage> {
           ElevatedButton.icon(
             onPressed: () => Get.toNamed('/project/add'),
             icon: const Icon(Icons.add),
-            label: Text(s.createProject),
+            label: Text('createProject'.tr),
           ),
         ],
       ),
@@ -472,20 +477,20 @@ class _ProjectPageState extends State<ProjectPage> {
     }
   }
   
-  String _getStatusDisplayName(ProjectStatus status, S s) {
+  String _getStatusDisplayName(ProjectStatus status) {
     switch (status) {
       case ProjectStatus.planning:
-        return s.projectStatusPlanning;
+        return 'projectStatusPlanning'.tr;
       case ProjectStatus.active:
-        return s.projectStatusActive;
+        return 'projectStatusActive'.tr;
       case ProjectStatus.onHold:
-        return s.projectStatusOnHold;
+        return 'projectStatusOnHold'.tr;
       case ProjectStatus.completed:
-        return s.projectStatusCompleted;
+        return 'projectStatusCompleted'.tr;
       case ProjectStatus.cancelled:
-        return s.projectStatusCancelled;
+        return 'projectStatusCancelled'.tr;
       case ProjectStatus.archived:
-        return s.projectStatusArchived;
+        return 'projectStatusArchived'.tr;
     }
   }
 
