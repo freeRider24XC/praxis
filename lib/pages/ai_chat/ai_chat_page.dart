@@ -4,6 +4,8 @@ import 'package:praxis/common/ai/services/ai_service.dart';
 import 'package:praxis/common/ai/providers/openai_provider.dart';
 import 'package:praxis/common/ai/parsers/entity_extractor.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/models/todo.dart';
+import 'package:praxis/common/models/goal.dart';
 
 class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});
@@ -281,18 +283,179 @@ class _AiChatPageState extends State<AiChatPage> {
   }
 
   Widget _buildConfirmationCard() {
+    if (_pendingExtraction!.hasTodos && _pendingExtraction!.todos != null) {
+      // 多个任务的情况
+      return Container(
+        margin: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.blue.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.blue.shade700),
+                const SizedBox(width: 8),
+                Text(
+                  '创建${_pendingExtraction!.todos!.length}个待办事项',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...(_pendingExtraction!.todos!.asMap().entries.map((entry) {
+              final index = entry.key;
+              final todo = entry.value;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '${index + 1}. ${todo.title}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const Spacer(),
+                        Chip(
+                          label: Text(
+                            todo.priority.displayName,
+                            style: const TextStyle(fontSize: 10),
+                          ),
+                          backgroundColor: _getPriorityColor(todo.priority),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ],
+                    ),
+                    if (todo.description != null && todo.description!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        todo.description!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                    if (todo.dueDate != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '截止日期: ${_formatDate(todo.dueDate!)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            })),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => setState(() => _pendingExtraction = null),
+                  child: const Text('取消'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _confirmCreate,
+                  child: const Text('确认创建全部'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // 单个任务或目标的情况
     String title = '';
-    String content = '';
+    Widget content;
     
     if (_pendingExtraction!.hasTodo && _pendingExtraction!.todo != null) {
+      final todo = _pendingExtraction!.todo!;
       title = '创建待办事项';
-      content = _pendingExtraction!.todo!.title;
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            todo.title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          if (todo.description != null && todo.description!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(todo.description!),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Chip(
+                label: Text(todo.priority.displayName),
+                backgroundColor: _getPriorityColor(todo.priority),
+              ),
+              if (todo.dueDate != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '截止: ${_formatDate(todo.dueDate!)}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ],
+          ),
+        ],
+      );
     } else if (_pendingExtraction!.hasGoal && _pendingExtraction!.goal != null) {
+      final goal = _pendingExtraction!.goal!;
       title = '创建目标';
-      content = _pendingExtraction!.goal!.title;
-    } else if (_pendingExtraction!.hasTodos && _pendingExtraction!.todos != null) {
-      title = '创建多个待办事项';
-      content = '共${_pendingExtraction!.todos!.length}个任务';
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            goal.title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          if (goal.description != null && goal.description!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(goal.description!),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Chip(
+                label: Text(goal.type.displayName),
+                backgroundColor: Colors.purple.shade100,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '目标日期: ${_formatDate(goal.targetDate)}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ],
+      );
+    } else {
+      title = '创建任务';
+      content = const Text('未知类型');
     }
 
     return Container(
@@ -320,7 +483,7 @@ class _AiChatPageState extends State<AiChatPage> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(content),
+          content,
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -339,6 +502,22 @@ class _AiChatPageState extends State<AiChatPage> {
         ],
       ),
     );
+  }
+
+  Color _getPriorityColor(TodoPriority priority) {
+    switch (priority) {
+      case TodoPriority.high:
+      case TodoPriority.urgent:
+        return Colors.red.shade100;
+      case TodoPriority.medium:
+        return Colors.orange.shade100;
+      case TodoPriority.low:
+        return Colors.green.shade100;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   Widget _buildInputArea() {

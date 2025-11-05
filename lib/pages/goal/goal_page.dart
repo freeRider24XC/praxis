@@ -378,10 +378,78 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
   }
 
   void _showGoalDetail(Goal goal) {
-    Get.toNamed('/goal/detail', arguments: goal);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(goal.title),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (goal.description != null && goal.description!.isNotEmpty) ...[
+                const Text(
+                  '描述',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(goal.description!),
+                const SizedBox(height: 16),
+              ],
+              Row(
+                children: [
+                  const Text(
+                    '类型: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Chip(
+                    label: Text(goal.type.displayName),
+                    backgroundColor: Colors.purple.shade100,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '目标日期: ${_formatDate(goal.targetDate)}',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '状态: ${goal.status.displayName}',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '进度: ${(goal.progress * 100).toStringAsFixed(0)}%',
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   void _showGoalAnalytics() {
-    Get.toNamed('/goal/analytics');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('目标分析'),
+        content: const Text('目标分析功能正在开发中，敬请期待！'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
   }
 }

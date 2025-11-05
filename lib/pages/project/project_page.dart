@@ -495,7 +495,65 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   void _showProjectDetail(Project project) {
-    Get.toNamed('/project/detail', arguments: project);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(project.name),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (project.description != null && project.description!.isNotEmpty) ...[
+                const Text(
+                  '描述',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(project.description!),
+                const SizedBox(height: 16),
+              ],
+              Row(
+                children: [
+                  const Text(
+                    '状态: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Chip(
+                    label: Text(project.status.displayName),
+                    backgroundColor: _getStatusColor(project.status),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '进度: ${(project.progress * 100).toStringAsFixed(0)}%',
+              ),
+              if (project.endDate != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '结束日期: ${_formatDate(project.endDate!)}',
+                ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                '剩余天数: ${project.daysRemaining}天',
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }
 

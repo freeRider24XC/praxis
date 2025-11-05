@@ -18,6 +18,9 @@ class _SettingsPageState extends State<SettingsPage> {
   String? _selectedProvider = 'openai';
   bool _isLoading = false;
   bool _isConfigured = false;
+  
+  // 默认API密钥（仅在开发环境使用）
+  static const String _defaultApiKey = 'sk-6aed399eac434b389bd831bff6f456d1';
 
   @override
   void initState() {
@@ -221,20 +224,36 @@ class _SettingsPageState extends State<SettingsPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  TextField(
-                    controller: _apiKeyController,
-                    decoration: InputDecoration(
-                      labelText: 'API密钥',
-                      hintText: 'sk-...',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.visibility_off),
-                        onPressed: () {
-                          // TODO: 实现显示/隐藏密码
-                        },
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _apiKeyController,
+                          decoration: InputDecoration(
+                            labelText: 'API密钥',
+                            hintText: 'sk-...',
+                            border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.visibility_off),
+                              onPressed: () {
+                                // TODO: 实现显示/隐藏密码
+                              },
+                            ),
+                          ),
+                          obscureText: true,
+                        ),
                       ),
-                    ),
-                    obscureText: true,
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _apiKeyController.text = _defaultApiKey;
+                          });
+                        },
+                        icon: const Icon(Icons.auto_fix_high, size: 16),
+                        label: const Text('使用默认'),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(
