@@ -163,8 +163,16 @@ class _AiChatPageState extends State<AiChatPage> {
             child: _buildMessageList(),
           ),
 
-          // 待确认的实体卡片
-          if (_pendingExtraction != null) _buildConfirmationCard(),
+          // 待确认的实体卡片（使用 Flexible 防止溢出）
+          if (_pendingExtraction != null)
+            Flexible(
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: SingleChildScrollView(
+                  child: _buildConfirmationCard(),
+                ),
+              ),
+            ),
 
           // 输入区域
           _buildInputArea(),

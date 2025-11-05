@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:get/get.dart';
 import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/pages/settings/settings_page.dart';
 
 class StatsPage extends StatefulWidget {
   const StatsPage({super.key});
@@ -22,6 +24,11 @@ class _StatsPageState extends State<StatsPage> {
       appBar: AppBar(
         title: const Text('统计分析'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Get.to(() => const SettingsPage()),
+            tooltip: '设置',
+          ),
           PopupMenuButton<StatsTimeRange>(
             initialValue: _timeRange,
             onSelected: (range) {
