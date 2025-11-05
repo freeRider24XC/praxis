@@ -59,6 +59,9 @@ class OpenAIProvider {
     final apiKey = await AiConfigService.getApiKey();
     final baseUrl = await AiConfigService.getApiBaseUrl();
     final model = await AiConfigService.getModel();
+    
+    // 判断是否为通义千问API
+    final isTongyi = baseUrl.contains('dashscope');
 
     // 构建消息列表
     final messages = <Map<String, dynamic>>[
@@ -67,20 +70,43 @@ class OpenAIProvider {
       {'role': 'user', 'content': message},
     ];
 
-    // 发送请求
-    final url = Uri.parse('$baseUrl/chat/completions');
+    // 通义千问使用不同的API端点
+    final endpoint = isTongyi 
+        ? 'services/aigc/text-generation/generation'
+        : 'chat/completions';
+    final url = Uri.parse('$baseUrl/$endpoint');
+    
+    // 构建请求体
+    Map<String, dynamic> requestBody;
+    if (isTongyi) {
+      // 通义千问的API格式
+      requestBody = {
+        'model': model,
+        'input': {
+          'messages': messages,
+        },
+        'parameters': {
+          'temperature': 0.7,
+          'max_tokens': 2000,
+        },
+      };
+    } else {
+      // OpenAI格式
+      requestBody = {
+        'model': model,
+        'messages': messages,
+        'temperature': 0.7,
+        'max_tokens': 2000,
+      };
+    }
+    
     final response = await http.post(
       url,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $apiKey',
       },
-      body: jsonEncode({
-        'model': model,
-        'messages': messages,
-        'temperature': 0.7,
-        'max_tokens': 2000,
-      }),
+      body: jsonEncode(requestBody),
     ).timeout(
       const Duration(seconds: 30),
       onTimeout: () {
@@ -90,15 +116,34 @@ class OpenAIProvider {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final choices = data['choices'] as List;
-      if (choices.isNotEmpty) {
-        final content = choices[0]['message']['content'] as String;
-        return content;
+      
+      String content;
+      if (isTongyi) {
+        // 通义千问的响应格式
+        final output = data['output'] as Map<String, dynamic>?;
+        if (output != null) {
+          content = output['text'] as String? ?? '';
+        } else {
+          throw Exception('AI返回了空响应');
+        }
       } else {
-        throw Exception('AI返回了空响应');
+        // OpenAI格式
+        final choices = data['choices'] as List;
+        if (choices.isNotEmpty) {
+          content = choices[0]['message']['content'] as String;
+        } else {
+          throw Exception('AI返回了空响应');
+        }
       }
+      
+      return content;
     } else if (response.statusCode == 401) {
       throw Exception('API密钥无效，请检查密钥是否正确');
+    } else if (response.statusCode == 402) {
+      final isTongyi = baseUrl.contains('dashscope');
+      throw Exception(isTongyi 
+        ? '账户余额不足，请前往阿里云DashScope平台充值' 
+        : '账户余额不足，请前往DeepSeek平台充值');
     } else if (response.statusCode == 429) {
       throw Exception('API调用次数超限，请稍后再试');
     } else {
@@ -111,10 +156,91 @@ class OpenAIProvider {
   // 测试连接
   Future<bool> testConnection() async {
     try {
-      final result = await chat('你好', []);
-      return result.isNotEmpty;
+      final apiKey = await AiConfigService.getApiKey();
+      final baseUrl = await AiConfigService.getApiBaseUrl();
+      final model = await AiConfigService.getModel();
+      
+      final isTongyi = baseUrl.contains('dashscope');
+
+      if (apiKey == null || apiKey.isEmpty) {
+        throw Exception('API密钥未配置');
+      }
+
+      // 通义千问使用不同的API端点
+      final endpoint = isTongyi 
+          ? 'services/aigc/text-generation/generation'
+          : 'chat/completions';
+      final url = Uri.parse('$baseUrl/$endpoint');
+      
+      // 构建请求体
+      Map<String, dynamic> requestBody;
+      if (isTongyi) {
+        requestBody = {
+          'model': model,
+          'input': {
+            'messages': [
+              {'role': 'user', 'content': 'Hello'}
+            ],
+          },
+          'parameters': {
+            'max_tokens': 5,
+          },
+        };
+      } else {
+        requestBody = {
+          'model': model,
+          'messages': [
+            {'role': 'user', 'content': 'Hello'}
+          ],
+          'max_tokens': 5,
+        };
+      }
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: jsonEncode(requestBody),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('请求超时，请检查网络连接');
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        if (isTongyi) {
+          final output = data['output'] as Map<String, dynamic>?;
+          return output != null && output['text'] != null;
+        } else {
+          final choices = data['choices'] as List;
+          return choices.isNotEmpty;
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('API密钥无效，请检查密钥是否正确');
+      } else if (response.statusCode == 402) {
+        final isTongyiCheck = baseUrl.contains('dashscope');
+        throw Exception(isTongyiCheck 
+          ? '账户余额不足，请前往阿里云DashScope平台充值' 
+          : '账户余额不足，请前往DeepSeek平台充值');
+      } else if (response.statusCode == 429) {
+        throw Exception('API调用次数超限，请稍后再试');
+      } else {
+        try {
+          final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+          final errorMessage = errorData['error']?['message'] ?? '请求失败';
+          throw Exception('API请求失败: $errorMessage');
+        } catch (_) {
+          throw Exception('API请求失败: HTTP ${response.statusCode}');
+        }
+      }
     } catch (e) {
-      return false;
+      // 重新抛出异常以便上层捕获
+      throw e;
     }
   }
 }

@@ -8,6 +8,7 @@ class AiConfigService {
   // 默认值
   static const String defaultBaseUrl = 'https://api.openai.com/v1';
   static const String defaultDeepSeekUrl = 'https://api.deepseek.com/v1';
+  static const String defaultTongyiUrl = 'https://dashscope.aliyuncs.com/api/v1';
   static const String defaultModel = 'gpt-3.5-turbo';
 
   // 获取API密钥
@@ -100,6 +101,13 @@ class AiConfigService {
   static Future<void> setDeepSeek({required String apiKey, String model = 'deepseek-chat'}) async {
     await setApiKey(apiKey);
     await setApiBaseUrl(defaultDeepSeekUrl);
+    await setModel(model);
+  }
+
+  // 设置使用通义千问（Tongyi Qianwen）- 免费额度
+  static Future<void> setTongyi({required String apiKey, String model = 'qwen-turbo'}) async {
+    await setApiKey(apiKey);
+    await setApiBaseUrl(defaultTongyiUrl);
     await setModel(model);
   }
 }

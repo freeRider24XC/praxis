@@ -37,6 +37,8 @@ class _SettingsPageState extends State<SettingsPage> {
       }
       if (baseUrl.contains('deepseek')) {
         _selectedProvider = 'deepseek';
+      } else if (baseUrl.contains('dashscope')) {
+        _selectedProvider = 'tongyi';
       } else {
         _selectedProvider = 'openai';
       }
@@ -51,10 +53,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _saveConfiguration() async {
     if (_apiKeyController.text.trim().isEmpty) {
-      Get.snackbar('错误', '请输入API密钥', snackPosition: SnackPosition.BOTTOM);
+      if (mounted) {
+        Get.snackbar('错误', '请输入API密钥', snackPosition: SnackPosition.BOTTOM);
+      }
       return;
     }
 
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
     });
@@ -62,29 +68,65 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       if (_selectedProvider == 'openai') {
         await AiConfigService.setOpenAI(apiKey: _apiKeyController.text.trim());
-      } else {
+      } else if (_selectedProvider == 'deepseek') {
         await AiConfigService.setDeepSeek(apiKey: _apiKeyController.text.trim());
+      } else if (_selectedProvider == 'tongyi') {
+        await AiConfigService.setTongyi(apiKey: _apiKeyController.text.trim());
       }
 
       // 测试连接
-      final provider = OpenAIProvider();
-      final testResult = await provider.testConnection();
+      bool testResult = false;
+      String? testErrorMsg;
+      try {
+        final provider = OpenAIProvider();
+        testResult = await provider.testConnection();
+      } catch (e) {
+        // 测试连接失败，但配置已保存
+        testResult = false;
+        testErrorMsg = e.toString().replaceAll('Exception: ', '');
+        debugPrint('测试连接失败: $testErrorMsg');
+      }
 
+      if (!mounted) return;
+      
       setState(() {
         _isLoading = false;
         _isConfigured = testResult;
       });
 
       if (testResult) {
-        Get.snackbar('成功', 'API密钥配置成功', snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar(
+          '成功',
+          'API密钥配置成功',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.shade100,
+          colorText: Colors.green.shade900,
+        );
       } else {
-        Get.snackbar('警告', '配置已保存，但测试连接失败', snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar(
+          '警告',
+          '配置已保存，但测试连接失败${testErrorMsg != null ? ': $testErrorMsg' : ''}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange.shade100,
+          colorText: Colors.orange.shade900,
+          duration: const Duration(seconds: 4),
+        );
       }
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _isLoading = false;
       });
-      Get.snackbar('错误', '配置失败: $e', snackPosition: SnackPosition.BOTTOM);
+      
+      Get.snackbar(
+        '错误',
+        '配置失败: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+        duration: const Duration(seconds: 3),
+      );
     }
   }
 
@@ -166,6 +208,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       DropdownMenuItem(
                         value: 'deepseek',
                         child: Text('DeepSeek'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'tongyi',
+                        child: Text('通义千问 (免费额度)'),
                       ),
                     ],
                     onChanged: (value) {
