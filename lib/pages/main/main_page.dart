@@ -5,6 +5,7 @@ import 'package:praxis/pages/goal/goal_page.dart';
 import 'package:praxis/pages/project/project_page.dart';
 import 'package:praxis/pages/stats/stats_page.dart';
 import 'package:praxis/pages/settings/settings_page.dart';
+import 'package:praxis/pages/ai_chat/ai_chat_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -86,41 +87,83 @@ class _MainPageState extends State<MainPage> {
         shadowColor: Colors.black.withOpacity(0.3),
       ),
       floatingActionButton: _buildFloatingActionButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
   Widget? _buildFloatingActionButton() {
-    if (_currentIndex >= 3) return null; // No FAB for stats and settings
-
-    IconData icon;
-    String tooltip;
-    VoidCallback onPressed;
-
-    switch (_currentIndex) {
-      case 0: // Todo
-        icon = Icons.add;
-        tooltip = '添加待办';
-        onPressed = () => _showAddTodoDialog();
-        break;
-      case 1: // Goal
-        icon = Icons.flag;
-        tooltip = '创建目标';
-        onPressed = () => _showAddGoalDialog();
-        break;
-      case 2: // Project
-        icon = Icons.create_new_folder;
-        tooltip = '新建项目';
-        onPressed = () => _showAddProjectDialog();
-        break;
-      default:
-        return null;
+    if (_currentIndex >= 3) {
+      // 在统计和设置页面显示AI按钮
+      return FloatingActionButton.extended(
+        onPressed: () => Get.to(() => const AiChatPage()),
+        icon: const Icon(Icons.smart_toy),
+        label: const Text('AI助手'),
+      );
     }
 
-    return FloatingActionButton(
-      onPressed: onPressed,
-      tooltip: tooltip,
-      child: Icon(icon),
+    // 在其他页面显示原有功能按钮 + AI按钮
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        // AI助手按钮
+        Positioned(
+          bottom: 70,
+          right: 0,
+          child: FloatingActionButton(
+            heroTag: 'ai_button',
+            onPressed: () => Get.to(() => const AiChatPage()),
+            tooltip: 'AI助手',
+            child: const Icon(Icons.smart_toy),
+          ),
+        ),
+        // 原有功能按钮
+        FloatingActionButton(
+          heroTag: 'fab_button',
+          onPressed: _getFabAction(),
+          tooltip: _getFabTooltip(),
+          child: Icon(_getFabIcon()),
+        ),
+      ],
     );
+  }
+
+  IconData _getFabIcon() {
+    switch (_currentIndex) {
+      case 0:
+        return Icons.add;
+      case 1:
+        return Icons.flag;
+      case 2:
+        return Icons.create_new_folder;
+      default:
+        return Icons.add;
+    }
+  }
+
+  String _getFabTooltip() {
+    switch (_currentIndex) {
+      case 0:
+        return '添加待办';
+      case 1:
+        return '创建目标';
+      case 2:
+        return '新建项目';
+      default:
+        return '添加';
+    }
+  }
+
+  VoidCallback _getFabAction() {
+    switch (_currentIndex) {
+      case 0:
+        return _showAddTodoDialog;
+      case 1:
+        return _showAddGoalDialog;
+      case 2:
+        return _showAddProjectDialog;
+      default:
+        return () {};
+    }
   }
 
   void _showAddTodoDialog() {

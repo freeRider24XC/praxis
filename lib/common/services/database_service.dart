@@ -91,6 +91,13 @@ class DatabaseService {
     await todoBox.add(todo);
   }
 
+  // 批量添加待办事项
+  static Future<void> addTodos(List<Todo> todos) async {
+    for (final todo in todos) {
+      await todoBox.add(todo);
+    }
+  }
+
   static List<Todo> getAllTodos() {
     return todoBox.values.toList();
   }

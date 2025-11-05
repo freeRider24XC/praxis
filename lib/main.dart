@@ -5,6 +5,10 @@ import 'package:get/get.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/services/locale_service.dart';
 import 'package:praxis/pages/main/main_page.dart';
+import 'package:praxis/pages/todo/add_todo_page.dart';
+import 'package:praxis/pages/goal/add_goal_page.dart';
+import 'package:praxis/pages/project/add_project_page.dart';
+import 'package:praxis/pages/ai_chat/ai_chat_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +19,7 @@ void main() async {
     
     // Initialize services
     await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
+    await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
     
     // Set preferred orientations
     await SystemChrome.setPreferredOrientations([
@@ -37,6 +42,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localeService = Get.find<LocaleService>();
+    final themeService = Get.find<ThemeService>();
     
     return Obx(() => GetMaterialApp(
       title: "Praxis",
@@ -49,10 +55,16 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: LocaleService.supportedLocales,
-      theme: ThemeService.getThemeData(isDark: false),
-      darkTheme: ThemeService.getThemeData(isDark: true),
-      themeMode: ThemeService.themeMode,
+      theme: themeService.lightTheme,
+      darkTheme: themeService.darkTheme,
+      themeMode: themeService.themeMode,
       home: const MainPage(),
+      getPages: [
+        GetPage(name: '/todo/add', page: () => const AddTodoPage()),
+        GetPage(name: '/goal/add', page: () => const AddGoalPage()),
+        GetPage(name: '/project/add', page: () => const AddProjectPage()),
+        GetPage(name: '/ai/chat', page: () => const AiChatPage()),
+      ],
     ));
   }
 }

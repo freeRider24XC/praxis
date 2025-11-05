@@ -18,3 +18,12 @@ samples, guidance on mobile development, and a full API reference.
 ## 使用工具
 
 - 状态管理：GetX
+## 功能分析
+-   - 核心功能：
+        - 接入AI工具（deepseek、通义千问、 GPT等等）
+        - 通过和AI交流制定目标、项目以及待办
+    - 待办
+    - 目标
+    - 项目
+    - 统计
+    - 设置
