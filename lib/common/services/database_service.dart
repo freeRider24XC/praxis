@@ -11,9 +11,13 @@ class DatabaseService {
   static late Box<Goal> goalBox;
   static late Box<Project> projectBox;
   static late Box settingsBox;
+  
+  static bool _isInitialized = false;
 
   // Initialize Hive and register adapters
   static Future<void> init() async {
+    if (_isInitialized) return;
+    
     await Hive.initFlutter();
 
     // Register adapters
@@ -21,7 +25,12 @@ class DatabaseService {
 
     // Open boxes
     await _openBoxes();
+    
+    _isInitialized = true;
   }
+  
+  // Check if database is initialized
+  static bool get isInitialized => _isInitialized;
 
   static void _registerAdapters() {
     // Todo adapters
@@ -183,7 +192,14 @@ class DatabaseService {
 
   // Settings operations
   static dynamic getSetting(String key, {dynamic defaultValue}) {
-    return settingsBox.get(key, defaultValue: defaultValue);
+    if (!_isInitialized) {
+      return defaultValue;
+    }
+    try {
+      return settingsBox.get(key, defaultValue: defaultValue);
+    } catch (e) {
+      return defaultValue;
+    }
   }
 
   static Future<void> setSetting(String key, dynamic value) async {

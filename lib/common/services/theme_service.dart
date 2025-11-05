@@ -39,13 +39,28 @@ class ThemeService {
 
   // Get current theme mode
   static ThemeMode get themeMode {
-    final modeIndex = DatabaseService.getSetting(_themeKey, defaultValue: 0);
-    return ThemeMode.values[modeIndex];
+    try {
+      final modeIndex = DatabaseService.getSetting(_themeKey, defaultValue: 0);
+      if (modeIndex is int && modeIndex >= 0 && modeIndex < ThemeMode.values.length) {
+        return ThemeMode.values[modeIndex];
+      }
+    } catch (e) {
+      debugPrint('获取主题模式失败: $e');
+    }
+    return ThemeMode.system;
   }
 
   // Get current theme color index
   static int get colorIndex {
-    return DatabaseService.getSetting(_colorKey, defaultValue: 0);
+    try {
+      final index = DatabaseService.getSetting(_colorKey, defaultValue: 0);
+      if (index is int && index >= 0 && index < themeColors.length) {
+        return index;
+      }
+    } catch (e) {
+      debugPrint('获取主题颜色索引失败: $e');
+    }
+    return 0;
   }
 
   // Get current theme color
