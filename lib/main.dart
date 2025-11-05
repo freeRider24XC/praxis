@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/services/index.dart';
-import 'package:praxis/generated/l10n.dart';
+import 'package:praxis/common/services/locale_service.dart';
 import 'package:praxis/pages/main/main_page.dart';
 
 void main() async {
@@ -12,13 +12,16 @@ void main() async {
   try {
     // Initialize database
     await DatabaseService.init();
-
+    
+    // Initialize services
+    await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
+    
     // Set preferred orientations
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-
+    
     runApp(const MyApp());
   } catch (e, stackTrace) {
     // Log error and show error screen
@@ -33,24 +36,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
+    final localeService = Get.find<LocaleService>();
+    
+    return Obx(() => GetMaterialApp(
       title: "Praxis",
       debugShowCheckedModeBanner: false,
+      locale: localeService.locale,
+      fallbackLocale: const Locale('en', 'US'),
       localizationsDelegates: const [
-        S.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en', 'US'), // 美国英语
-        Locale('zh', 'CN'), // 中文简体
-      ],
+      supportedLocales: LocaleService.supportedLocales,
       theme: ThemeService.getThemeData(isDark: false),
       darkTheme: ThemeService.getThemeData(isDark: true),
       themeMode: ThemeService.themeMode,
       home: const MainPage(),
-    );
+    ));
   }
 }
 

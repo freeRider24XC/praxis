@@ -18,7 +18,7 @@ class _ProjectPageState extends State<ProjectPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('项目管理'),
+        title: Text('projectManagement'.tr),
         actions: [
           IconButton(
             icon: Icon(_currentView == ProjectView.grid 
@@ -40,14 +40,14 @@ class _ProjectPageState extends State<ProjectPage> {
               });
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: null,
-                child: Text('全部项目'),
+                child: Text('allProjects'.tr),
               ),
               const PopupMenuDivider(),
               ...ProjectStatus.values.map((status) => PopupMenuItem(
                 value: status,
-                child: Text(status.displayName),
+                child: Text(_getStatusDisplayName(status)),
               )),
             ],
           ),
@@ -163,14 +163,18 @@ class _ProjectPageState extends State<ProjectPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '${(project.progress * 100).toStringAsFixed(0)}%',
+                        'progressPercentage'.trParams({
+                          'percentage': (project.progress * 100).toInt().toString()
+                        }),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       if (project.daysRemaining > 0)
                         Text(
-                          '${project.daysRemaining}天',
+                          'daysRemaining'.trParams({
+                            'days': project.daysRemaining.toString()
+                          }),
                           style: theme.textTheme.bodySmall,
                         ),
                     ],
@@ -195,7 +199,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  project.status.displayName,
+                  _getStatusDisplayName(project.status),
                   style: TextStyle(
                     fontSize: 12,
                     color: _getStatusColor(project.status),
@@ -297,7 +301,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            project.status.displayName,
+                            _getStatusDisplayName(project.status),
                             style: TextStyle(
                               fontSize: 12,
                               color: _getStatusColor(project.status),
@@ -309,7 +313,9 @@ class _ProjectPageState extends State<ProjectPage> {
                         
                         // Progress percentage
                         Text(
-                          '${(project.progress * 100).toStringAsFixed(0)}%',
+                          'progressPercentage'.trParams({
+                            'percentage': (project.progress * 100).toInt().toString()
+                          }),
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -326,7 +332,9 @@ class _ProjectPageState extends State<ProjectPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${project.totalTasks}',
+                            'taskCount'.trParams({
+                              'count': project.totalTasks.toString()
+                            }),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.disabledColor,
                             ),
@@ -343,7 +351,9 @@ class _ProjectPageState extends State<ProjectPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${project.daysRemaining}天',
+                            'daysRemaining'.trParams({
+                              'days': project.daysRemaining.toString()
+                            }),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.disabledColor,
                             ),
@@ -374,8 +384,10 @@ class _ProjectPageState extends State<ProjectPage> {
           const SizedBox(height: 16),
           Text(
             _statusFilter != null 
-              ? '没有${_statusFilter!.displayName}的项目'
-              : '还没有创建任何项目',
+              ? 'noProjectsWithStatus'.trParams({
+                  'status': _getStatusDisplayName(_statusFilter!)
+                })
+              : 'notCreatedAnyProjects'.tr,
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
@@ -385,7 +397,7 @@ class _ProjectPageState extends State<ProjectPage> {
           ElevatedButton.icon(
             onPressed: () => Get.toNamed('/project/add'),
             icon: const Icon(Icons.add),
-            label: const Text('创建项目'),
+            label: Text('createProject'.tr),
           ),
         ],
       ),
@@ -462,6 +474,23 @@ class _ProjectPageState extends State<ProjectPage> {
         return Colors.orange;
       case ProjectHealth.critical:
         return Colors.red;
+    }
+  }
+  
+  String _getStatusDisplayName(ProjectStatus status) {
+    switch (status) {
+      case ProjectStatus.planning:
+        return 'projectStatusPlanning'.tr;
+      case ProjectStatus.active:
+        return 'projectStatusActive'.tr;
+      case ProjectStatus.onHold:
+        return 'projectStatusOnHold'.tr;
+      case ProjectStatus.completed:
+        return 'projectStatusCompleted'.tr;
+      case ProjectStatus.cancelled:
+        return 'projectStatusCancelled'.tr;
+      case ProjectStatus.archived:
+        return 'projectStatusArchived'.tr;
     }
   }
 
