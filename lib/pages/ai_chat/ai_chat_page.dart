@@ -64,6 +64,7 @@ class _AiChatPageState extends State<AiChatPage> {
       
       setState(() {
         _isLoading = false;
+        // 将提取结果存储到最后一个AI消息中
         if (extraction.hasTodo || extraction.hasGoal || extraction.hasTodos) {
           _pendingExtraction = extraction;
         }
@@ -163,17 +164,6 @@ class _AiChatPageState extends State<AiChatPage> {
             child: _buildMessageList(),
           ),
 
-          // 待确认的实体卡片（使用 Flexible 防止溢出）
-          if (_pendingExtraction != null)
-            Flexible(
-              child: Container(
-                constraints: const BoxConstraints(maxHeight: 300),
-                child: SingleChildScrollView(
-                  child: _buildConfirmationCard(),
-                ),
-              ),
-            ),
-
           // 输入区域
           _buildInputArea(),
         ],
@@ -213,12 +203,16 @@ class _AiChatPageState extends State<AiChatPage> {
         if (index == messages.length) {
           return _buildLoadingMessage();
         }
-        return _buildMessageItem(messages[index]);
+        // 如果是最后一个AI消息且有待办事项，显示待办列表
+        final isLastAiMessage = index == messages.length - 1 && 
+                                 messages[index].role == 'assistant' &&
+                                 _pendingExtraction != null;
+        return _buildMessageItem(messages[index], showTodoList: isLastAiMessage);
       },
     );
   }
 
-  Widget _buildMessageItem(ChatMessage message) {
+  Widget _buildMessageItem(ChatMessage message, {bool showTodoList = false}) {
     final isUser = message.role == 'user';
     
     return Padding(
@@ -241,12 +235,22 @@ class _AiChatPageState extends State<AiChatPage> {
                 color: isUser ? Colors.blue.shade50 : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                message.content,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isUser ? Colors.blue.shade900 : Colors.grey.shade900,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.content,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isUser ? Colors.blue.shade900 : Colors.grey.shade900,
+                    ),
+                  ),
+                  // 如果是AI消息且显示待办列表，添加待办事项卡片
+                  if (showTodoList && _pendingExtraction != null) ...[
+                    const SizedBox(height: 12),
+                    _buildTodoListInMessage(),
+                  ],
+                ],
               ),
             ),
           ),
@@ -290,15 +294,17 @@ class _AiChatPageState extends State<AiChatPage> {
     );
   }
 
-  Widget _buildConfirmationCard() {
+  Widget _buildTodoListInMessage() {
+    if (_pendingExtraction == null) return const SizedBox.shrink();
+    
     if (_pendingExtraction!.hasTodos && _pendingExtraction!.todos != null) {
       // 多个任务的情况
       return Container(
-        margin: const EdgeInsets.all(8),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.blue.shade200),
         ),
         child: Column(
@@ -306,13 +312,14 @@ class _AiChatPageState extends State<AiChatPage> {
           children: [
             Row(
               children: [
-                Icon(Icons.check_circle_outline, color: Colors.blue.shade700),
+                Icon(Icons.check_circle_outline, color: Colors.blue.shade700, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  '创建${_pendingExtraction!.todos!.length}个待办事项',
+                  '待办事项列表（${_pendingExtraction!.todos!.length}个）',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.blue.shade700,
+                    fontSize: 13,
                   ),
                 ),
               ],
@@ -323,24 +330,27 @@ class _AiChatPageState extends State<AiChatPage> {
               final todo = entry.value;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          '${index + 1}. ${todo.title}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                        Expanded(
+                          child: Text(
+                            '${index + 1}. ${todo.title}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         Chip(
                           label: Text(
                             todo.priority.displayName,
@@ -366,7 +376,7 @@ class _AiChatPageState extends State<AiChatPage> {
                       Text(
                         '截止日期: ${_formatDate(todo.dueDate!)}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -381,12 +391,22 @@ class _AiChatPageState extends State<AiChatPage> {
               children: [
                 TextButton(
                   onPressed: () => setState(() => _pendingExtraction = null),
-                  child: const Text('取消'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('取消', style: TextStyle(fontSize: 12)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _confirmCreate,
-                  child: const Text('确认创建全部'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('确认创建', style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -414,19 +434,19 @@ class _AiChatPageState extends State<AiChatPage> {
             Text(todo.description!),
           ],
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
             children: [
               Chip(
                 label: Text(todo.priority.displayName),
                 backgroundColor: _getPriorityColor(todo.priority),
               ),
-              if (todo.dueDate != null) ...[
-                const SizedBox(width: 8),
+              if (todo.dueDate != null)
                 Text(
                   '截止: ${_formatDate(todo.dueDate!)}',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
-              ],
             ],
           ),
         ],
@@ -446,13 +466,14 @@ class _AiChatPageState extends State<AiChatPage> {
             Text(goal.description!),
           ],
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
             children: [
               Chip(
                 label: Text(goal.type.displayName),
                 backgroundColor: Colors.purple.shade100,
               ),
-              const SizedBox(width: 8),
               Text(
                 '目标日期: ${_formatDate(goal.targetDate)}',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
@@ -462,16 +483,15 @@ class _AiChatPageState extends State<AiChatPage> {
         ],
       );
     } else {
-      title = '创建任务';
-      content = const Text('未知类型');
+      return const SizedBox.shrink();
     }
 
     return Container(
-      margin: const EdgeInsets.all(8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.blue.shade200),
       ),
       child: Column(
@@ -479,13 +499,14 @@ class _AiChatPageState extends State<AiChatPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.check_circle_outline, color: Colors.blue.shade700),
+              Icon(Icons.check_circle_outline, color: Colors.blue.shade700, size: 18),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.blue.shade700,
+                  fontSize: 13,
                 ),
               ),
             ],
@@ -498,12 +519,22 @@ class _AiChatPageState extends State<AiChatPage> {
             children: [
               TextButton(
                 onPressed: () => setState(() => _pendingExtraction = null),
-                child: const Text('取消'),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('取消', style: TextStyle(fontSize: 12)),
               ),
               const SizedBox(width: 8),
               ElevatedButton(
                 onPressed: _confirmCreate,
-                child: const Text('确认创建'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('确认创建', style: TextStyle(fontSize: 12)),
               ),
             ],
           ),

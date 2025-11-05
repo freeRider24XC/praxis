@@ -98,7 +98,7 @@ class _MainPageState extends State<MainPage> {
     
     // 统计页面不需要FAB
     if (_currentIndex == 4) {
-      return null;
+        return null;
     }
 
     // 其他页面显示原有功能按钮

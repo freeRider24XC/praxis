@@ -214,7 +214,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       DropdownMenuItem(
                         value: 'tongyi',
-                        child: Text('通义千问 (免费额度)'),
+                        child: Text('通义千问'),
                       ),
                     ],
                     onChanged: (value) {

@@ -14,20 +14,20 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    // Initialize database
-    await DatabaseService.init();
+  // Initialize database
+  await DatabaseService.init();
     
     // Initialize services
     await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
-    
-    // Set preferred orientations
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    
-    runApp(const MyApp());
+  
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  
+  runApp(const MyApp());
   } catch (e, stackTrace) {
     // Log error and show error screen
     debugPrint('初始化失败: $e');

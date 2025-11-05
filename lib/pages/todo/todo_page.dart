@@ -157,21 +157,21 @@ class _TodoPageState extends State<TodoPage> with SingleTickerProviderStateMixin
 
   Widget _buildTodoList(TodoTimeFilter timeFilter) {
     final todos = _filterTodos(DatabaseService.getAllTodos(), timeFilter);
-    
-    if (todos.isEmpty) {
-      return _buildEmptyState(timeFilter);
-    }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: todos.length,
-      itemBuilder: (context, index) {
-        final todo = todos[index];
-        return TodoListItem(
-          todo: todo,
-          onTap: () => _showTodoDetail(todo),
-          onToggle: () => _toggleTodo(todo),
-          onDelete: () => _deleteTodo(todo),
+        if (todos.isEmpty) {
+          return _buildEmptyState(timeFilter);
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: todos.length,
+          itemBuilder: (context, index) {
+            final todo = todos[index];
+            return TodoListItem(
+              todo: todo,
+              onTap: () => _showTodoDetail(todo),
+              onToggle: () => _toggleTodo(todo),
+              onDelete: () => _deleteTodo(todo),
         );
       },
     );

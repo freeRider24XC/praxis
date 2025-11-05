@@ -11,7 +11,7 @@ class DatabaseService {
   static late Box<Goal> goalBox;
   static late Box<Project> projectBox;
   static late Box settingsBox;
-  
+
   static bool _isInitialized = false;
 
   // Initialize Hive and register adapters
@@ -203,7 +203,7 @@ class DatabaseService {
       return defaultValue;
     }
     try {
-      return settingsBox.get(key, defaultValue: defaultValue);
+    return settingsBox.get(key, defaultValue: defaultValue);
     } catch (e) {
       return defaultValue;
     }
