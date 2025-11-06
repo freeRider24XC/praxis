@@ -178,50 +178,45 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Status and Title Row
               Row(
                 children: [
-                  // Status indicator
+                  // Status text
                   Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(goal.status),
-                      shape: BoxShape.circle,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: DesignTokens.spacing2,
+                      vertical: 2,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  
-                  // Title
-                  Expanded(
-                    child: Text(
-                      goal.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  
-                  // Type badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: _getStatusColor(goal.status).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
                     ),
                     child: Text(
-                      goal.type.displayName,
+                      goal.status.displayName,
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.primaryColor,
+                        color: _getStatusColor(goal.status),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
+                  const Spacer(),
                 ],
               ),
               
-              if (goal.description != null) ...[
-                const SizedBox(height: 8),
+              const SizedBox(height: DesignTokens.spacing3),
+              
+              // Title
+              Text(
+                goal.title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              
+              // Description
+              if (goal.description != null && goal.description!.isNotEmpty) ...[
+                const SizedBox(height: DesignTokens.spacing2),
                 Text(
                   goal.description!,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -232,97 +227,72 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
                 ),
               ],
               
-              const SizedBox(height: 12),
+              const SizedBox(height: DesignTokens.spacing4),
               
               // Progress bar
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '进度',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      Text(
-                        '${(progress * 100).toStringAsFixed(0)}%',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: _getProgressColor(progress),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: DesignTokens.spacing1),
                   LinearProgressIndicator(
                     value: animatedProgress,
-                    backgroundColor: Colors.grey[300],
+                    backgroundColor: Colors.grey[200],
                     valueColor: AlwaysStoppedAnimation<Color>(
                       _getProgressColor(animatedProgress),
                     ),
                     minHeight: 8,
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
                   ),
                 ],
               ),
               
-              const SizedBox(height: 12),
+              const SizedBox(height: DesignTokens.spacing3),
               
               // Footer info
               Row(
                 children: [
-                  // Time remaining
-                  Icon(
-                    Icons.schedule,
-                    size: 16,
-                    color: isOverdue ? Colors.red : theme.disabledColor,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    isOverdue 
-                      ? '已逾期${-daysRemaining}天'
-                      : daysRemaining > 0
-                        ? '剩余$daysRemaining天'
-                        : '今天截止',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isOverdue ? Colors.red : theme.disabledColor,
+                  // Goal type badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: DesignTokens.spacing2,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+                    ),
+                    child: Text(
+                      goal.type.displayName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.primaryColor,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   
                   const Spacer(),
                   
-                  // Key results count
-                  if (goal.keyResults != null && goal.keyResults!.isNotEmpty) ...[
-                    Icon(
-                      Icons.flag,
-                      size: 16,
-                      color: theme.disabledColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${goal.keyResults!.where((kr) => kr.isCompleted).length}/${goal.keyResults!.length} KR',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.disabledColor,
+                  // Time remaining
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.schedule,
+                        size: 14,
+                        color: isOverdue ? DesignTokens.errorColor : theme.disabledColor,
                       ),
-                    ),
-                  ],
-                  
-                  // Linked todos count
-                  if (goal.linkedTodoIds != null && goal.linkedTodoIds!.isNotEmpty) ...[
-                    const SizedBox(width: 12),
-                    Icon(
-                      Icons.checklist,
-                      size: 16,
-                      color: theme.disabledColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${goal.linkedTodoIds!.length}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.disabledColor,
+                      const SizedBox(width: 4),
+                      Text(
+                        isOverdue 
+                          ? '已逾期${-daysRemaining}天'
+                          : daysRemaining > 0
+                            ? '剩余$daysRemaining天'
+                            : '今天截止',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isOverdue ? DesignTokens.errorColor : theme.disabledColor,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ],
               ),
             ],

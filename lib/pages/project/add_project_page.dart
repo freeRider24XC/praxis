@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/error_service.dart';
+import 'package:praxis/common/services/logger_service.dart';
+import 'package:praxis/common/widgets/praxis_text_field.dart';
+import 'package:praxis/common/widgets/praxis_button.dart';
+import 'package:praxis/common/widgets/praxis_card.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 
 class AddProjectPage extends StatefulWidget {
   const AddProjectPage({super.key});
@@ -20,12 +26,12 @@ class _AddProjectPageState extends State<AddProjectPage> {
   bool _isLoading = false;
 
   final List<Color> _colorOptions = [
-    const Color(0xFF2196F3), // Blue
-    const Color(0xFF4CAF50), // Green
-    const Color(0xFFFF9800), // Orange
+    DesignTokens.primaryColor,
+    DesignTokens.successColor,
+    DesignTokens.warningColor,
     const Color(0xFF9C27B0), // Purple
-    const Color(0xFFF44336), // Red
-    const Color(0xFF00BCD4), // Cyan
+    DesignTokens.errorColor,
+    DesignTokens.secondaryColor,
     const Color(0xFF795548), // Brown
     const Color(0xFF607D8B), // Blue Grey
   ];
@@ -77,11 +83,12 @@ class _AddProjectPageState extends State<AddProjectPage> {
       
       if (mounted) {
         Get.back();
-        Get.snackbar('成功', '项目已创建', snackPosition: SnackPosition.BOTTOM);
+        ErrorService.showSuccess('项目已创建');
       }
     } catch (e) {
+      LoggerService.error('创建项目失败', 'AddProjectPage', e);
       if (mounted) {
-        Get.snackbar('错误', '创建失败: $e', snackPosition: SnackPosition.BOTTOM);
+        ErrorService.handleError(e, context: '创建项目');
       }
     } finally {
       if (mounted) {
@@ -101,123 +108,154 @@ class _AddProjectPageState extends State<AddProjectPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(DesignTokens.spacing4),
           children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: '项目名称',
-                hintText: '请输入项目名称',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '请输入项目名称';
-                }
-                return null;
-              },
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: '描述（可选）',
-                hintText: '请输入项目描述',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<ProjectStatus>(
-              value: _status,
-              decoration: const InputDecoration(
-                labelText: '状态',
-                border: OutlineInputBorder(),
-              ),
-              items: ProjectStatus.values.map((status) {
-                return DropdownMenuItem(
-                  value: status,
-                  child: Text(status.displayName),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _status = value;
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              '项目颜色',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              children: _colorOptions.map((color) {
-                final isSelected = _color == _colorToHex(color);
-                return InkWell(
-                  onTap: () {
-                    setState(() {
-                      _color = _colorToHex(color);
-                    });
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? Colors.black : Colors.transparent,
-                        width: 3,
+            PraxisCard(
+              padding: const EdgeInsets.all(DesignTokens.spacing4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PraxisTextField(
+                    controller: _nameController,
+                    label: '项目名称',
+                    hint: '请输入项目名称',
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return '请输入项目名称';
+                      }
+                      return null;
+                    },
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
+                  PraxisTextField(
+                    controller: _descriptionController,
+                    label: '描述（可选）',
+                    hint: '请输入项目描述',
+                    maxLines: 3,
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
+                  DropdownButtonFormField<ProjectStatus>(
+                    value: _status,
+                    decoration: InputDecoration(
+                      labelText: '状态',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.spacing4,
+                        vertical: DesignTokens.spacing4,
                       ),
                     ),
-                    child: isSelected
-                        ? const Icon(Icons.check, color: Colors.white)
-                        : null,
+                    items: ProjectStatus.values.map((status) {
+                      return DropdownMenuItem(
+                        value: status,
+                        child: Text(status.displayName),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _status = value;
+                        });
+                      }
+                    },
                   ),
-                );
-              }).toList(),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: _selectEndDate,
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: '结束日期（可选）',
-                  border: OutlineInputBorder(),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _endDate == null
-                          ? '未设置'
-                          : '${_endDate!.year}-${_endDate!.month.toString().padLeft(2, '0')}-${_endDate!.day.toString().padLeft(2, '0')}',
+            const SizedBox(height: DesignTokens.spacing4),
+            PraxisCard(
+              padding: const EdgeInsets.all(DesignTokens.spacing4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '项目颜色',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: DesignTokens.fontWeightMedium,
                     ),
-                    const Icon(Icons.calendar_today),
-                  ],
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: _colorOptions.map((color) {
+                      final isSelected = _color == _colorToHex(color);
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _color = _colorToHex(color);
+                          });
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? Colors.black87 : Colors.grey.shade300,
+                              width: isSelected ? 3 : 2,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: color.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: isSelected
+                              ? const Icon(Icons.check, color: Colors.white, size: 20)
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spacing4),
+            PraxisCard(
+              padding: const EdgeInsets.all(DesignTokens.spacing4),
+              child: InkWell(
+                onTap: _selectEndDate,
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: '结束日期（可选）',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: DesignTokens.spacing4,
+                      vertical: DesignTokens.spacing4,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _endDate == null
+                            ? '未设置'
+                            : '${_endDate!.year}-${_endDate!.month.toString().padLeft(2, '0')}-${_endDate!.day.toString().padLeft(2, '0')}',
+                      ),
+                      const Icon(Icons.calendar_today),
+                    ],
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
+            const SizedBox(height: DesignTokens.spacing8),
+            PraxisButton(
+              text: '保存项目',
               onPressed: _isLoading ? null : _saveProject,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('保存'),
+              type: PraxisButtonType.primary,
+              size: PraxisButtonSize.large,
+              isFullWidth: true,
+              isLoading: _isLoading,
             ),
           ],
         ),

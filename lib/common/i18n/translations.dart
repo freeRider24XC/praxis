@@ -63,6 +63,7 @@ class AppTranslations extends Translations {
       'edit': 'Edit',
       'add': 'Add',
       'confirm': 'Confirm',
+          'close': 'Close',
       
       'projectName': 'Project Name',
       'projectDescription': 'Project Description',
@@ -86,6 +87,13 @@ class AppTranslations extends Translations {
       'appInfo': 'App Info',
       'version': 'Version @version',
       'description': 'Description',
+      
+          'projectStatus': 'Status',
+          'projectProgress': 'Progress',
+          'projectEndDate': 'End Date',
+          'projectDaysRemaining': 'Days Remaining',
+          'adjustFilter': 'Try adjusting the filter',
+          'startCreatingProject': 'Start creating your first project',
     },
     'zh_CN': {
       'title': '知行合一',
@@ -147,6 +155,7 @@ class AppTranslations extends Translations {
       'edit': '编辑',
       'add': '添加',
       'confirm': '确认',
+          'close': '关闭',
       
       'projectName': '项目名称',
       'projectDescription': '项目描述',
@@ -170,6 +179,13 @@ class AppTranslations extends Translations {
       'appInfo': '应用信息',
       'version': '版本 @version',
       'description': '描述',
+      
+          'projectStatus': '状态',
+          'projectProgress': '进度',
+          'projectEndDate': '结束日期',
+          'projectDaysRemaining': '剩余天数',
+          'adjustFilter': '尝试调整筛选条件',
+          'startCreatingProject': '开始创建你的第一个项目吧',
     },
   };
 }

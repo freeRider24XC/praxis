@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/services/locale_service.dart';
+import 'package:praxis/common/i18n/translations.dart';
 import 'package:praxis/pages/main/main_page.dart';
 import 'package:praxis/pages/todo/add_todo_page.dart';
 import 'package:praxis/pages/goal/add_goal_page.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
     return Obx(() => GetMaterialApp(
       title: "Praxis",
       debugShowCheckedModeBanner: false,
+      translations: AppTranslations(),
       locale: localeService.locale,
       fallbackLocale: const Locale('en', 'US'),
       localizationsDelegates: const [

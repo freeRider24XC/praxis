@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/pages/todo/todo_page.dart';
 import 'package:praxis/pages/goal/goal_page.dart';
 import 'package:praxis/pages/project/project_page.dart';
-import 'package:praxis/pages/stats/stats_page.dart';
+import 'package:praxis/pages/profile/profile_page.dart';
 import 'package:praxis/pages/ai_chat/ai_chat_page.dart';
 
 class MainPage extends StatefulWidget {
@@ -22,7 +23,7 @@ class _MainPageState extends State<MainPage> {
     const GoalPage(),
     const AiChatPage(),
     const ProjectPage(),
-    const StatsPage(),
+    const ProfilePage(),
   ];
 
   final List<NavigationDestination> _destinations = const [
@@ -47,9 +48,9 @@ class _MainPageState extends State<MainPage> {
       label: '项目',
     ),
     NavigationDestination(
-      icon: Icon(Icons.analytics_outlined),
-      selectedIcon: Icon(Icons.analytics),
-      label: '统计',
+      icon: Icon(Icons.person_outline),
+      selectedIcon: Icon(Icons.person),
+      label: '个人中心',
     ),
   ];
 
@@ -59,8 +60,8 @@ class _MainPageState extends State<MainPage> {
     });
     _pageController.animateToPage(
       index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+      duration: DesignTokens.durationNormal,
+      curve: DesignTokens.curveDefault,
     );
   }
 
@@ -83,7 +84,7 @@ class _MainPageState extends State<MainPage> {
         onDestinationSelected: _onDestinationSelected,
         destinations: _destinations,
         elevation: 8,
-        shadowColor: Colors.black.withOpacity(0.3),
+        shadowColor: Colors.black.withOpacity(0.1),
       ),
       floatingActionButton: _buildFloatingActionButton(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -96,7 +97,7 @@ class _MainPageState extends State<MainPage> {
       return null;
     }
     
-    // 统计页面不需要FAB
+    // 个人中心页面不需要FAB
     if (_currentIndex == 4) {
         return null;
     }

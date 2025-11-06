@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/services/theme_service.dart';
+import 'package:praxis/common/services/error_service.dart';
+import 'package:praxis/common/services/logger_service.dart';
 import 'package:praxis/common/ai/services/ai_config_service.dart';
 import 'package:praxis/common/ai/providers/openai_provider.dart';
 import 'package:praxis/common/widgets/language_switcher.dart';
+import 'package:praxis/common/widgets/praxis_card.dart';
+import 'package:praxis/common/widgets/praxis_button.dart';
+import 'package:praxis/common/widgets/praxis_text_field.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -56,7 +62,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _saveConfiguration() async {
     if (_apiKeyController.text.trim().isEmpty) {
       if (mounted) {
-        Get.snackbar('错误', '请输入API密钥', snackPosition: SnackPosition.BOTTOM);
+        ErrorService.showWarning('请输入API密钥');
       }
       return;
     }
@@ -97,38 +103,19 @@ class _SettingsPageState extends State<SettingsPage> {
       });
 
       if (testResult) {
-        Get.snackbar(
-          '成功',
-          'API密钥配置成功',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade100,
-          colorText: Colors.green.shade900,
-        );
+        ErrorService.showSuccess('API密钥配置成功');
       } else {
-        Get.snackbar(
-          '警告',
-          '配置已保存，但测试连接失败${testErrorMsg != null ? ': $testErrorMsg' : ''}',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange.shade100,
-          colorText: Colors.orange.shade900,
-          duration: const Duration(seconds: 4),
-        );
+        ErrorService.showWarning('配置已保存，但测试连接失败${testErrorMsg != null ? ': $testErrorMsg' : ''}');
       }
     } catch (e) {
+      LoggerService.error('保存配置失败', 'SettingsPage', e);
       if (!mounted) return;
       
       setState(() {
         _isLoading = false;
       });
       
-      Get.snackbar(
-        '错误',
-        '配置失败: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
-        duration: const Duration(seconds: 3),
-      );
+      ErrorService.handleError(e, context: '保存配置');
     }
   }
 
@@ -150,13 +137,13 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
-    if (confirmed == true) {
+      if (confirmed == true) {
       await AiConfigService.clearConfig();
       setState(() {
         _isConfigured = false;
         _apiKeyController.clear();
       });
-      Get.snackbar('成功', '配置已清除', snackPosition: SnackPosition.BOTTOM);
+      ErrorService.showSuccess('配置已清除');
     }
   }
 
@@ -169,19 +156,18 @@ class _SettingsPageState extends State<SettingsPage> {
         title: const Text('设置'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(DesignTokens.spacing4),
         children: [
           // AI配置
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+          PraxisCard(
+            padding: const EdgeInsets.all(DesignTokens.spacing4),
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       const Icon(Icons.smart_toy),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: DesignTokens.spacing2),
                       Text(
                         'AI配置',
                         style: Theme.of(context).textTheme.titleMedium,
@@ -190,17 +176,23 @@ class _SettingsPageState extends State<SettingsPage> {
                       if (_isConfigured)
                         Chip(
                           label: const Text('已配置'),
-                          backgroundColor: Colors.green.shade100,
-                          labelStyle: TextStyle(color: Colors.green.shade800),
+                          backgroundColor: DesignTokens.successColor.withOpacity(0.2),
+                          labelStyle: TextStyle(color: DesignTokens.successColor),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: DesignTokens.spacing4),
                   DropdownButtonFormField<String>(
                     value: _selectedProvider,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'AI服务提供商',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.spacing4,
+                        vertical: DesignTokens.spacing4,
+                      ),
                     ),
                     items: const [
                       DropdownMenuItem(
@@ -222,66 +214,58 @@ class _SettingsPageState extends State<SettingsPage> {
                       });
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: DesignTokens.spacing4),
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
+                        child: PraxisTextField(
                           controller: _apiKeyController,
-                          decoration: InputDecoration(
-                            labelText: 'API密钥',
-                            hintText: 'sk-...',
-                            border: const OutlineInputBorder(),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.visibility_off),
-                              onPressed: () {
-                                // TODO: 实现显示/隐藏密码
-                              },
-                            ),
-                          ),
+                          label: 'API密钥',
+                          hint: 'sk-...',
                           obscureText: true,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      OutlinedButton.icon(
+                      const SizedBox(width: DesignTokens.spacing2),
+                      PraxisButton(
+                        text: '使用默认',
+                        icon: Icons.auto_fix_high,
                         onPressed: () {
                           setState(() {
                             _apiKeyController.text = _defaultApiKey;
                           });
                         },
-                        icon: const Icon(Icons.auto_fix_high, size: 16),
-                        label: const Text('使用默认'),
+                        type: PraxisButtonType.outline,
+                        size: PraxisButtonSize.medium,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: DesignTokens.spacing2),
                   Text(
                     'API密钥仅存储在本地，不会上传到服务器',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).disabledColor,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: DesignTokens.spacing4),
                   Row(
                     children: [
                       Expanded(
-                        child: ElevatedButton(
+                        child: PraxisButton(
+                          text: '保存配置',
                           onPressed: _isLoading ? null : _saveConfiguration,
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Text('保存配置'),
+                          type: PraxisButtonType.primary,
+                          size: PraxisButtonSize.large,
+                          isFullWidth: true,
+                          isLoading: _isLoading,
                         ),
                       ),
                       if (_isConfigured) ...[
-                        const SizedBox(width: 8),
-                        OutlinedButton(
+                        const SizedBox(width: DesignTokens.spacing2),
+                        PraxisButton(
+                          text: '清除',
                           onPressed: _clearConfiguration,
-                          child: const Text('清除'),
+                          type: PraxisButtonType.outline,
+                          size: PraxisButtonSize.large,
                         ),
                       ],
                     ],
@@ -289,32 +273,28 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
             ),
-          ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: DesignTokens.spacing4),
           
           // 语言设置
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: const LanguageSelector(),
-            ),
+          PraxisCard(
+            padding: const EdgeInsets.all(DesignTokens.spacing4),
+            child: const LanguageSelector(),
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: DesignTokens.spacing4),
           
           // 主题设置
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Obx(() => Column(
+          PraxisCard(
+            padding: const EdgeInsets.all(DesignTokens.spacing4),
+            child: Obx(() => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     '主题',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: DesignTokens.spacing4),
                   RadioListTile<ThemeMode>(
                     title: const Text('浅色'),
                     value: ThemeMode.light,
@@ -351,22 +331,20 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               )),
             ),
-          ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: DesignTokens.spacing4),
           
           // 应用信息
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+          PraxisCard(
+            padding: const EdgeInsets.all(DesignTokens.spacing4),
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     '应用信息',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: DesignTokens.spacing4),
                   const ListTile(
                     leading: Icon(Icons.info_outline),
                     title: Text('Praxis'),
@@ -382,7 +360,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
             ),
-          ),
         ],
       ),
     );

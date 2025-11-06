@@ -5,7 +5,6 @@ import 'package:praxis/common/ai/parsers/entity_extractor.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/error_service.dart';
 import 'package:praxis/common/services/logger_service.dart';
-import 'package:praxis/common/widgets/praxis_card.dart';
 import 'package:praxis/common/widgets/loading_indicator.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/common/models/todo.dart';
@@ -226,23 +225,32 @@ class _AiChatPageState extends State<AiChatPage> {
     final isUser = message.role == 'user';
     
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: DesignTokens.spacing4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if (!isUser) ...[
             CircleAvatar(
+              radius: 16,
               backgroundColor: DesignTokens.primaryColor.withOpacity(0.1),
-              child: Icon(Icons.smart_toy, color: DesignTokens.primaryColor),
+              child: Icon(
+                Icons.smart_toy,
+                size: 20,
+                color: DesignTokens.primaryColor,
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: DesignTokens.spacing2),
           ],
           Flexible(
-            child: PraxisCard(
+            child: Container(
               padding: const EdgeInsets.all(DesignTokens.spacing3),
-              color: isUser ? DesignTokens.primaryColor.withOpacity(0.1) : null,
-              showShadow: false,
+              decoration: BoxDecoration(
+                color: isUser 
+                    ? DesignTokens.primaryColor 
+                    : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -250,12 +258,12 @@ class _AiChatPageState extends State<AiChatPage> {
                     message.content,
                     style: TextStyle(
                       fontSize: 14,
-                      color: isUser ? Colors.blue.shade900 : Colors.grey.shade900,
+                      color: isUser ? Colors.white : Colors.grey.shade900,
                     ),
                   ),
                   // 如果是AI消息且显示待办列表，添加待办事项卡片
                   if (showTodoList && _pendingExtraction != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: DesignTokens.spacing3),
                     _buildTodoListInMessage(),
                   ],
                 ],
@@ -263,10 +271,15 @@ class _AiChatPageState extends State<AiChatPage> {
             ),
           ),
           if (isUser) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: DesignTokens.spacing2),
             CircleAvatar(
-              backgroundColor: Colors.blue.shade100,
-              child: const Icon(Icons.person, color: Colors.blue),
+              radius: 16,
+              backgroundColor: DesignTokens.primaryColor.withOpacity(0.1),
+              child: Icon(
+                Icons.person,
+                size: 20,
+                color: DesignTokens.primaryColor,
+              ),
             ),
           ],
         ],
@@ -281,115 +294,104 @@ class _AiChatPageState extends State<AiChatPage> {
     if (_pendingExtraction!.hasTodos && _pendingExtraction!.todos != null) {
       // 多个任务的情况
       return Container(
-        margin: const EdgeInsets.only(top: 8),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.only(top: DesignTokens.spacing2),
+        padding: const EdgeInsets.all(DesignTokens.spacing3),
         decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue.shade200),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+          border: Border.all(color: Colors.grey.shade300),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.check_circle_outline, color: Colors.blue.shade700, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  '待办事项列表（${_pendingExtraction!.todos!.length}个）',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+            Text(
+              '我为您整理了今天的待办事项:',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+                fontSize: 13,
+              ),
             ),
-            const SizedBox(height: 12),
-            ...(_pendingExtraction!.todos!.asMap().entries.map((entry) {
-              final index = entry.key;
-              final todo = entry.value;
+            const SizedBox(height: DesignTokens.spacing3),
+            ...(_pendingExtraction!.todos!.map((todo) {
               return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(10),
+                margin: const EdgeInsets.only(bottom: DesignTokens.spacing2),
+                padding: const EdgeInsets.all(DesignTokens.spacing2),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
                 ),
-                child: Column(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${index + 1}. ${todo.title}',
+                    Checkbox(
+                      value: false,
+                      onChanged: null,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            todo.title,
                             style: const TextStyle(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                               fontSize: 13,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Chip(
-                          label: Text(
-                            todo.priority.displayName,
-                            style: const TextStyle(fontSize: 10),
-                          ),
-                          backgroundColor: _getPriorityColor(todo.priority),
-                          padding: EdgeInsets.zero,
-                        ),
-                      ],
+                          if (todo.dueDate != null) ...[
+                            const SizedBox(height: DesignTokens.spacing1),
+                            Text(
+                              '截止: ${_formatDueDate(todo.dueDate!)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                    if (todo.description != null && todo.description!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        todo.description!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
+                    if (todo.priority != TodoPriority.medium)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: DesignTokens.spacing2,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getPriorityColor(todo.priority),
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                        ),
+                        child: Text(
+                          todo.priority.displayName,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ],
-                    if (todo.dueDate != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '截止日期: ${_formatDate(todo.dueDate!)}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               );
             })),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => setState(() => _pendingExtraction = null),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            const SizedBox(height: DesignTokens.spacing3),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _confirmCreate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: DesignTokens.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: DesignTokens.spacing2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
                   ),
-                  child: const Text('取消', style: TextStyle(fontSize: 12)),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _confirmCreate,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text('确认创建', style: TextStyle(fontSize: 12)),
-                ),
-              ],
+                child: const Text('创建全部'),
+              ),
             ),
           ],
         ),
@@ -425,7 +427,7 @@ class _AiChatPageState extends State<AiChatPage> {
               ),
               if (todo.dueDate != null)
                 Text(
-                  '截止: ${_formatDate(todo.dueDate!)}',
+                  '截止: ${_formatDueDate(todo.dueDate!)}',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
             ],
@@ -456,7 +458,7 @@ class _AiChatPageState extends State<AiChatPage> {
                 backgroundColor: Colors.purple.shade100,
               ),
               Text(
-                '目标日期: ${_formatDate(goal.targetDate)}',
+                '目标日期: ${_formatDueDate(goal.targetDate)}',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ],
@@ -468,50 +470,52 @@ class _AiChatPageState extends State<AiChatPage> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: DesignTokens.spacing2),
+      padding: const EdgeInsets.all(DesignTokens.spacing3),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.shade200),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.check_circle_outline, color: Colors.blue.shade700, size: 18),
-              const SizedBox(width: 8),
+              Icon(Icons.check_circle_outline, color: DesignTokens.primaryColor, size: 18),
+              const SizedBox(width: DesignTokens.spacing2),
               Text(
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade700,
+                  color: DesignTokens.primaryColor,
                   fontSize: 13,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: DesignTokens.spacing2),
           content,
-          const SizedBox(height: 12),
+          const SizedBox(height: DesignTokens.spacing3),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
                 onPressed: () => setState(() => _pendingExtraction = null),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spacing3, vertical: DesignTokens.spacing2),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: const Text('取消', style: TextStyle(fontSize: 12)),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: DesignTokens.spacing2),
               ElevatedButton(
                 onPressed: _confirmCreate,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  backgroundColor: DesignTokens.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spacing3, vertical: DesignTokens.spacing2),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -536,8 +540,19 @@ class _AiChatPageState extends State<AiChatPage> {
     }
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  String _formatDueDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    if (dateOnly == today) {
+      return '今天 ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (dateOnly == tomorrow) {
+      return '明天 ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } else {
+      return '${date.month}月${date.day}日 ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    }
   }
 
   Widget _buildInputArea() {

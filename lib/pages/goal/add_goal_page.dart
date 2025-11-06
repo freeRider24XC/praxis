@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/error_service.dart';
+import 'package:praxis/common/services/logger_service.dart';
+import 'package:praxis/common/widgets/praxis_text_field.dart';
+import 'package:praxis/common/widgets/praxis_button.dart';
+import 'package:praxis/common/widgets/praxis_card.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 
 class AddGoalPage extends StatefulWidget {
   const AddGoalPage({super.key});
@@ -60,11 +66,12 @@ class _AddGoalPageState extends State<AddGoalPage> {
       
       if (mounted) {
         Get.back();
-        Get.snackbar('成功', '目标已创建', snackPosition: SnackPosition.BOTTOM);
+        ErrorService.showSuccess('目标已创建');
       }
     } catch (e) {
+      LoggerService.error('创建目标失败', 'AddGoalPage', e);
       if (mounted) {
-        Get.snackbar('错误', '创建失败: $e', snackPosition: SnackPosition.BOTTOM);
+        ErrorService.handleError(e, context: '创建目标');
       }
     } finally {
       if (mounted) {
@@ -84,89 +91,98 @@ class _AddGoalPageState extends State<AddGoalPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(DesignTokens.spacing4),
           children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: '目标标题',
-                hintText: '请输入目标标题',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '请输入目标标题';
-                }
-                return null;
-              },
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: '描述（可选）',
-                hintText: '请输入目标描述',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<GoalType>(
-              value: _type,
-              decoration: const InputDecoration(
-                labelText: '目标类型',
-                border: OutlineInputBorder(),
-              ),
-              items: GoalType.values.map((type) {
-                return DropdownMenuItem(
-                  value: type,
-                  child: Text(type.displayName),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _type = value;
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: _selectTargetDate,
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: '目标日期',
-                  border: OutlineInputBorder(),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _targetDate == null
-                          ? '未设置'
-                          : '${_targetDate!.year}-${_targetDate!.month.toString().padLeft(2, '0')}-${_targetDate!.day.toString().padLeft(2, '0')}',
+            PraxisCard(
+              padding: const EdgeInsets.all(DesignTokens.spacing4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PraxisTextField(
+                    controller: _titleController,
+                    label: '目标标题',
+                    hint: '请输入目标标题',
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return '请输入目标标题';
+                      }
+                      return null;
+                    },
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
+                  PraxisTextField(
+                    controller: _descriptionController,
+                    label: '描述（可选）',
+                    hint: '请输入目标描述',
+                    maxLines: 3,
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
+                  DropdownButtonFormField<GoalType>(
+                    value: _type,
+                    decoration: InputDecoration(
+                      labelText: '目标类型',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.spacing4,
+                        vertical: DesignTokens.spacing4,
+                      ),
                     ),
-                    const Icon(Icons.calendar_today),
-                  ],
-                ),
+                    items: GoalType.values.map((type) {
+                      return DropdownMenuItem(
+                        value: type,
+                        child: Text(type.displayName),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _type = value;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
+                  InkWell(
+                    onTap: _selectTargetDate,
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: '目标日期',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: DesignTokens.spacing4,
+                          vertical: DesignTokens.spacing4,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _targetDate == null
+                                ? '未设置'
+                                : '${_targetDate!.year}-${_targetDate!.month.toString().padLeft(2, '0')}-${_targetDate!.day.toString().padLeft(2, '0')}',
+                          ),
+                          const Icon(Icons.calendar_today),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
+            const SizedBox(height: DesignTokens.spacing8),
+            PraxisButton(
+              text: '保存目标',
               onPressed: _isLoading ? null : _saveGoal,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('保存'),
+              type: PraxisButtonType.primary,
+              size: PraxisButtonSize.large,
+              isFullWidth: true,
+              isLoading: _isLoading,
             ),
           ],
         ),

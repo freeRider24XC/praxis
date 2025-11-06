@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:praxis/common/services/logger_service.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 
 class ThemeService extends GetxService {
   static const String _keyThemeMode = 'theme_mode';
@@ -35,14 +37,14 @@ class ThemeService extends GetxService {
       _themeMode.value = themeMode;
       Get.changeThemeMode(themeMode);
     } catch (e) {
-      print('Failed to save theme mode: $e');
-  }
+      LoggerService.error('保存主题模式失败', 'ThemeService', e);
+    }
   }
   
   ThemeData get lightTheme => ThemeData(
         useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.blue,
+          seedColor: DesignTokens.primaryColor,
       brightness: Brightness.light,
     ),
         appBarTheme: const AppBarTheme(
@@ -52,21 +54,47 @@ class ThemeService extends GetxService {
         cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
           ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.spacing4,
+            vertical: DesignTokens.spacing4,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.spacing4,
+              vertical: DesignTokens.spacing3,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+            ),
+            elevation: 2,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.spacing3,
+              vertical: DesignTokens.spacing2,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+            ),
+          ),
         ),
   );
   
   ThemeData get darkTheme => ThemeData(
         useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.blue,
+          seedColor: DesignTokens.primaryColor,
       brightness: Brightness.dark,
     ),
         appBarTheme: const AppBarTheme(
@@ -76,14 +104,40 @@ class ThemeService extends GetxService {
         cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
           ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.spacing4,
+            vertical: DesignTokens.spacing4,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.spacing4,
+              vertical: DesignTokens.spacing3,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+            ),
+            elevation: 2,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.spacing3,
+              vertical: DesignTokens.spacing2,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+            ),
+          ),
         ),
       );
 }

@@ -120,7 +120,7 @@ class TodoListItem extends StatelessWidget {
                         _buildChip(
                           icon: Icons.schedule,
                           label: _formatDueDate(todo.dueDate!),
-                          color: isOverdue ? Colors.red : null,
+                          color: isOverdue ? DesignTokens.errorColor : null,
                         ),
                       
                       // Priority
@@ -179,7 +179,7 @@ class TodoListItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: (color ?? Colors.grey).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -190,11 +190,11 @@ class TodoListItem extends StatelessWidget {
             color: color ?? Colors.grey,
           ),
           if (label.isNotEmpty) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: DesignTokens.spacing1),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: DesignTokens.fontSizeLabelSmall,
                 color: color ?? Colors.grey,
               ),
             ),

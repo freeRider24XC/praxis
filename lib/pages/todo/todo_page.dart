@@ -37,15 +37,6 @@ class _TodoPageState extends State<TodoPage> with SingleTickerProviderStateMixin
     return Scaffold(
       appBar: AppBar(
         title: const Text('待办事项'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: '今日'),
-            Tab(text: '明日'),
-            Tab(text: '本周'),
-            Tab(text: '全部'),
-          ],
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -91,67 +82,127 @@ class _TodoPageState extends State<TodoPage> with SingleTickerProviderStateMixin
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Get.toNamed('/todo/add'),
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
   Widget _buildFilterChips() {
     return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spacing4, vertical: DesignTokens.spacing2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TodoFilterChip(
-            label: '全部',
-            selected: _currentFilter == TodoFilter.all,
-            onSelected: (_) => setState(() {
-              _currentFilter = TodoFilter.all;
-            }),
-          ),
-          const SizedBox(width: 8),
-          TodoFilterChip(
-            label: '未完成',
-            selected: _currentFilter == TodoFilter.pending,
-            onSelected: (_) => setState(() {
-              _currentFilter = TodoFilter.pending;
-            }),
-          ),
-          const SizedBox(width: 8),
-          TodoFilterChip(
-            label: '已完成',
-            selected: _currentFilter == TodoFilter.completed,
-            onSelected: (_) => setState(() {
-              _currentFilter = TodoFilter.completed;
-            }),
-          ),
-          const SizedBox(width: 8),
-          TodoFilterChip(
-            label: '已逾期',
-            selected: _currentFilter == TodoFilter.overdue,
-            onSelected: (_) => setState(() {
-              _currentFilter = TodoFilter.overdue;
-            }),
-          ),
-          if (_priorityFilter != null) ...[
-            const SizedBox(width: 8),
-            TodoFilterChip(
-              label: _priorityFilter!.displayName,
-              selected: true,
-              onDeleted: () => setState(() {
-                _priorityFilter = null;
-              }),
+          // 日期筛选
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                TodoFilterChip(
+                  label: '今日',
+                  selected: _tabController.index == 0,
+                  onSelected: (_) {
+                    _tabController.animateTo(0);
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(width: DesignTokens.spacing2),
+                TodoFilterChip(
+                  label: '明日',
+                  selected: _tabController.index == 1,
+                  onSelected: (_) {
+                    _tabController.animateTo(1);
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(width: DesignTokens.spacing2),
+                TodoFilterChip(
+                  label: '本周',
+                  selected: _tabController.index == 2,
+                  onSelected: (_) {
+                    _tabController.animateTo(2);
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(width: DesignTokens.spacing2),
+                TodoFilterChip(
+                  label: '全部',
+                  selected: _tabController.index == 3,
+                  onSelected: (_) {
+                    _tabController.animateTo(3);
+                    setState(() {});
+                  },
+                ),
+              ],
             ),
-          ],
-          if (_projectFilter != null) ...[
-            const SizedBox(width: 8),
-            TodoFilterChip(
-              label: _projectFilter!,
-              selected: true,
-              onDeleted: () => setState(() {
-                _projectFilter = null;
-              }),
+          ),
+          const SizedBox(height: DesignTokens.spacing2),
+          // 优先级筛选
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                TodoFilterChip(
+                  label: '全部',
+                  selected: _priorityFilter == null && _currentFilter == TodoFilter.all,
+                  onSelected: (_) => setState(() {
+                    _priorityFilter = null;
+                    _currentFilter = TodoFilter.all;
+                  }),
+                ),
+                const SizedBox(width: DesignTokens.spacing2),
+                TodoFilterChip(
+                  label: '低',
+                  selected: _priorityFilter == TodoPriority.low,
+                  onSelected: (_) => setState(() {
+                    _priorityFilter = TodoPriority.low;
+                    _currentFilter = TodoFilter.all;
+                  }),
+                ),
+                const SizedBox(width: DesignTokens.spacing2),
+                TodoFilterChip(
+                  label: '中',
+                  selected: _priorityFilter == TodoPriority.medium,
+                  onSelected: (_) => setState(() {
+                    _priorityFilter = TodoPriority.medium;
+                    _currentFilter = TodoFilter.all;
+                  }),
+                ),
+                const SizedBox(width: DesignTokens.spacing2),
+                TodoFilterChip(
+                  label: '高',
+                  selected: _priorityFilter == TodoPriority.high,
+                  onSelected: (_) => setState(() {
+                    _priorityFilter = TodoPriority.high;
+                    _currentFilter = TodoFilter.all;
+                  }),
+                ),
+                const SizedBox(width: DesignTokens.spacing2),
+                TodoFilterChip(
+                  label: '紧急',
+                  selected: _priorityFilter == TodoPriority.urgent,
+                  onSelected: (_) => setState(() {
+                    _priorityFilter = TodoPriority.urgent;
+                    _currentFilter = TodoFilter.all;
+                  }),
+                ),
+                if (_priorityFilter != null) ...[
+                  const SizedBox(width: DesignTokens.spacing2),
+                  TodoFilterChip(
+                    label: _priorityFilter!.displayName,
+                    selected: true,
+                    onDeleted: () => setState(() {
+                      _priorityFilter = null;
+                    }),
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );
