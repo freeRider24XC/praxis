@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:praxis/common/ai/services/ai_service.dart';
 import 'package:praxis/common/ai/providers/openai_provider.dart';
 import 'package:praxis/common/ai/parsers/entity_extractor.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/error_service.dart';
+import 'package:praxis/common/services/logger_service.dart';
+import 'package:praxis/common/widgets/praxis_card.dart';
+import 'package:praxis/common/widgets/loading_indicator.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/models/goal.dart';
 
@@ -73,6 +77,8 @@ class _AiChatPageState extends State<AiChatPage> {
       // 滚动到底部
       _scrollToBottom();
     } catch (e) {
+      LoggerService.error('发送AI消息失败', 'AiChatPage', e);
+      ErrorService.handleError(e, context: 'AI聊天');
       setState(() {
         _isLoading = false;
         _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -86,20 +92,21 @@ class _AiChatPageState extends State<AiChatPage> {
     try {
       if (_pendingExtraction!.hasTodo && _pendingExtraction!.todo != null) {
         await DatabaseService.addTodo(_pendingExtraction!.todo!);
-        Get.snackbar('成功', '待办事项已创建', snackPosition: SnackPosition.BOTTOM);
+        ErrorService.showSuccess('待办事项已创建');
       } else if (_pendingExtraction!.hasGoal && _pendingExtraction!.goal != null) {
         await DatabaseService.addGoal(_pendingExtraction!.goal!);
-        Get.snackbar('成功', '目标已创建', snackPosition: SnackPosition.BOTTOM);
+        ErrorService.showSuccess('目标已创建');
       } else if (_pendingExtraction!.hasTodos && _pendingExtraction!.todos != null) {
         await DatabaseService.addTodos(_pendingExtraction!.todos!);
-        Get.snackbar('成功', '已创建${_pendingExtraction!.todos!.length}个待办事项', snackPosition: SnackPosition.BOTTOM);
+        ErrorService.showSuccess('已创建${_pendingExtraction!.todos!.length}个待办事项');
       }
 
       setState(() {
         _pendingExtraction = null;
       });
     } catch (e) {
-      Get.snackbar('错误', '创建失败: $e', snackPosition: SnackPosition.BOTTOM);
+      LoggerService.error('创建实体失败', 'AiChatPage', e);
+      ErrorService.handleError(e, context: '创建实体');
     }
   }
 
@@ -197,11 +204,14 @@ class _AiChatPageState extends State<AiChatPage> {
 
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
       itemCount: messages.length + (_isLoading ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == messages.length) {
-          return _buildLoadingMessage();
+          return const Padding(
+            padding: EdgeInsets.all(DesignTokens.spacing4),
+            child: LoadingIndicator(message: 'AI正在思考...'),
+          );
         }
         // 如果是最后一个AI消息且有待办事项，显示待办列表
         final isLastAiMessage = index == messages.length - 1 && 
@@ -223,18 +233,16 @@ class _AiChatPageState extends State<AiChatPage> {
         children: [
           if (!isUser) ...[
             CircleAvatar(
-              backgroundColor: Colors.blue.shade100,
-              child: const Icon(Icons.smart_toy, color: Colors.blue),
+              backgroundColor: DesignTokens.primaryColor.withOpacity(0.1),
+              child: Icon(Icons.smart_toy, color: DesignTokens.primaryColor),
             ),
             const SizedBox(width: 8),
           ],
           Flexible(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isUser ? Colors.blue.shade50 : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
+            child: PraxisCard(
+              padding: const EdgeInsets.all(DesignTokens.spacing3),
+              color: isUser ? DesignTokens.primaryColor.withOpacity(0.1) : null,
+              showShadow: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -266,33 +274,6 @@ class _AiChatPageState extends State<AiChatPage> {
     );
   }
 
-  Widget _buildLoadingMessage() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.blue.shade100,
-            child: const Icon(Icons.smart_toy, color: Colors.blue),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const SizedBox(
-              width: 40,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTodoListInMessage() {
     if (_pendingExtraction == null) return const SizedBox.shrink();

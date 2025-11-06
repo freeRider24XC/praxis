@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/services/database_service.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:praxis/common/widgets/empty_state.dart';
+import 'package:praxis/common/widgets/praxis_card.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 
 class GoalPage extends StatefulWidget {
   const GoalPage({super.key});
@@ -13,7 +15,6 @@ class GoalPage extends StatefulWidget {
 
 class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  GoalType _selectedType = GoalType.yearly;
 
   @override
   void initState() {
@@ -43,11 +44,7 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
             Tab(text: '全部'),
           ],
           onTap: (index) {
-            setState(() {
-              if (index < 4) {
-                _selectedType = GoalType.values[index];
-              }
-            });
+            // Tab selection handled by TabController
           },
         ),
         actions: [
@@ -78,11 +75,25 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
       itemCount: goals.length,
       itemBuilder: (context, index) {
         final goal = goals[index];
-        return _buildGoalCard(goal);
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: DesignTokens.durationNormal,
+          curve: DesignTokens.curveEaseOut,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, 20 * (1 - value)),
+                child: child,
+              ),
+            );
+          },
+          child: _buildGoalCard(goal),
+        );
       },
     );
   }
@@ -155,13 +166,15 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
     final isOverdue = goal.isOverdue;
     final daysRemaining = goal.daysRemaining;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showGoalDetail(goal),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: progress),
+      duration: DesignTokens.durationNormal,
+      curve: DesignTokens.curveDefault,
+      builder: (context, animatedProgress, child) {
+        return PraxisCard(
+          margin: const EdgeInsets.only(bottom: DesignTokens.spacing3),
+          onTap: () => _showGoalDetail(goal),
+          padding: const EdgeInsets.all(DesignTokens.spacing4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -241,12 +254,12 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: DesignTokens.spacing1),
                   LinearProgressIndicator(
-                    value: progress,
+                    value: animatedProgress,
                     backgroundColor: Colors.grey[300],
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      _getProgressColor(progress),
+                      _getProgressColor(animatedProgress),
                     ),
                     minHeight: 8,
                   ),
@@ -314,44 +327,28 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   Widget _buildEmptyState(GoalType? type) {
     String message;
+    String? description;
     if (type == null) {
       message = '还没有设定任何目标';
+      description = '设定目标，让每一天都有方向';
     } else {
       message = '还没有${type.displayName}';
+      description = '开始创建你的第一个${type.displayName}吧';
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.flag_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => Get.toNamed('/goal/add'),
-            icon: const Icon(Icons.add),
-            label: const Text('创建目标'),
-          ),
-        ],
-      ),
+    return EmptyState(
+      icon: Icons.flag_outlined,
+      title: message,
+      description: description,
+      actionLabel: '创建目标',
+      onAction: () => Get.toNamed('/goal/add'),
     );
   }
 
@@ -360,21 +357,21 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
       case GoalStatus.notStarted:
         return Colors.grey;
       case GoalStatus.inProgress:
-        return Colors.blue;
+        return DesignTokens.statusActive;
       case GoalStatus.paused:
-        return Colors.orange;
+        return DesignTokens.statusPaused;
       case GoalStatus.completed:
-        return Colors.green;
+        return DesignTokens.statusCompleted;
       case GoalStatus.cancelled:
-        return Colors.red;
+        return DesignTokens.statusCancelled;
     }
   }
 
   Color _getProgressColor(double progress) {
-    if (progress >= 0.8) return Colors.green;
-    if (progress >= 0.5) return Colors.blue;
-    if (progress >= 0.3) return Colors.orange;
-    return Colors.red;
+    if (progress >= 0.8) return DesignTokens.successColor;
+    if (progress >= 0.5) return DesignTokens.primaryColor;
+    if (progress >= 0.3) return DesignTokens.warningColor;
+    return DesignTokens.errorColor;
   }
 
   void _showGoalDetail(Goal goal) {

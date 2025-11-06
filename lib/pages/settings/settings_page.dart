@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/services/locale_service.dart';
 import 'package:praxis/common/services/theme_service.dart';
 import 'package:praxis/common/ai/services/ai_config_service.dart';
 import 'package:praxis/common/ai/providers/openai_provider.dart';

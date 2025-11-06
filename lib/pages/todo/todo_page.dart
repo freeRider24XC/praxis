@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/widgets/empty_state.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/pages/todo/widgets/todo_list_item.dart';
 import 'package:praxis/pages/todo/widgets/todo_filter_chip.dart';
 
@@ -163,7 +165,7 @@ class _TodoPageState extends State<TodoPage> with SingleTickerProviderStateMixin
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(DesignTokens.spacing4),
           itemCount: todos.length,
           itemBuilder: (context, index) {
             final todo = todos[index];
@@ -172,55 +174,45 @@ class _TodoPageState extends State<TodoPage> with SingleTickerProviderStateMixin
               onTap: () => _showTodoDetail(todo),
               onToggle: () => _toggleTodo(todo),
               onDelete: () => _deleteTodo(todo),
+            );
+          },
         );
-      },
-    );
   }
 
   Widget _buildEmptyState(TodoTimeFilter timeFilter) {
     String message;
+    String? description;
     IconData icon;
 
     switch (timeFilter) {
       case TodoTimeFilter.today:
         message = '今天没有待办事项';
-        icon = Icons.wb_sunny;
+        description = '享受轻松的一天吧！';
+        icon = Icons.wb_sunny_outlined;
         break;
       case TodoTimeFilter.tomorrow:
         message = '明天没有待办事项';
-        icon = Icons.calendar_today;
+        description = '提前规划，高效执行';
+        icon = Icons.calendar_today_outlined;
         break;
       case TodoTimeFilter.thisWeek:
         message = '本周没有待办事项';
-        icon = Icons.date_range;
+        description = '保持这个节奏！';
+        icon = Icons.date_range_outlined;
         break;
       case TodoTimeFilter.all:
         message = '暂无待办事项';
+        description = '开始创建你的第一个待办事项吧';
         icon = Icons.check_circle_outline;
         break;
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 80, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => Get.toNamed('/todo/add'),
-            icon: const Icon(Icons.add),
-            label: const Text('添加待办事项'),
-          ),
-        ],
-      ),
+    return EmptyState(
+      icon: icon,
+      title: message,
+      description: description,
+      actionLabel: '添加待办事项',
+      onAction: () => Get.toNamed('/todo/add'),
     );
   }
 

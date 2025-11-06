@@ -3,6 +3,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/widgets/praxis_card.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/pages/settings/settings_page.dart';
 
 class StatsPage extends StatefulWidget {
@@ -13,13 +15,10 @@ class StatsPage extends StatefulWidget {
 }
 
 class _StatsPageState extends State<StatsPage> {
-  DateTime _selectedDate = DateTime.now();
   StatsTimeRange _timeRange = StatsTimeRange.week;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Scaffold(
       appBar: AppBar(
         title: const Text('统计分析'),
@@ -58,39 +57,39 @@ class _StatsPageState extends State<StatsPage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(DesignTokens.spacing4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Overview Cards
             _buildOverviewCards(),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: DesignTokens.spacing6),
             
             // Todo Completion Chart
             _buildSectionTitle('任务完成趋势'),
-            const SizedBox(height: 12),
+            const SizedBox(height: DesignTokens.spacing3),
             _buildTodoCompletionChart(),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: DesignTokens.spacing6),
             
             // Goal Progress
             _buildSectionTitle('目标进度'),
-            const SizedBox(height: 12),
+            const SizedBox(height: DesignTokens.spacing3),
             _buildGoalProgressCards(),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: DesignTokens.spacing6),
             
             // Project Status
             _buildSectionTitle('项目状态分布'),
-            const SizedBox(height: 12),
+            const SizedBox(height: DesignTokens.spacing3),
             _buildProjectStatusChart(),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: DesignTokens.spacing6),
             
             // Productivity Score
             _buildSectionTitle('生产力评分'),
-            const SizedBox(height: 12),
+            const SizedBox(height: DesignTokens.spacing3),
             _buildProductivityScore(),
           ],
         ),
@@ -113,32 +112,32 @@ class _StatsPageState extends State<StatsPage> {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
       childAspectRatio: 1.5,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
+      crossAxisSpacing: DesignTokens.spacing3,
+      mainAxisSpacing: DesignTokens.spacing3,
       children: [
         _buildStatCard(
           title: '今日待办',
           value: todayTodos.toString(),
           icon: Icons.today,
-          color: Colors.blue,
+          color: DesignTokens.primaryColor,
         ),
         _buildStatCard(
           title: '已完成',
           value: completedTodos.toString(),
           icon: Icons.check_circle,
-          color: Colors.green,
+          color: DesignTokens.successColor,
         ),
         _buildStatCard(
           title: '活跃目标',
           value: activeGoals.toString(),
           icon: Icons.flag,
-          color: Colors.orange,
+          color: DesignTokens.warningColor,
         ),
         _buildStatCard(
           title: '进行项目',
           value: activeProjects.toString(),
           icon: Icons.folder_open,
-          color: Colors.purple,
+          color: DesignTokens.secondaryColor,
         ),
       ],
     );
@@ -152,104 +151,98 @@ class _StatsPageState extends State<StatsPage> {
   }) {
     final theme = Theme.of(context);
     
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(icon, color: color, size: 24),
-                Text(
-                  value,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
+    return PraxisCard(
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(icon, color: color, size: 24),
+              Text(
+                value,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
                 ),
-              ],
-            ),
-            Text(
-              title,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.disabledColor,
               ),
+            ],
+          ),
+          Text(
+            title,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.disabledColor,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    final theme = Theme.of(context);
-    
     return Text(
       title,
-      style: theme.textTheme.titleLarge?.copyWith(
+      style: Theme.of(context).textTheme.titleLarge?.copyWith(
         fontWeight: FontWeight.bold,
       ),
     );
   }
 
   Widget _buildTodoCompletionChart() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 200,
-          child: LineChart(
-            LineChartData(
-              gridData: FlGridData(show: false),
-              titlesData: FlTitlesData(
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                topTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      final days = ['一', '二', '三', '四', '五', '六', '日'];
-                      if (value.toInt() < days.length) {
-                        return Text(days[value.toInt()]);
-                      }
-                      return const Text('');
-                    },
-                  ),
+    return PraxisCard(
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
+      child: SizedBox(
+        height: 200,
+        child: LineChart(
+          LineChartData(
+            gridData: FlGridData(show: false),
+            titlesData: FlTitlesData(
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              topTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  getTitlesWidget: (value, meta) {
+                    final days = ['一', '二', '三', '四', '五', '六', '日'];
+                    if (value.toInt() < days.length) {
+                      return Text(days[value.toInt()]);
+                    }
+                    return const Text('');
+                  },
                 ),
               ),
-              borderData: FlBorderData(show: false),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: [
-                    const FlSpot(0, 3),
-                    const FlSpot(1, 5),
-                    const FlSpot(2, 4),
-                    const FlSpot(3, 7),
-                    const FlSpot(4, 6),
-                    const FlSpot(5, 8),
-                    const FlSpot(6, 5),
-                  ],
-                  isCurved: true,
-                  color: Colors.blue,
-                  barWidth: 3,
-                  dotData: FlDotData(show: true),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: Colors.blue.withOpacity(0.1),
-                  ),
-                ),
-              ],
             ),
+            borderData: FlBorderData(show: false),
+            lineBarsData: [
+              LineChartBarData(
+                spots: [
+                  const FlSpot(0, 3),
+                  const FlSpot(1, 5),
+                  const FlSpot(2, 4),
+                  const FlSpot(3, 7),
+                  const FlSpot(4, 6),
+                  const FlSpot(5, 8),
+                  const FlSpot(6, 5),
+                ],
+                isCurved: true,
+                color: DesignTokens.primaryColor,
+                barWidth: 3,
+                dotData: FlDotData(show: true),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: DesignTokens.primaryColor.withOpacity(0.1),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -274,8 +267,8 @@ class _StatsPageState extends State<StatsPage> {
     }
     
     return Column(
-      children: goals.take(3).map((goal) => Card(
-        margin: const EdgeInsets.only(bottom: 8),
+      children: goals.take(3).map((goal) => PraxisCard(
+        margin: const EdgeInsets.only(bottom: DesignTokens.spacing2),
         child: ListTile(
           title: Text(goal.title),
           subtitle: LinearProgressIndicator(
@@ -301,27 +294,24 @@ class _StatsPageState extends State<StatsPage> {
     }
     
     if (statusCounts.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Center(
-            child: Text(
-              '暂无项目数据',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+      return PraxisCard(
+        padding: const EdgeInsets.all(DesignTokens.spacing8),
+        child: Center(
+          child: Text(
+            '暂无项目数据',
+            style: TextStyle(color: Colors.grey[600]),
           ),
         ),
       );
     }
     
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 200,
-          child: PieChart(
-            PieChartData(
-              sections: statusCounts.entries.map((entry) {
+    return PraxisCard(
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
+      child: SizedBox(
+        height: 200,
+        child: PieChart(
+          PieChartData(
+            sections: statusCounts.entries.map((entry) {
                 final total = statusCounts.values.reduce((a, b) => a + b);
                 final percentage = (entry.value / total) * 100;
                 
@@ -332,9 +322,8 @@ class _StatsPageState extends State<StatsPage> {
                   radius: 80,
                 );
               }).toList(),
-              sectionsSpace: 2,
-              centerSpaceRadius: 40,
-            ),
+            sectionsSpace: 2,
+            centerSpaceRadius: 40,
           ),
         ),
       ),
@@ -345,55 +334,53 @@ class _StatsPageState extends State<StatsPage> {
     final score = _calculateProductivityScore();
     final theme = Theme.of(context);
     
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 150,
-                  height: 150,
-                  child: CircularProgressIndicator(
-                    value: score / 100,
-                    strokeWidth: 12,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _getScoreColor(score),
-                    ),
+    return PraxisCard(
+      padding: const EdgeInsets.all(DesignTokens.spacing6),
+      child: Column(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 150,
+                height: 150,
+                child: CircularProgressIndicator(
+                  value: score / 100,
+                  strokeWidth: 12,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    _getScoreColor(score),
                   ),
                 ),
-                Column(
-                  children: [
-                    Text(
-                      score.toStringAsFixed(0),
-                      style: theme.textTheme.displayMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: _getScoreColor(score),
-                      ),
-                    ),
-                    Text(
-                      _getScoreLabel(score),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.disabledColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Text(
-              '基于任务完成率、目标进度和项目健康度计算',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.disabledColor,
               ),
-              textAlign: TextAlign.center,
+              Column(
+                children: [
+                  Text(
+                    score.toStringAsFixed(0),
+                    style: theme.textTheme.displayMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: _getScoreColor(score),
+                    ),
+                  ),
+                  Text(
+                    _getScoreLabel(score),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.disabledColor,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: DesignTokens.spacing6),
+          Text(
+            '基于任务完成率、目标进度和项目健康度计算',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.disabledColor,
             ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -426,10 +413,10 @@ class _StatsPageState extends State<StatsPage> {
   }
 
   Color _getScoreColor(double score) {
-    if (score >= 80) return Colors.green;
-    if (score >= 60) return Colors.blue;
-    if (score >= 40) return Colors.orange;
-    return Colors.red;
+    if (score >= 80) return DesignTokens.successColor;
+    if (score >= 60) return DesignTokens.primaryColor;
+    if (score >= 40) return DesignTokens.warningColor;
+    return DesignTokens.errorColor;
   }
 
   String _getScoreLabel(double score) {
@@ -444,13 +431,13 @@ class _StatsPageState extends State<StatsPage> {
       case ProjectStatus.planning:
         return Colors.grey;
       case ProjectStatus.active:
-        return Colors.blue;
+        return DesignTokens.statusActive;
       case ProjectStatus.onHold:
-        return Colors.orange;
+        return DesignTokens.statusPaused;
       case ProjectStatus.completed:
-        return Colors.green;
+        return DesignTokens.statusCompleted;
       case ProjectStatus.cancelled:
-        return Colors.red;
+        return DesignTokens.statusCancelled;
       case ProjectStatus.archived:
         return Colors.brown;
     }

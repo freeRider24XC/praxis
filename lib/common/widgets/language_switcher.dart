@@ -48,8 +48,7 @@ class LanguageSelector extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 16),
-        ...LocaleService.supportedLocales.map((locale) {
-          final isSelected = localeService.isCurrentLocale(locale);
+            ...LocaleService.supportedLocales.map((locale) {
           return ListTile(
             leading: Radio<Locale>(
               value: locale,

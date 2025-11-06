@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/widgets/empty_state.dart';
+import 'package:praxis/common/widgets/praxis_card.dart';
+import 'package:praxis/common/style/design_tokens.dart';
 
 class ProjectPage extends StatefulWidget {
   const ProjectPage({super.key});
@@ -31,6 +34,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   : ProjectView.grid;
               });
             },
+            tooltip: _currentView == ProjectView.grid ? '列表视图' : '网格视图',
           ),
           PopupMenuButton<ProjectStatus?>(
             icon: const Icon(Icons.filter_list),
@@ -73,28 +77,56 @@ class _ProjectPageState extends State<ProjectPage> {
 
   Widget _buildGridView(List<Project> projects) {
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 1.0,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        crossAxisSpacing: DesignTokens.spacing3,
+        mainAxisSpacing: DesignTokens.spacing3,
       ),
       itemCount: projects.length,
       itemBuilder: (context, index) {
         final project = projects[index];
-        return _buildProjectGridCard(project);
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: DesignTokens.durationNormal,
+          curve: DesignTokens.curveEaseOut,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.scale(
+                scale: 0.8 + (0.2 * value),
+                child: child,
+              ),
+            );
+          },
+          child: _buildProjectGridCard(project),
+        );
       },
     );
   }
 
   Widget _buildListView(List<Project> projects) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
       itemCount: projects.length,
       itemBuilder: (context, index) {
         final project = projects[index];
-        return _buildProjectListCard(project);
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: DesignTokens.durationNormal,
+          curve: DesignTokens.curveEaseOut,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, 20 * (1 - value)),
+                child: child,
+              ),
+            );
+          },
+          child: _buildProjectListCard(project),
+        );
       },
     );
   }
@@ -103,111 +135,110 @@ class _ProjectPageState extends State<ProjectPage> {
     final theme = Theme.of(context);
     final color = _parseColor(project.color);
 
-    return Card(
-      child: InkWell(
+    return AnimatedSwitcher(
+      duration: DesignTokens.durationNormal,
+      child: PraxisCard(
+        key: ValueKey(project.id),
         onTap: () => _showProjectDetail(project),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      _getProjectIcon(project.icon),
-                      color: color,
-                      size: 24,
-                    ),
+        padding: const EdgeInsets.all(DesignTokens.spacing4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const Spacer(),
-                  // Health indicator
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _getHealthColor(project.health),
-                      shape: BoxShape.circle,
-                    ),
+                  child: Icon(
+                    _getProjectIcon(project.icon),
+                    color: color,
+                    size: 24,
                   ),
-                ],
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Title
-              Text(
-                project.name,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                const Spacer(),
+                // Health indicator
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _getHealthColor(project.health),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 12),
+            
+            // Title
+            Text(
+              project.name,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
-              
-              const Spacer(),
-              
-              // Progress
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'progressPercentage'.trParams({
-                          'percentage': (project.progress * 100).toInt().toString()
-                        }),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            
+            const Spacer(),
+            
+            // Progress
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'progressPercentage'.trParams({
+                        'percentage': (project.progress * 100).toInt().toString()
+                      }),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      if (project.daysRemaining > 0)
-                        Text(
-                          'daysRemaining'.trParams({
-                            'days': project.daysRemaining.toString()
-                          }),
-                          style: theme.textTheme.bodySmall,
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: project.progress,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(color),
-                    minHeight: 4,
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // Status
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(project.status).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                    ),
+                    if (project.daysRemaining > 0)
+                      Text(
+                        'daysRemaining'.trParams({
+                          'days': project.daysRemaining.toString()
+                        }),
+                        style: theme.textTheme.bodySmall,
+                      ),
+                  ],
                 ),
-                child: Text(
-                  _getStatusDisplayName(project.status),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _getStatusColor(project.status),
-                  ),
+                const SizedBox(height: 4),
+                LinearProgressIndicator(
+                  value: project.progress,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                  minHeight: 4,
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 8),
+            
+            // Status
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _getStatusColor(project.status).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _getStatusDisplayName(project.status),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _getStatusColor(project.status),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -217,190 +248,171 @@ class _ProjectPageState extends State<ProjectPage> {
     final theme = Theme.of(context);
     final color = _parseColor(project.color);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showProjectDetail(project),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _getProjectIcon(project.icon),
-                  color: color,
-                  size: 28,
-                ),
-              ),
-              
-              const SizedBox(width: 16),
-              
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return PraxisCard(
+      margin: const EdgeInsets.only(bottom: DesignTokens.spacing3),
+      onTap: () => _showProjectDetail(project),
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              _getProjectIcon(project.icon),
+              color: color,
+              size: 28,
+            ),
+          ),
+          
+          const SizedBox(width: 16),
+          
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title and health
+                Row(
                   children: [
-                    // Title and health
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            project.name,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                    Expanded(
+                      child: Text(
+                        project.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                        Text(
-                          project.health.emoji,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    
-                    if (project.description != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        project.description!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.disabledColor,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Progress bar
-                    LinearProgressIndicator(
-                      value: project.progress,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                      minHeight: 6,
                     ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Meta info
-                    Row(
-                      children: [
-                        // Status
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(project.status).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            _getStatusDisplayName(project.status),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _getStatusColor(project.status),
-                            ),
-                          ),
-                        ),
-                        
-                        const SizedBox(width: 12),
-                        
-                        // Progress percentage
-                        Text(
-                          'progressPercentage'.trParams({
-                            'percentage': (project.progress * 100).toInt().toString()
-                          }),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        
-                        const Spacer(),
-                        
-                        // Tasks count
-                        if (project.totalTasks > 0) ...[
-                          Icon(
-                            Icons.checklist,
-                            size: 16,
-                            color: theme.disabledColor,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'taskCount'.trParams({
-                              'count': project.totalTasks.toString()
-                            }),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.disabledColor,
-                            ),
-                          ),
-                        ],
-                        
-                        // Days remaining
-                        if (project.daysRemaining > 0) ...[
-                          const SizedBox(width: 12),
-                          Icon(
-                            Icons.schedule,
-                            size: 16,
-                            color: theme.disabledColor,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'daysRemaining'.trParams({
-                              'days': project.daysRemaining.toString()
-                            }),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.disabledColor,
-                            ),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      project.health.emoji,
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ],
                 ),
-              ),
-            ],
+                
+                if (project.description != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    project.description!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.disabledColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                
+                const SizedBox(height: 8),
+                
+                // Progress bar
+                LinearProgressIndicator(
+                  value: project.progress,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                  minHeight: 6,
+                ),
+                
+                const SizedBox(height: 8),
+                
+                // Meta info
+                Row(
+                  children: [
+                    // Status
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(project.status).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _getStatusDisplayName(project.status),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _getStatusColor(project.status),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(width: 12),
+                    
+                    // Progress percentage
+                    Text(
+                      'progressPercentage'.trParams({
+                        'percentage': (project.progress * 100).toInt().toString()
+                      }),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    
+                    const Spacer(),
+                    
+                    // Tasks count
+                    if (project.totalTasks > 0) ...[
+                      Icon(
+                        Icons.checklist,
+                        size: 16,
+                        color: theme.disabledColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'taskCount'.trParams({
+                          'count': project.totalTasks.toString()
+                        }),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.disabledColor,
+                        ),
+                      ),
+                    ],
+                    
+                    // Days remaining
+                    if (project.daysRemaining > 0) ...[
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.schedule,
+                        size: 16,
+                        color: theme.disabledColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'daysRemaining'.trParams({
+                          'days': project.daysRemaining.toString()
+                        }),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.disabledColor,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.folder_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _statusFilter != null 
-              ? 'noProjectsWithStatus'.trParams({
-                  'status': _getStatusDisplayName(_statusFilter!)
-                })
-              : 'notCreatedAnyProjects'.tr,
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => Get.toNamed('/project/add'),
-            icon: const Icon(Icons.add),
-            label: Text('createProject'.tr),
-          ),
-        ],
-      ),
+    final message = _statusFilter != null 
+      ? 'noProjectsWithStatus'.trParams({
+          'status': _getStatusDisplayName(_statusFilter!)
+        })
+      : 'notCreatedAnyProjects'.tr;
+    final description = _statusFilter != null 
+      ? '尝试调整筛选条件'
+      : '开始创建你的第一个项目吧';
+    
+    return EmptyState(
+      icon: Icons.folder_outlined,
+      title: message,
+      description: description,
+      actionLabel: 'createProject'.tr,
+      onAction: () => Get.toNamed('/project/add'),
     );
   }
 
