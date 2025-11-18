@@ -51,7 +51,7 @@ class ThemeService extends GetxService {
       centerTitle: false,
           elevation: 0,
         ),
-        cardTheme: CardThemeData(
+        cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
@@ -101,7 +101,7 @@ class ThemeService extends GetxService {
       centerTitle: false,
           elevation: 0,
         ),
-        cardTheme: CardThemeData(
+        cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),

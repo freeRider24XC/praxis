@@ -19,7 +19,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.4.3 <4.0.0"
+  sdk: ">=3.3.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -54,7 +54,8 @@ dependencies:
   animations: ^2.0.11
   
   # Utilities
-  intl: ^0.20.2
+  # intl 版本由 flutter_localizations 自动管理，不需要显式指定
+  # intl: ^0.20.2
   uuid: ^4.2.1
   collection: ^1.18.0
   
@@ -65,7 +66,7 @@ dependencies:
   fl_chart: ^0.66.0
   
   # Notifications
-  flutter_local_notifications: ^19.4.1
+  flutter_local_notifications: ^18.0.1
   
   # Permissions
   permission_handler: ^11.1.0
