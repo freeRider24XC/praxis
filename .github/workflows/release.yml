@@ -50,14 +50,13 @@ jobs:
           cat pubspec.yaml | grep version
       
       - name: Setup Android keystore
-        if: env.ANDROID_KEYSTORE_BASE64 != ''
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ "$ANDROID_KEYSTORE_BASE64" != "" ]; then
             echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/keystore.jks
             cat >> android/key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
@@ -65,6 +64,9 @@ jobs:
           keyAlias=$ANDROID_KEY_ALIAS
           storeFile=keystore.jks
           EOF
+            echo "Android keystore configured"
+          else
+            echo "Android keystore not configured, will use debug signing"
           fi
       
       - name: Build Android APK
@@ -155,13 +157,12 @@ jobs:
           cat pubspec.yaml | grep version
       
       - name: Setup iOS certificates
-        if: env.IOS_CERTIFICATE_BASE64 != ''
         env:
           IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
           IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
           IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
         run: |
-          if [ -n "$IOS_CERTIFICATE_BASE64" ]; then
+          if [ -n "$IOS_CERTIFICATE_BASE64" ] && [ "$IOS_CERTIFICATE_BASE64" != "" ]; then
             # 创建钥匙串
             security create-keychain -p "" build.keychain
             security default-keychain -s build.keychain
@@ -179,6 +180,9 @@ jobs:
             
             # 设置代码签名
             security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
+            echo "iOS certificates configured"
+          else
+            echo "iOS certificates not configured, build may fail"
           fi
       
       - name: Build iOS IPA
