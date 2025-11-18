@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - 'v*'  # 匹配所有以 v 开头的 tag，如 v1.0.0
+    # 注意：tag 可以从任何分支推送，都会触发构建
+    # 如果需要限制分支，可以取消下面的注释：
+    # branches:
+    #   - main
+    #   - dev
 
 jobs:
   build-android:
