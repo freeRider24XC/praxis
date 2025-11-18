@@ -59,17 +59,24 @@ android {
     signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-                storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-                storePassword keystoreProperties['storePassword']
+                def storeFileProp = keystoreProperties['storeFile']
+                if (storeFileProp && file(storeFileProp).exists()) {
+                    keyAlias keystoreProperties['keyAlias']
+                    keyPassword keystoreProperties['keyPassword']
+                    storeFile file(storeFileProp)
+                    storePassword keystoreProperties['storePassword']
+                }
             }
         }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            // 只有在配置了签名时才使用 release 签名，否则使用 debug 签名
+            def hasReleaseSigning = keystorePropertiesFile.exists() && 
+                                    keystoreProperties['storeFile'] && 
+                                    file(keystoreProperties['storeFile']).exists()
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }
