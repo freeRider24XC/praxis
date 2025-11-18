@@ -231,15 +231,55 @@
     </div>
     
     <script>
-        // 从 pubspec.yaml 读取版本号（需要后端支持）
-        // 这里使用占位符
-        document.getElementById('version').textContent = '1.0.0';
+        // 从 version.json 加载版本信息和下载链接
+        async function loadVersionInfo() {
+            try {
+                // 尝试从当前目录加载 version.json
+                const response = await fetch('./version.json?t=' + Date.now());
+                if (!response.ok) {
+                    throw new Error('Failed to load version info');
+                }
+                const data = await response.json();
+                
+                // 更新版本号
+                document.getElementById('version').textContent = data.version || '1.0.0';
+                
+                // 更新下载链接
+                const iosDownload = document.getElementById('ios-download');
+                const androidDownload = document.getElementById('android-download');
+                
+                if (data.ios && data.ios.ipa) {
+                    iosDownload.href = data.ios.ipa;
+                    iosDownload.style.display = 'inline-block';
+                } else {
+                    iosDownload.href = 'https://testflight.apple.com/join/YOUR_CODE';
+                    iosDownload.textContent = 'iOS (TestFlight)';
+                }
+                
+                if (data.android && data.android.apk) {
+                    androidDownload.href = data.android.apk;
+                    androidDownload.style.display = 'inline-block';
+                } else {
+                    androidDownload.href = '#';
+                    androidDownload.style.display = 'none';
+                }
+                
+                // 如果有更新日期，显示在版本号旁边
+                if (data.releaseDate) {
+                    const versionEl = document.getElementById('version');
+                    versionEl.textContent += ` (${data.releaseDate})`;
+                }
+            } catch (error) {
+                console.error('Error loading version info:', error);
+                // 使用默认值
+                document.getElementById('version').textContent = '1.0.0';
+                document.getElementById('ios-download').href = 'https://testflight.apple.com/join/YOUR_CODE';
+                document.getElementById('android-download').href = '#';
+            }
+        }
         
-        // iOS 下载链接（TestFlight 或 App Store）
-        document.getElementById('ios-download').href = 'https://testflight.apple.com/join/YOUR_CODE';
-        
-        // Android 下载链接
-        document.getElementById('android-download').href = '#';
+        // 页面加载时获取版本信息
+        loadVersionInfo();
     </script>
 </body>
 </html>
