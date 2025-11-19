@@ -32,7 +32,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.example.praxis"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "25.1.8937393"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -60,11 +60,14 @@ android {
         release {
             if (keystorePropertiesFile.exists()) {
                 def storeFileProp = keystoreProperties['storeFile']
-                if (storeFileProp && file(storeFileProp).exists()) {
-                    keyAlias keystoreProperties['keyAlias']
-                    keyPassword keystoreProperties['keyPassword']
-                    storeFile file(storeFileProp)
-                    storePassword keystoreProperties['storePassword']
+                if (storeFileProp) {
+                    def storeFileObj = file(storeFileProp)
+                    if (storeFileObj.exists()) {
+                        keyAlias keystoreProperties['keyAlias']
+                        keyPassword keystoreProperties['keyPassword']
+                        storeFile storeFileObj
+                        storePassword keystoreProperties['storePassword']
+                    }
                 }
             }
         }
@@ -73,10 +76,21 @@ android {
     buildTypes {
         release {
             // 只有在配置了签名时才使用 release 签名，否则使用 debug 签名
-            def hasReleaseSigning = keystorePropertiesFile.exists() && 
-                                    keystoreProperties['storeFile'] && 
-                                    file(keystoreProperties['storeFile']).exists()
-            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
+            def hasReleaseSigning = false
+            if (keystorePropertiesFile.exists()) {
+                def storeFileProp = keystoreProperties['storeFile']
+                if (storeFileProp) {
+                    def storeFileObj = file(storeFileProp)
+                    if (storeFileObj.exists()) {
+                        hasReleaseSigning = true
+                    }
+                }
+            }
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled false
             shrinkResources false
         }
