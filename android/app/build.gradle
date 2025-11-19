@@ -57,12 +57,13 @@ android {
     }
 
     signingConfigs {
-        release {
-            if (keystorePropertiesFile.exists()) {
-                def storeFileProp = keystoreProperties['storeFile']
-                if (storeFileProp) {
-                    def storeFileObj = file(storeFileProp)
-                    if (storeFileObj.exists()) {
+        // 只有在有完整签名配置时才定义 release
+        if (keystorePropertiesFile.exists()) {
+            def storeFileProp = keystoreProperties['storeFile']
+            if (storeFileProp) {
+                def storeFileObj = file(storeFileProp)
+                if (storeFileObj.exists()) {
+                    release {
                         keyAlias keystoreProperties['keyAlias']
                         keyPassword keystoreProperties['keyPassword']
                         storeFile storeFileObj
@@ -75,18 +76,20 @@ android {
 
     buildTypes {
         release {
-            // 只有在配置了签名时才使用 release 签名，否则使用 debug 签名
-            def hasReleaseSigning = false
+            // 检查是否有有效的签名配置
+            def hasValidSigning = false
             if (keystorePropertiesFile.exists()) {
                 def storeFileProp = keystoreProperties['storeFile']
                 if (storeFileProp) {
                     def storeFileObj = file(storeFileProp)
                     if (storeFileObj.exists()) {
-                        hasReleaseSigning = true
+                        hasValidSigning = true
                     }
                 }
             }
-            if (hasReleaseSigning) {
+            
+            // 根据检查结果选择签名配置
+            if (hasValidSigning && signingConfigs.hasProperty('release')) {
                 signingConfig signingConfigs.release
             } else {
                 signingConfig signingConfigs.debug
