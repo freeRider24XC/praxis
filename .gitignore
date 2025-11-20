@@ -34,8 +34,6 @@ migrate_working_dir/
 /build/
 
 # FVM (Flutter Version Management)
-.fvm/flutter_sdk/
-.fvm/versions/
 
 # Symbolication related
 app.*.symbols
@@ -55,3 +53,6 @@ app.*.map.json
 ios/certificate.p12
 ios/*.mobileprovision
 ios/*.p12
+
+# FVM Version Cache
+.fvm/

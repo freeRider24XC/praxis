@@ -32,7 +32,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.example.praxis"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "25.1.8937393"
+    ndkVersion = "26.3.11579264"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -57,13 +57,13 @@ android {
     }
 
     signingConfigs {
-        // 只有在有完整签名配置时才定义 release
-        if (keystorePropertiesFile.exists()) {
-            def storeFileProp = keystoreProperties['storeFile']
-            if (storeFileProp) {
-                def storeFileObj = file(storeFileProp)
-                if (storeFileObj.exists()) {
-                    release {
+        release {
+            // 只有在 key.properties 存在且配置完整时才设置签名
+            if (keystorePropertiesFile.exists()) {
+                def storeFileProp = keystoreProperties['storeFile']
+                if (storeFileProp) {
+                    def storeFileObj = file(storeFileProp)
+                    if (storeFileObj.exists()) {
                         keyAlias keystoreProperties['keyAlias']
                         keyPassword keystoreProperties['keyPassword']
                         storeFile storeFileObj
@@ -76,26 +76,30 @@ android {
 
     buildTypes {
         release {
-            // 检查是否有有效的签名配置
-            def hasValidSigning = false
-            if (keystorePropertiesFile.exists()) {
-                def storeFileProp = keystoreProperties['storeFile']
-                if (storeFileProp) {
-                    def storeFileObj = file(storeFileProp)
-                    if (storeFileObj.exists()) {
-                        hasValidSigning = true
-                    }
-                }
-            }
-            
-            // 根据检查结果选择签名配置
-            if (hasValidSigning && signingConfigs.hasProperty('release')) {
-                signingConfig signingConfigs.release
-            } else {
-                signingConfig signingConfigs.debug
-            }
+            // 默认使用 debug 签名，如果有配置 release 签名会在 afterEvaluate 中设置
+            signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
+        }
+    }
+}
+
+// 在配置阶段后动态设置签名配置（如果有有效的 release 签名）
+afterEvaluate {
+    if (keystorePropertiesFile.exists()) {
+        def storeFileProp = keystoreProperties['storeFile']
+        if (storeFileProp) {
+            def storeFileObj = file(storeFileProp)
+            if (storeFileObj.exists()) {
+                try {
+                    def releaseConfig = android.signingConfigs.release
+                    if (releaseConfig.storeFile != null && releaseConfig.storeFile.exists()) {
+                        android.buildTypes.release.signingConfig = android.signingConfigs.release
+                    }
+                } catch (Exception e) {
+                    // 如果 release 配置无效，保持使用 debug 签名
+                }
+            }
         }
     }
 }
@@ -107,3 +111,4 @@ flutter {
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
+
