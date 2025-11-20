@@ -164,9 +164,13 @@ class OpenAIProvider {
       );
       
       debugPrint('🔵 响应状态码: ${response.statusCode}');
-      debugPrint('🔵 响应体: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
+      if (response.body.length > 200) {
+        debugPrint('🔵 响应体(前200字符): ${response.body.substring(0, 200)}...');
+      } else {
+        debugPrint('🔵 响应体: ${response.body}');
+      }
 
-    if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       
       String content;
