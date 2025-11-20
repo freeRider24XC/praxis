@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:praxis/common/ai/services/ai_config_service.dart';
 
@@ -208,19 +209,37 @@ class OpenAIProvider {
       }
       
       return content;
-    } else if (response.statusCode == 401) {
-      throw Exception('API密钥无效，请检查密钥是否正确');
-    } else if (response.statusCode == 402) {
-      final isTongyi = baseUrl.contains('dashscope');
-      throw Exception(isTongyi 
-        ? '账户余额不足，请前往阿里云DashScope平台充值' 
-        : '账户余额不足，请前往DeepSeek平台充值');
-    } else if (response.statusCode == 429) {
-      throw Exception('API调用次数超限，请稍后再试');
-    } else {
-      final errorData = jsonDecode(response.body) as Map<String, dynamic>;
-      final errorMessage = errorData['error']?['message'] ?? '请求失败';
-      throw Exception('API请求失败: $errorMessage');
+      } else if (response.statusCode == 401) {
+        debugPrint('❌ API密钥无效');
+        throw Exception('API密钥无效，请检查密钥是否正确');
+      } else if (response.statusCode == 402) {
+        debugPrint('❌ 账户余额不足');
+        throw Exception(isTongyi 
+          ? '账户余额不足，请前往阿里云DashScope平台充值' 
+          : '账户余额不足，请前往DeepSeek平台充值');
+      } else if (response.statusCode == 429) {
+        debugPrint('❌ API调用次数超限');
+        throw Exception('API调用次数超限，请稍后再试');
+      } else {
+        debugPrint('❌ API请求失败 - 状态码: ${response.statusCode}');
+        debugPrint('❌ 响应体: ${response.body}');
+        try {
+          final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+          final errorMessage = errorData['error']?['message'] ?? 
+                              errorData['message'] ?? 
+                              '请求失败';
+          throw Exception('API请求失败: $errorMessage');
+        } catch (e) {
+          throw Exception('API请求失败: HTTP ${response.statusCode} - ${response.body}');
+        }
+      }
+    } catch (e) {
+      if (e.toString().contains('timeout') || e.toString().contains('超时')) {
+        debugPrint('❌ 请求超时异常: $e');
+        rethrow;
+      }
+      debugPrint('❌ 其他异常: $e');
+      rethrow;
     }
   }
 
