@@ -32,11 +32,14 @@ void main() async {
     // 配置通义千问API key（如果未配置）
     final isConfigured = await AiConfigService.isConfigured();
     if (!isConfigured) {
-      // 使用默认的通义千问API key（请替换为实际的API key）
-      // 注意：这里应该从环境变量或配置文件读取，不要硬编码
-      const defaultTongyiApiKey = 'sk-your-tongyi-api-key-here';
-      if (defaultTongyiApiKey != 'sk-your-tongyi-api-key-here') {
+      // 使用默认的通义千问API key
+      // TODO: 如果项目中有写死的key，请替换下面的值
+      const defaultTongyiApiKey = 'sk-xxxxx'; // 请替换为实际的通义千问API key
+      if (defaultTongyiApiKey != 'sk-xxxxx' && defaultTongyiApiKey.isNotEmpty) {
         await AiConfigService.setTongyi(apiKey: defaultTongyiApiKey);
+        debugPrint('已自动配置通义千问API key');
+      } else {
+        debugPrint('未配置通义千问API key，请在设置中手动配置');
       }
     }
   
