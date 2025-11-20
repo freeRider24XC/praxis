@@ -29,13 +29,13 @@ void main() async {
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
     await CalendarSyncService.init();
     
-    // 配置Gemini API key（如果未配置）
+    // 配置通义千问API key（如果未配置）
     final isConfigured = await AiConfigService.isConfigured();
     if (!isConfigured) {
-      // 使用Gemini API key
-      const geminiApiKey = 'AIzaSyDHGwpV6HWeZ_K0OP37LtRvkvf3UYbuc34';
-      await AiConfigService.setGemini(apiKey: geminiApiKey);
-      debugPrint('已自动配置Gemini API key');
+      // 使用通义千问API key
+      const tongyiApiKey = 'sk-6aed399eac434b389bd831bff6f456d1';
+      await AiConfigService.setTongyi(apiKey: tongyiApiKey);
+      debugPrint('已自动配置通义千问API key');
     }
   
   // Set preferred orientations

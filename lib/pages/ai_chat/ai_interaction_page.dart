@@ -176,14 +176,10 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
                           vertical: DesignTokens.spacing2,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? DesignTokens.surfaceDarkSecondary
-                              : DesignTokens.surfaceLightSecondary,
+                          color: isDark ? DesignTokens.surfaceDarkSecondary : DesignTokens.surfaceLightSecondary,
                           borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
                           border: Border.all(
-                            color: isDark
-                                ? DesignTokens.borderDark
-                                : DesignTokens.borderLight,
+                            color: isDark ? DesignTokens.borderDark : DesignTokens.borderLight,
                             width: 1,
                           ),
                         ),
@@ -193,18 +189,14 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
                             Icon(
                               Icons.delete_outline,
                               size: 16,
-                              color: isDark
-                                  ? DesignTokens.textSecondaryDark
-                                  : DesignTokens.textSecondaryLight,
+                              color: isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight,
                             ),
                             const SizedBox(width: DesignTokens.spacing1),
                             Text(
                               '清除',
                               style: DesignTokens.textStyle(
                                 fontSize: DesignTokens.fontSizeLabelSmall,
-                                color: isDark
-                                    ? DesignTokens.textSecondaryDark
-                                    : DesignTokens.textSecondaryLight,
+                                color: isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight,
                               ),
                             ),
                           ],
