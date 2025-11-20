@@ -129,6 +129,14 @@ class DatabaseService {
     return todoBox.values.where((todo) => todo.isOverdue).toList();
   }
 
+  static Todo? getTodoById(String id) {
+    try {
+      return todoBox.values.firstWhere((todo) => todo.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
   static Future<void> updateTodo(Todo todo) async {
     await todo.save();
   }

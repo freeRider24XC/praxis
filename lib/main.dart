@@ -5,7 +5,11 @@ import 'package:get/get.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/services/locale_service.dart';
 import 'package:praxis/common/i18n/translations.dart';
+import 'package:praxis/pages/focus/focus_page.dart';
 import 'package:praxis/pages/main/main_page.dart';
+import 'package:praxis/pages/notifications/notifications_page.dart';
+import 'package:praxis/pages/onboarding/onboarding_page.dart';
+import 'package:praxis/pages/project/project_detail_page.dart';
 import 'package:praxis/pages/todo/add_todo_page.dart';
 import 'package:praxis/pages/goal/add_goal_page.dart';
 import 'package:praxis/pages/project/add_project_page.dart';
@@ -60,12 +64,30 @@ class MyApp extends StatelessWidget {
       theme: themeService.lightTheme,
       darkTheme: themeService.darkTheme,
       themeMode: themeService.themeMode,
-      home: const MainPage(),
+          home: FutureBuilder<bool>(
+            future: OnboardingChecker.shouldShowOnboarding(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              return snapshot.data == true ? const OnboardingPage() : const MainPage();
+            },
+          ),
       getPages: [
         GetPage(name: '/todo/add', page: () => const AddTodoPage()),
         GetPage(name: '/goal/add', page: () => const AddGoalPage()),
         GetPage(name: '/project/add', page: () => const AddProjectPage()),
         GetPage(name: '/ai/chat', page: () => const AiChatPage()),
+            GetPage(
+                name: '/project/detail/:id',
+                page: () {
+                  final id = Get.parameters['id']!;
+                  return ProjectDetailPage(projectId: id);
+                }),
+            GetPage(name: '/focus', page: () => const FocusPage()),
+            GetPage(name: '/notifications', page: () => const NotificationsPage()),
       ],
     ));
   }

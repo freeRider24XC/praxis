@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:praxis/common/services/logger_service.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 
@@ -43,6 +44,12 @@ class ThemeService extends GetxService {
   
   ThemeData get lightTheme => ThemeData(
         useMaterial3: true,
+        fontFamily: DesignTokens.fontFamilyDefault,
+        textTheme: GoogleFonts.interTextTheme().copyWith(
+          bodyLarge: GoogleFonts.notoSansSc(),
+          bodyMedium: GoogleFonts.notoSansSc(),
+          bodySmall: GoogleFonts.notoSansSc(),
+        ),
     colorScheme: ColorScheme.fromSeed(
           seedColor: DesignTokens.primaryColor,
       brightness: Brightness.light,
@@ -52,9 +59,9 @@ class ThemeService extends GetxService {
           elevation: 0,
         ),
         cardTheme: CardThemeData(
-          elevation: 2,
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),  
+            borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),  
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
@@ -73,7 +80,7 @@ class ThemeService extends GetxService {
               vertical: DesignTokens.spacing3,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
             ),
             elevation: 2,
           ),
@@ -85,7 +92,7 @@ class ThemeService extends GetxService {
               vertical: DesignTokens.spacing2,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
             ),
           ),
         ),
@@ -93,6 +100,12 @@ class ThemeService extends GetxService {
   
   ThemeData get darkTheme => ThemeData(
         useMaterial3: true,
+        fontFamily: DesignTokens.fontFamilyDefault,
+        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
+          bodyLarge: GoogleFonts.notoSansSc(),
+          bodyMedium: GoogleFonts.notoSansSc(),
+          bodySmall: GoogleFonts.notoSansSc(),
+        ),
     colorScheme: ColorScheme.fromSeed(
           seedColor: DesignTokens.primaryColor,
       brightness: Brightness.dark,
@@ -123,7 +136,7 @@ class ThemeService extends GetxService {
               vertical: DesignTokens.spacing3,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
             ),
             elevation: 2,
           ),
@@ -135,7 +148,7 @@ class ThemeService extends GetxService {
               vertical: DesignTokens.spacing2,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
             ),
           ),
         ),

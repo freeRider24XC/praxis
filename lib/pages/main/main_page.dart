@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/pages/todo/todo_page.dart';
-import 'package:praxis/pages/goal/goal_page.dart';
-import 'package:praxis/pages/project/project_page.dart';
+import 'package:praxis/common/widgets/glass_nav_bar.dart';
+import 'package:praxis/common/widgets/fab_button.dart';
+import 'package:praxis/pages/home/home_page.dart';
+import 'package:praxis/pages/explore/explore_page.dart';
+import 'package:praxis/pages/ai_chat/ai_interaction_page.dart';
+import 'package:praxis/pages/schedule/schedule_page.dart';
 import 'package:praxis/pages/profile/profile_page.dart';
-import 'package:praxis/pages/ai_chat/ai_chat_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -19,38 +21,38 @@ class _MainPageState extends State<MainPage> {
   final PageController _pageController = PageController();
 
   final List<Widget> _pages = [
-    const TodoPage(),
-    const GoalPage(),
-    const AiChatPage(),
-    const ProjectPage(),
+    const HomePage(),
+    const ExplorePage(),
+    const AiInteractionPage(),
+    const SchedulePage(),
     const ProfilePage(),
   ];
 
-  final List<NavigationDestination> _destinations = const [
-    NavigationDestination(
-      icon: Icon(Icons.check_circle_outline),
-      selectedIcon: Icon(Icons.check_circle),
-      label: '待办',
+  final List<NavBarItem> _navItems = const [
+    NavBarItem(
+      icon: Icons.home_outlined,
+      selectedIcon: Icons.home,
+      label: '首页',
     ),
-    NavigationDestination(
-      icon: Icon(Icons.flag_outlined),
-      selectedIcon: Icon(Icons.flag),
-      label: '目标',
+    NavBarItem(
+      icon: Icons.explore_outlined,
+      selectedIcon: Icons.explore,
+      label: '发现',
     ),
-    NavigationDestination(
-      icon: Icon(Icons.smart_toy_outlined),
-      selectedIcon: Icon(Icons.smart_toy),
-      label: 'AI助手',
+    NavBarItem(
+      icon: Icons.smart_toy_outlined,
+      selectedIcon: Icons.smart_toy,
+      label: 'AI',
     ),
-    NavigationDestination(
-      icon: Icon(Icons.folder_outlined),
-      selectedIcon: Icon(Icons.folder),
-      label: '项目',
+    NavBarItem(
+      icon: Icons.calendar_today_outlined,
+      selectedIcon: Icons.calendar_today,
+      label: '日程',
     ),
-    NavigationDestination(
-      icon: Icon(Icons.person_outline),
-      selectedIcon: Icon(Icons.person),
-      label: '个人中心',
+    NavBarItem(
+      icon: Icons.person_outline,
+      selectedIcon: Icons.person,
+      label: '个人',
     ),
   ];
 
@@ -73,92 +75,40 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: _pages,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: _onDestinationSelected,
-        destinations: _destinations,
-        elevation: 8,
-        shadowColor: Colors.black.withOpacity(0.1),
-      ),
-      floatingActionButton: _buildFloatingActionButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-    );
-  }
-
-  Widget? _buildFloatingActionButton() {
-    // AI助手页面不需要FAB
-    if (_currentIndex == 2) {
-      return null;
-    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // 个人中心页面不需要FAB
-    if (_currentIndex == 4) {
-        return null;
-    }
-
-    // 其他页面显示原有功能按钮
-    return FloatingActionButton(
-      heroTag: 'fab_button',
-      onPressed: _getFabAction(),
-      tooltip: _getFabTooltip(),
-      child: Icon(_getFabIcon()),
+    return Scaffold(
+      body: Stack(
+        children: [
+          PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            children: _pages,
+          ),
+          
+          // 居中悬浮FAB（仅在首页显示）
+          if (_currentIndex == 0)
+            Positioned(
+              bottom: 80,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: FabButton(
+                  icon: Icons.add,
+                  onPressed: () {
+                    Get.to(() => const AiInteractionPage());
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
+      bottomNavigationBar: GlassNavBar(
+        currentIndex: _currentIndex,
+        onTap: _onDestinationSelected,
+        items: _navItems,
+        isDark: isDark,
+      ),
     );
-  }
-
-  IconData _getFabIcon() {
-    switch (_currentIndex) {
-      case 0:
-        return Icons.add;
-      case 1:
-        return Icons.flag;
-      case 3:
-        return Icons.create_new_folder;
-      default:
-        return Icons.add;
-    }
-  }
-
-  String _getFabTooltip() {
-    switch (_currentIndex) {
-      case 0:
-        return '添加待办';
-      case 1:
-        return '创建目标';
-      case 3:
-        return '新建项目';
-      default:
-        return '添加';
-    }
-  }
-
-  VoidCallback _getFabAction() {
-    switch (_currentIndex) {
-      case 0:
-        return _showAddTodoDialog;
-      case 1:
-        return _showAddGoalDialog;
-      case 3:
-        return _showAddProjectDialog;
-      default:
-        return () {};
-    }
-  }
-
-  void _showAddTodoDialog() {
-    Get.toNamed('/todo/add');
-  }
-
-  void _showAddGoalDialog() {
-    Get.toNamed('/goal/add');
-  }
-
-  void _showAddProjectDialog() {
-    Get.toNamed('/project/add');
   }
 }

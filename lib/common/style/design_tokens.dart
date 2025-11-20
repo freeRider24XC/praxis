@@ -6,12 +6,17 @@ class DesignTokens {
 
   // ==================== 颜色系统 ====================
   
-  /// 主色调
-  static const Color primaryColor = Color(0xFF2196F3); // 蓝色
-  static const Color primaryLight = Color(0xFF64B5F6);
-  static const Color primaryDark = Color(0xFF1976D2);
+  /// 主色调 - Indigo-600
+  static const Color primaryColor = Color(0xFF4F46E5); // Indigo-600
+  static const Color primaryLight = Color(0xFF818CF8); // Indigo-400
+  static const Color primaryDark = Color(0xFF4338CA); // Indigo-700
   
   /// 辅助色
+  static const Color secondaryPurple = Color(0xFFA855F7); // Purple-500
+  static const Color secondaryOrange = Color(0xFFF97316); // Orange-500
+  static const Color secondaryEmerald = Color(0xFF10B981); // Emerald-500
+  
+  /// 旧版兼容（保留）
   static const Color secondaryColor = Color(0xFF03A9F4);
   static const Color accentColor = Color(0xFFFF9800);
   
@@ -21,17 +26,25 @@ class DesignTokens {
   static const Color errorColor = Color(0xFFF44336);
   static const Color infoColor = Color(0xFF2196F3);
   
-  /// 中性色（亮色模式）
-  static const Color backgroundLight = Color(0xFFFFFFFF);
-  static const Color surfaceLight = Color(0xFFF5F5F5);
-  static const Color onSurfaceLight = Color(0xFF212121);
-  static const Color onBackgroundLight = Color(0xFF212121);
+  /// 中性色（亮色模式）- Slate系列
+  static const Color backgroundLight = Color(0xFFFAFAFA); // Slate-50
+  static const Color surfaceLight = Color(0xFFFFFFFF); // White
+  static const Color surfaceLightSecondary = Color(0xFFF8FAFC); // Slate-50
+  static const Color onSurfaceLight = Color(0xFF0F172A); // Slate-900
+  static const Color onBackgroundLight = Color(0xFF1E293B); // Slate-800
+  static const Color textSecondaryLight = Color(0xFF64748B); // Slate-500
+  static const Color textTertiaryLight = Color(0xFF94A3B8); // Slate-400
+  static const Color borderLight = Color(0xFFE2E8F0); // Slate-200
   
   /// 中性色（暗色模式）
-  static const Color backgroundDark = Color(0xFF121212);
-  static const Color surfaceDark = Color(0xFF1E1E1E);
-  static const Color onSurfaceDark = Color(0xFFFFFFFF);
-  static const Color onBackgroundDark = Color(0xFFFFFFFF);
+  static const Color backgroundDark = Color(0xFF0F172A); // Slate-900
+  static const Color surfaceDark = Color(0xFF1E293B); // Slate-800
+  static const Color surfaceDarkSecondary = Color(0xFF334155); // Slate-700
+  static const Color onSurfaceDark = Color(0xFFF1F5F9); // Slate-100
+  static const Color onBackgroundDark = Color(0xFFFFFFFF); // White
+  static const Color textSecondaryDark = Color(0xFF94A3B8); // Slate-400
+  static const Color textTertiaryDark = Color(0xFF64748B); // Slate-500
+  static const Color borderDark = Color(0xFF334155); // Slate-700
   
   /// 优先级颜色
   static const Color priorityLow = Color(0xFF4CAF50);
@@ -48,7 +61,9 @@ class DesignTokens {
   // ==================== 字体系统 ====================
   
   /// 字体系列
-  static const String fontFamily = 'Roboto';
+  static const String fontFamily = 'Inter'; // 英文/数字
+  static const String fontFamilyChinese = 'Noto Sans SC'; // 中文
+  static const String fontFamilyDefault = 'Inter'; // 默认字体
   
   /// 字号
   static const double fontSizeDisplayLarge = 57.0;
@@ -98,11 +113,45 @@ class DesignTokens {
   static const double radiusSmall = 4.0;
   static const double radiusMedium = 8.0;
   static const double radiusLarge = 12.0;
-  static const double radiusXLarge = 16.0;
+  static const double radiusXLarge = 32.0; // 大圆角统一为32px
+  static const double radiusXXLarge = 40.0; // 超大圆角
   static const double radiusRound = 999.0;
   
   // ==================== 阴影 ====================
   
+  /// iOS风格阴影
+  static List<BoxShadow> get shadowIOS => [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.05),
+      blurRadius: 20,
+      offset: const Offset(0, 8),
+      spreadRadius: -5,
+    ),
+    BoxShadow(
+      color: Colors.black.withOpacity(0.01),
+      blurRadius: 10,
+      offset: const Offset(0, 4),
+      spreadRadius: -6,
+    ),
+    BoxShadow(
+      color: Colors.black.withOpacity(0.02),
+      blurRadius: 0,
+      offset: const Offset(0, 0),
+      spreadRadius: 1,
+    ),
+  ];
+  
+  /// 浮动阴影（用于FAB等）
+  static List<BoxShadow> get shadowFloat => [
+    BoxShadow(
+      color: primaryColor.withOpacity(0.2),
+      blurRadius: 40,
+      offset: const Offset(0, 20),
+      spreadRadius: -10,
+    ),
+  ];
+  
+  /// 小阴影
   static List<BoxShadow> get shadowSmall => [
     BoxShadow(
       color: Colors.black.withOpacity(0.05),
@@ -111,6 +160,7 @@ class DesignTokens {
     ),
   ];
   
+  /// 中等阴影
   static List<BoxShadow> get shadowMedium => [
     BoxShadow(
       color: Colors.black.withOpacity(0.1),
@@ -119,6 +169,7 @@ class DesignTokens {
     ),
   ];
   
+  /// 大阴影
   static List<BoxShadow> get shadowLarge => [
     BoxShadow(
       color: Colors.black.withOpacity(0.15),
@@ -177,6 +228,59 @@ class DesignTokens {
       default:
         return priorityMedium;
     }
+  }
+  
+  // ==================== Glassmorphism 工具方法 ====================
+  
+  /// 创建玻璃拟态背景（亮色模式）
+  static BoxDecoration glassLight({
+    double opacity = 0.8,
+    double blur = 24.0,
+    Color? borderColor,
+  }) {
+    return BoxDecoration(
+      color: Colors.white.withOpacity(opacity),
+      borderRadius: BorderRadius.circular(radiusXLarge),
+      border: borderColor != null
+          ? Border.all(color: borderColor, width: 1)
+          : Border.all(
+              color: Colors.white.withOpacity(0.6),
+              width: 1,
+            ),
+    );
+  }
+  
+  /// 创建玻璃拟态背景（暗色模式）
+  static BoxDecoration glassDark({
+    double opacity = 0.8,
+    double blur = 24.0,
+    Color? borderColor,
+  }) {
+    return BoxDecoration(
+      color: backgroundDark.withOpacity(opacity),
+      borderRadius: BorderRadius.circular(radiusXLarge),
+      border: borderColor != null
+          ? Border.all(color: borderColor, width: 1)
+          : Border.all(
+              color: Colors.white.withOpacity(0.05),
+              width: 1,
+            ),
+    );
+  }
+  
+  /// 获取文本样式（支持中英文）
+  static TextStyle textStyle({
+    double? fontSize,
+    FontWeight? fontWeight,
+    Color? color,
+    bool isChinese = false,
+  }) {
+    return TextStyle(
+      fontSize: fontSize ?? fontSizeBodyMedium,
+      fontWeight: fontWeight ?? fontWeightRegular,
+      color: color,
+      fontFamily: isChinese ? fontFamilyChinese : fontFamily,
+    );
   }
 }
 

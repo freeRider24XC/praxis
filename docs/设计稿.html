@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanAI Ultimate UI Kit (Polished)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #F8FAFC;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.05) 0px, transparent 50%),
+                radial-gradient(#CBD5E1 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px;
+        }
+        /* 隐藏滚动条但允许滚动 */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 高级阴影 */
+        .ios-shadow {
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.05), 
+                0 8px 10px -6px rgba(0, 0, 0, 0.01),
+                0 0 0 1px rgba(0,0,0,0.02); /* 微弱边框替代 */
+        }
+        .float-shadow {
+            box-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.2);
+        }
+        
+        /* 玻璃拟态 */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-top: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* 动画微调 */
+        .animate-blink { animation: blink 1s step-end infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 
+            0%, 100% { transform: translateY(0); } 
+            50% { transform: translateY(-10px); } 
+        }
+    </style>
+</head>
+<body class="min-h-screen py-20">
+
+    <div class="text-center mb-16">
+        <span class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold tracking-widest uppercase mb-4 inline-block">Design System v2.0</span>
+        <h1 class="text-5xl font-black text-slate-900 mb-4 tracking-tight">PlanAI Experience Map</h1>
+        <p class="text-slate-500 text-lg max-w-2xl mx-auto">从构思到落地的完整用户旅程可视化</p>
+    </div>
+
+    <!-- 设计稿容器 Grid: 3列布局 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-16 gap-y-24 px-8 max-w-[1400px] mx-auto">
+
+        <!-- ================= 01. 启动页 (Onboarding) ================= -->
+        <div class="relative w-[375px] h-[812px] bg-[#0F172A] rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+            <!-- 动态背景 -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+                <div class="absolute -top-20 -left-20 w-[500px] h-[500px] bg-indigo-600 rounded-full blur-[120px] opacity-30 animate-pulse"></div>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-violet-600 rounded-full blur-[80px] opacity-20"></div>
+                <div class="absolute bottom-0 right-0 w-[400px] h-[400px] bg-fuchsia-600 rounded-full blur-[100px] opacity-20"></div>
+            </div>
+
+            <div class="relative z-10 flex-1 flex flex-col px-8 pt-20 pb-10">
+                <div class="flex-1 flex items-center justify-center animate-float">
+                    <div class="w-64 h-64 relative">
+                        <div class="relative z-10 w-full h-full bg-white/5 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 flex items-center justify-center transform -rotate-6 shadow-2xl ring-1 ring-white/20">
+                            <i class="fas fa-rocket text-8xl text-indigo-300 drop-shadow-[0_0_30px_rgba(165,180,252,0.3)]"></i>
+                        </div>
+                         <div class="absolute -right-4 -bottom-4 z-20 w-20 h-20 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center transform rotate-12 shadow-lg border border-white/10">
+                            <i class="fas fa-check text-3xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-12">
+                    <h1 class="text-4xl font-bold leading-tight text-white mb-4 tracking-tight">把梦想<br>拆解为<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-fuchsia-400">现实</span></h1>
+                    <p class="text-slate-400 text-lg leading-relaxed font-medium">一句话描述目标，AI 为你生成每一步执行路径。</p>
+                </div>
+                <button class="w-full bg-white text-slate-900 py-4 rounded-2xl font-bold text-lg hover:bg-indigo-50 transition-all active:scale-95 flex items-center justify-center gap-2 group shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
+                    开始探索 <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform text-indigo-600"></i>
+                </button>
+                <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-700 rounded-full"></div>
+            </div>
+        </div>
+
+        <!-- ================= 02. 首页 (Dashboard) ================= -->
+        <div class="relative w-[375px] h-[812px] bg-[#FAFAFA] rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+            <!-- 状态栏 -->
+            <div class="h-12 w-full bg-white/80 backdrop-blur-md flex justify-between items-center px-6 pt-2 z-20">
+                <span class="text-xs font-bold">9:41</span>
+                <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2"></div> 
+                <div class="flex gap-1"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar bg-[#FAFAFA] pb-24 relative">
+                <div class="px-6 pt-6 pb-2 bg-white">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <p class="text-slate-400 text-xs font-bold tracking-wider uppercase mb-1">Wed, 20 Nov</p>
+                            <h2 class="text-2xl font-black text-slate-800 tracking-tight">早安, Alex ☀️</h2>
+                        </div>
+                        <div class="relative cursor-pointer">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" class="w-12 h-12 rounded-full border-2 border-white shadow-md bg-indigo-50">
+                            <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="relative group mb-4">
+                        <i class="fas fa-search absolute left-5 top-4 text-slate-400 text-sm group-hover:text-indigo-500 transition-colors"></i>
+                        <input type="text" placeholder="搜索计划或任务..." class="w-full bg-slate-100 py-3.5 pl-12 pr-4 rounded-2xl text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="px-6 mt-6">
+                    <div class="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-[2rem] p-6 text-white float-shadow relative overflow-hidden group">
+                        <!-- 装饰背景 -->
+                        <div class="absolute top-0 right-0 w-48 h-48 bg-white opacity-[0.08] rounded-full -mr-16 -mt-16 blur-2xl group-hover:opacity-[0.12] transition-opacity"></div>
+                        <div class="absolute bottom-0 left-0 w-32 h-32 bg-purple-500 opacity-30 rounded-full -ml-10 -mb-10 blur-2xl"></div>
+                        
+                        <div class="flex justify-between items-start mb-6 relative z-10">
+                            <div>
+                                <p class="text-indigo-100 text-xs font-bold mb-1 uppercase tracking-wide">今日专注度</p>
+                                <div class="flex items-baseline gap-1">
+                                    <h3 class="text-5xl font-black tracking-tighter">85</h3>
+                                    <span class="text-xl opacity-80 font-medium">%</span>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/10 shadow-lg">
+                                <i class="fas fa-fire text-2xl text-amber-300 drop-shadow-md"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- 进度条 -->
+                        <div class="w-full bg-black/20 rounded-full h-1.5 mb-4 overflow-hidden">
+                            <div class="h-full bg-white/90 w-[85%] rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
+                        </div>
+
+                        <div class="flex gap-3 relative z-10">
+                            <span class="bg-indigo-500/40 border border-indigo-400/30 px-3 py-1.5 rounded-lg text-xs font-bold backdrop-blur-sm flex items-center gap-1"><i class="fas fa-check-circle text-[10px]"></i> 3 待办</span>
+                            <span class="bg-indigo-500/40 border border-indigo-400/30 px-3 py-1.5 rounded-lg text-xs font-bold backdrop-blur-sm flex items-center gap-1"><i class="fas fa-clock text-[10px]"></i> 2h 剩余</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 mt-8">
+                    <div class="flex justify-between items-end mb-4">
+                        <h3 class="font-bold text-lg text-slate-800">进行中</h3>
+                        <span class="text-indigo-600 text-xs font-extrabold bg-indigo-50 px-3 py-1 rounded-full cursor-pointer hover:bg-indigo-100 transition-colors">全部 (4)</span>
+                    </div>
+
+                    <!-- 卡片 1 -->
+                    <div class="bg-white p-5 rounded-[2rem] mb-4 ios-shadow border border-slate-100/50 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-orange-50 rounded-bl-[3rem] -mr-6 -mt-6 z-0 transition-transform group-hover:scale-110 origin-top-right"></div>
+                        <div class="flex justify-between items-start mb-3 relative z-10">
+                            <span class="bg-orange-100 text-orange-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider">Trip</span>
+                            <button class="text-slate-300 hover:text-slate-600"><i class="fas fa-ellipsis-h"></i></button>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-lg mb-1 relative z-10">🇯🇵 东京跨年之旅</h4>
+                        <p class="text-slate-400 text-xs mb-5 relative z-10 font-semibold flex items-center gap-1">
+                            <i class="far fa-clock text-[10px]"></i> 还有 25 天出发 • 4/12 任务
+                        </p>
+                        <div class="flex items-center gap-3 relative z-10">
+                            <div class="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-orange-400 to-red-400 w-[65%] rounded-full shadow-lg shadow-orange-500/30"></div>
+                            </div>
+                            <span class="text-xs font-black text-slate-700">65%</span>
+                        </div>
+                    </div>
+
+                    <!-- 卡片 2 -->
+                    <div class="bg-white p-5 rounded-[2rem] mb-4 ios-shadow border border-slate-100/50 group hover:-translate-y-1 transition-transform duration-300">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="bg-blue-100 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider">Study</span>
+                            <button class="text-slate-300 hover:text-slate-600"><i class="fas fa-ellipsis-h"></i></button>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-lg mb-1">⚛️ React 进阶冲刺</h4>
+                        <p class="text-slate-400 text-xs mb-5 font-semibold flex items-center gap-1">
+                            <i class="fas fa-bullseye text-[10px]"></i> 目标：完成 App 原型
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-blue-500 w-[30%] rounded-full shadow-lg shadow-blue-500/20"></div>
+                            </div>
+                            <span class="text-xs font-black text-slate-700">30%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部导航栏 -->
+            <div class="absolute bottom-0 w-full glass-nav px-6 pb-8 pt-4 flex justify-between items-center z-20">
+                <div class="flex flex-col items-center text-indigo-600 gap-1 cursor-pointer hover:scale-110 transition-transform"><i class="fas fa-house text-xl"></i></div>
+                <div class="flex flex-col items-center text-slate-400 gap-1 cursor-pointer hover:scale-110 transition-transform hover:text-slate-600"><i class="fas fa-compass text-xl"></i></div>
+                
+                <!-- 核心悬浮按钮 FAB -->
+                <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center text-white shadow-2xl shadow-slate-900/40 -mt-10 border-[6px] border-[#FAFAFA] relative z-30 cursor-pointer hover:scale-105 active:scale-95 transition-all group">
+                    <i class="fas fa-plus text-2xl group-hover:rotate-90 transition-transform duration-300"></i>
+                </div>
+                
+                <div class="flex flex-col items-center text-slate-400 gap-1 cursor-pointer hover:scale-110 transition-transform hover:text-slate-600"><i class="fas fa-calendar-alt text-xl"></i></div>
+                <div class="flex flex-col items-center text-slate-400 gap-1 cursor-pointer hover:scale-110 transition-transform hover:text-slate-600"><i class="fas fa-user text-xl"></i></div>
+            </div>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-900 rounded-full z-30"></div>
+        </div>
+
+        <!-- ================= 03. AI 交互 (AI Interaction) ================= -->
+        <div class="relative w-[375px] h-[812px] bg-white rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+             <div class="h-12 w-full flex justify-between items-center px-6 pt-2 z-20">
+                <span class="text-xs font-bold">9:42</span>
+                <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2"></div>
+                <div class="flex gap-1"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+            </div>
+            <div class="px-6 pt-4 flex justify-end">
+                <div class="w-9 h-9 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 border border-slate-100 hover:bg-slate-100 cursor-pointer transition-colors"><i class="fas fa-times"></i></div>
+            </div>
+
+            <div class="flex-1 flex flex-col px-8 pt-4 pb-8 relative">
+                <div class="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-indigo-500/20 mb-8 animate-bounce">
+                    <i class="fas fa-sparkles"></i>
+                </div>
+                
+                <h2 class="text-4xl font-black text-slate-900 leading-[1.1] mb-4 tracking-tight">你想达成什么<br><span class="text-indigo-600">新目标？</span></h2>
+                <p class="text-slate-500 mb-10 text-lg font-medium">告诉我你的想法，我会帮你拆解成可执行的小步骤。</p>
+
+                <div class="flex-1">
+                    <div class="relative group">
+                        <!-- 使用大号字体输入，去除边框，像是在写标题 -->
+                        <textarea class="w-full h-48 text-3xl bg-transparent border-none outline-none text-slate-800 placeholder-slate-300 resize-none leading-tight font-bold" placeholder="例如：我想在一个月内减重 5 斤..."></textarea>
+                        <!-- 光标模拟 -->
+                        <div class="absolute top-2 left-[300px] w-1 h-8 bg-indigo-500 animate-blink rounded-full"></div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <span class="px-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-sm font-bold hover:border-indigo-500 hover:text-indigo-600 transition-colors cursor-pointer">🏃‍♂️ 运动健身</span>
+                        <span class="px-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-sm font-bold hover:border-indigo-500 hover:text-indigo-600 transition-colors cursor-pointer">📚 技能学习</span>
+                        <span class="px-4 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-sm font-bold hover:border-indigo-500 hover:text-indigo-600 transition-colors cursor-pointer">✈️ 旅行规划</span>
+                    </div>
+                </div>
+
+                <div class="w-full">
+                    <div class="flex justify-between items-center mb-6 px-2">
+                        <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors border border-slate-200 cursor-pointer group">
+                            <i class="fas fa-microphone text-lg group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-300 bg-slate-50 px-2 py-1 rounded">0/200</span>
+                    </div>
+                    <button class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-xl shadow-indigo-900/20 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all">
+                        <i class="fas fa-magic"></i> 开始智能规划
+                    </button>
+                </div>
+            </div>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-900 rounded-full z-30"></div>
+        </div>
+
+        <!-- ================= 04. 计划详情 (Project Detail) ================= -->
+        <div class="relative w-[375px] h-[812px] bg-[#FAFAFA] rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+            <div class="h-12 w-full flex justify-between items-center px-6 pt-2 z-20 bg-white">
+                <span class="text-xs font-bold">9:43</span>
+                <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2"></div>
+                <div class="flex gap-1"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+            </div>
+
+            <div class="bg-white px-6 pb-4 pt-2 flex items-center gap-4 border-b border-slate-50 sticky top-0 z-10">
+                <div class="w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center text-slate-600 bg-slate-50 hover:bg-slate-100 cursor-pointer">
+                    <i class="fas fa-arrow-left text-sm"></i>
+                </div>
+                <div class="flex-1 text-center pr-10">
+                    <h3 class="font-bold text-slate-800">计划详情</h3>
+                </div>
+                <i class="fas fa-share-alt text-slate-400 cursor-pointer hover:text-indigo-600"></i>
+            </div>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-24">
+                <div class="p-8 bg-white rounded-b-[2.5rem] shadow-sm mb-6 border-b border-slate-100/50">
+                    <div class="flex items-start gap-5 mb-8">
+                        <div class="w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-3xl flex-shrink-0 shadow-inner border border-blue-200/50">
+                            <i class="fab fa-python"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-900 leading-tight mb-2">30天 Python<br>基础入门</h2>
+                            <div class="flex gap-2 text-xs font-bold">
+                                <span class="bg-slate-100 text-slate-500 px-2 py-1 rounded-md">截止: 12月20日</span>
+                                <span class="bg-orange-50 text-orange-500 px-2 py-1 rounded-md">中等难度</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <div class="flex-1 bg-[#F8FAFC] p-4 rounded-2xl text-center border border-slate-100 group hover:border-indigo-100 transition-colors">
+                            <div class="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors">4</div>
+                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">阶段</div>
+                        </div>
+                        <div class="flex-1 bg-[#F8FAFC] p-4 rounded-2xl text-center border border-slate-100 group hover:border-indigo-100 transition-colors">
+                            <div class="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors">24</div>
+                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">任务</div>
+                        </div>
+                        <div class="flex-1 bg-[#F8FAFC] p-4 rounded-2xl text-center border border-slate-100 group hover:border-indigo-100 transition-colors">
+                            <div class="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors">30h</div>
+                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">耗时</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6">
+                    <h3 class="text-xs font-extrabold text-slate-400 mb-6 uppercase tracking-widest pl-2">执行路线图</h3>
+
+                    <!-- 阶段 1 -->
+                    <div class="relative pl-8 pb-10 border-l-[3px] border-indigo-100 ml-2">
+                        <div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-indigo-600 border-[4px] border-[#FAFAFA] shadow-md ring-1 ring-indigo-100"></div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-bold text-slate-800 text-lg">Phase 1: 环境与语法</h4>
+                            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100">进行中</span>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 group hover:border-indigo-200 transition-colors cursor-pointer">
+                                <div class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs shadow-md shadow-indigo-200"><i class="fas fa-check"></i></div>
+                                <span class="text-sm text-slate-400 line-through font-medium group-hover:text-slate-500 transition-colors">安装 Python 和 VS Code</span>
+                            </div>
+                            <div class="bg-white p-4 rounded-2xl border border-indigo-500 shadow-lg shadow-indigo-100 flex items-center gap-4 relative overflow-hidden cursor-pointer hover:translate-x-1 transition-transform">
+                                <div class="absolute left-0 top-0 h-full w-1.5 bg-indigo-500"></div>
+                                <div class="w-6 h-6 rounded-full border-2 border-indigo-500"></div>
+                                <span class="text-sm text-slate-800 font-bold">变量与数据类型练习</span>
+                                <span class="ml-auto text-xs text-indigo-500 font-bold bg-indigo-50 px-2 py-1 rounded">今日</span>
+                            </div>
+                             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 opacity-60">
+                                <div class="w-6 h-6 rounded-full border-2 border-slate-300"></div>
+                                <span class="text-sm text-slate-600 font-medium">流程控制 (If/Else)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 阶段 2 -->
+                    <div class="relative pl-8 pb-8 border-l-[3px] border-slate-200 ml-2">
+                         <div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-[#FAFAFA] border-[4px] border-slate-300 shadow-sm"></div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-bold text-slate-400 text-lg">Phase 2: 函数与模块</h4>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">未开始</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 opacity-50 grayscale">
+                            <div class="w-6 h-6 rounded-full border-2 border-slate-200"></div>
+                            <span class="text-sm text-slate-400 font-medium">函数定义与参数</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="absolute bottom-0 w-full bg-white p-5 border-t border-slate-100 z-20 pb-8">
+                <button class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-base shadow-xl shadow-slate-900/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all">
+                    <i class="fas fa-play text-xs"></i> 继续执行
+                </button>
+            </div>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-900 rounded-full z-30"></div>
+        </div>
+
+        <!-- ================= 05. 发现页 (Explore) ================= -->
+        <div class="relative w-[375px] h-[812px] bg-[#FAFAFA] rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+             <div class="h-12 w-full flex justify-between items-center px-6 pt-2 z-20 bg-white">
+                <span class="text-xs font-bold">9:41</span>
+                <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2"></div>
+                <div class="flex gap-1"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+            </div>
+
+            <div class="px-6 pt-4 pb-4 bg-white sticky top-0 z-10 border-b border-slate-50">
+                <h2 class="text-2xl font-extrabold text-slate-800 mb-4 tracking-tight">探索社区 <span class="text-indigo-500">.</span></h2>
+                <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+                    <span class="px-5 py-2.5 bg-slate-900 text-white rounded-full text-sm font-bold whitespace-nowrap shadow-lg shadow-slate-900/20 cursor-pointer">推荐</span>
+                    <span class="px-5 py-2.5 bg-white text-slate-600 rounded-full text-sm font-bold whitespace-nowrap border border-slate-200 cursor-pointer hover:border-slate-300 transition-colors">旅行</span>
+                    <span class="px-5 py-2.5 bg-white text-slate-600 rounded-full text-sm font-bold whitespace-nowrap border border-slate-200 cursor-pointer hover:border-slate-300 transition-colors">健身</span>
+                    <span class="px-5 py-2.5 bg-white text-slate-600 rounded-full text-sm font-bold whitespace-nowrap border border-slate-200 cursor-pointer hover:border-slate-300 transition-colors">编程</span>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar p-6 space-y-6 pb-24">
+                <!-- 推荐卡片 1 -->
+                <div class="bg-white rounded-[2rem] p-4 shadow-sm border border-slate-100 group cursor-pointer hover:shadow-md transition-all duration-300">
+                    <div class="relative h-44 bg-slate-200 rounded-[1.5rem] mb-4 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1493934558415-9d19f0b2b4d2?w=500&q=80" class="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" alt="Kyoto">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                        <div class="absolute bottom-4 left-5 text-white">
+                            <div class="font-bold text-xl mb-1 leading-tight">7天京都深度游</div>
+                            <div class="text-xs opacity-90 font-medium flex gap-2">
+                                <span class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[10px]">⛩️ 寺庙</span>
+                                <span class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[10px]">🍵 抹茶</span>
+                            </div>
+                        </div>
+                        <div class="absolute top-4 right-4 bg-red-500/80 backdrop-blur-md px-3 py-1 rounded-full text-white text-[10px] font-bold shadow-lg">
+                            🔥 热门
+                        </div>
+                    </div>
+                    <div class="px-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-2">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" class="w-8 h-8 rounded-full bg-slate-100 border-2 border-white shadow-sm">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-800">Sarah L.</p>
+                                    <p class="text-[10px] text-slate-400">旅行博主</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 text-slate-400 text-xs font-bold">
+                                <span><i class="fas fa-download mr-1 text-indigo-500"></i> 2.3k</span>
+                                <span><i class="fas fa-heart mr-1 text-pink-500"></i> 582</span>
+                            </div>
+                        </div>
+                        <button class="w-full py-3 bg-indigo-50 text-indigo-600 font-bold text-sm rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2">
+                            <i class="far fa-copy"></i> 使用此模板
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 推荐卡片 2 -->
+                <div class="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100">
+                    <div class="flex items-start gap-4 mb-4">
+                        <div class="w-16 h-16 bg-gradient-to-br from-orange-100 to-amber-100 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-orange-200/30">🏋️</div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-slate-800 text-lg">30天居家腹肌训练</h3>
+                            <p class="text-xs text-slate-400 mt-1 font-medium">适合零基础 • 每日20分钟</p>
+                             <div class="flex gap-2 mt-3">
+                                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold">无器械</span>
+                                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold">P4级难度</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="w-full py-3 bg-slate-900 text-white font-bold text-sm rounded-xl shadow-lg shadow-slate-900/10">
+                        加入挑战
+                    </button>
+                </div>
+            </div>
+             <!-- Nav Bar -->
+             <div class="absolute bottom-0 w-full glass-nav px-6 pb-8 pt-4 flex justify-between items-center z-20">
+                <div class="flex flex-col items-center text-slate-300 gap-1"><i class="fas fa-house text-xl"></i></div>
+                <div class="flex flex-col items-center text-indigo-600 gap-1"><i class="fas fa-compass text-xl"></i></div>
+                <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center text-white shadow-2xl shadow-slate-900/40 -mt-10 border-[6px] border-[#FAFAFA] relative z-30"><i class="fas fa-plus text-2xl"></i></div>
+                <div class="flex flex-col items-center text-slate-300 gap-1"><i class="fas fa-calendar-alt text-xl"></i></div>
+                <div class="flex flex-col items-center text-slate-300 gap-1"><i class="fas fa-user text-xl"></i></div>
+            </div>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-900 rounded-full z-30"></div>
+        </div>
+
+        <!-- ================= 06. 日程视图 (Schedule) ================= -->
+        <div class="relative w-[375px] h-[812px] bg-white rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+             <div class="h-12 w-full flex justify-between items-center px-6 pt-2 z-20 bg-white">
+                <span class="text-xs font-bold">9:44</span>
+                <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2"></div>
+                <div class="flex gap-1"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+            </div>
+
+            <div class="px-6 pb-2 pt-2 bg-white shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] z-10">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">11月 2024</h2>
+                    <div class="flex gap-2">
+                         <button class="w-9 h-9 rounded-full border border-slate-100 flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors"><i class="fas fa-chevron-left text-xs"></i></button>
+                         <button class="w-9 h-9 rounded-full border border-slate-100 flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors"><i class="fas fa-chevron-right text-xs"></i></button>
+                    </div>
+                </div>
+                <div class="flex justify-between mb-4">
+                    <div class="flex flex-col items-center gap-3"><span class="text-xs text-slate-400 font-bold">周一</span><span class="text-sm font-bold text-slate-400 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-50 cursor-pointer transition-colors">18</span></div>
+                    <div class="flex flex-col items-center gap-3"><span class="text-xs text-slate-400 font-bold">周二</span><span class="text-sm font-bold text-slate-400 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-50 cursor-pointer transition-colors">19</span></div>
+                    <div class="flex flex-col items-center gap-3"><span class="text-xs text-indigo-600 font-bold">周三</span><span class="text-sm font-bold text-white w-9 h-9 flex items-center justify-center rounded-full bg-indigo-600 shadow-lg shadow-indigo-500/40 scale-110">20</span></div>
+                    <div class="flex flex-col items-center gap-3"><span class="text-xs text-slate-400 font-bold">周四</span><span class="text-sm font-bold text-slate-400 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-50 cursor-pointer transition-colors">21</span></div>
+                    <div class="flex flex-col items-center gap-3"><span class="text-xs text-slate-400 font-bold">周五</span><span class="text-sm font-bold text-slate-400 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-50 cursor-pointer transition-colors">22</span></div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar relative pt-6 bg-[#FAFAFA]">
+                <div class="absolute top-0 left-[4.5rem] w-px h-full bg-slate-200/50 border-r border-dashed border-slate-300"></div>
+                
+                <!-- 10:00 Item -->
+                <div class="flex w-full relative mb-8 group cursor-pointer">
+                    <div class="w-[4.5rem] text-right pr-5 text-xs text-slate-400 font-bold py-2">10:00</div>
+                    <div class="flex-1 mr-5 p-4 bg-white border-l-4 border-blue-500 rounded-xl relative shadow-sm group-hover:translate-x-1 transition-transform">
+                         <h4 class="text-sm font-bold text-slate-800">React 学习: 变量练习</h4>
+                         <p class="text-xs text-slate-400 mt-1 font-medium"><i class="far fa-clock mr-1"></i> 45 min • 学习计划</p>
+                    </div>
+                </div>
+
+                 <!-- 14:00 Item -->
+                 <div class="flex w-full relative mb-8 cursor-pointer group">
+                    <div class="w-[4.5rem] text-right pr-5 text-xs text-slate-400 font-bold py-2">14:00</div>
+                    <div class="flex-1 mr-5 p-4 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-500/30 relative overflow-hidden group-hover:scale-[1.02] transition-transform">
+                         <div class="absolute -right-4 -top-4 w-20 h-20 bg-white opacity-10 rounded-full"></div>
+                         <div class="flex justify-between items-start mb-1">
+                             <h4 class="text-sm font-bold">深度工作：核心代码</h4>
+                             <span class="bg-white/20 text-[10px] px-2 py-0.5 rounded font-bold backdrop-blur-sm border border-white/10">专注</span>
+                         </div>
+                         <p class="text-xs text-indigo-100 font-medium">2 hours • 禁止打扰</p>
+                    </div>
+                </div>
+
+                <!-- 16:30 Item -->
+                <div class="flex w-full relative mb-8 cursor-pointer group">
+                    <div class="w-[4.5rem] text-right pr-5 text-xs text-slate-400 font-bold py-2">16:30</div>
+                    <div class="flex-1 mr-5 p-4 bg-white border-l-4 border-orange-400 rounded-xl relative shadow-sm group-hover:translate-x-1 transition-transform">
+                         <h4 class="text-sm font-bold text-slate-800">预定东京机票</h4>
+                         <p class="text-xs text-slate-400 mt-1 font-medium"><i class="far fa-clock mr-1"></i> 30 min • 旅行清单</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Nav Bar -->
+            <div class="absolute bottom-0 w-full glass-nav px-6 pb-8 pt-4 flex justify-between items-center z-20">
+                <div class="flex flex-col items-center text-slate-300 gap-1"><i class="fas fa-house text-xl"></i></div>
+                <div class="flex flex-col items-center text-slate-300 gap-1"><i class="fas fa-compass text-xl"></i></div>
+                <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center text-white shadow-2xl shadow-slate-900/40 -mt-10 border-[6px] border-[#FAFAFA] relative z-30"><i class="fas fa-plus text-2xl"></i></div>
+                <div class="flex flex-col items-center text-indigo-600 gap-1"><i class="fas fa-calendar-alt text-xl"></i></div>
+                <div class="flex flex-col items-center text-slate-300 gap-1"><i class="fas fa-user text-xl"></i></div>
+            </div>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-900 rounded-full z-30"></div>
+        </div>
+
+        <!-- ================= 07. 快捷任务弹窗 (Quick Task Modal) ================= -->
+        <div class="relative w-[375px] h-[812px] bg-slate-800 rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+            <!-- 背景虚化 -->
+             <div class="absolute top-0 left-0 w-full h-full bg-white opacity-10 z-0"></div>
+             <!-- 模拟Home页面内容在后面 -->
+             <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop')] bg-cover blur-sm opacity-30"></div>
+
+             <!-- 底部弹窗 -->
+             <div class="absolute bottom-0 w-full bg-white rounded-t-[2.5rem] p-8 pt-8 pb-10 z-10 shadow-2xl">
+                 <div class="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-slate-200 rounded-full"></div>
+                 
+                 <div class="flex justify-between items-center mb-8">
+                     <h3 class="text-xl font-extrabold text-slate-800">新建任务</h3>
+                     <div class="w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 cursor-pointer hover:bg-slate-100"><i class="fas fa-times text-sm"></i></div>
+                 </div>
+
+                 <!-- 输入框 -->
+                 <div class="mb-6">
+                     <input type="text" placeholder="准备做什么？" class="w-full text-2xl font-black text-slate-800 placeholder-slate-300 border-none outline-none bg-transparent mb-3" value="整理周报会议记录">
+                     <textarea placeholder="添加描述、备注或子任务..." class="w-full text-sm font-medium text-slate-500 placeholder-slate-300 border-none outline-none bg-transparent resize-none h-20">需要包含 KPI 数据总结和下周计划...</textarea>
+                 </div>
+
+                 <!-- 选项 Chips -->
+                 <div class="flex flex-wrap gap-3 mb-8">
+                     <div class="px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold flex items-center gap-2 cursor-pointer hover:border-indigo-200 transition-colors">
+                         <i class="far fa-calendar text-slate-400"></i> 今天
+                     </div>
+                     <div class="px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold flex items-center gap-2 cursor-pointer hover:bg-indigo-100 transition-colors">
+                         <i class="far fa-flag"></i> 高优先级
+                     </div>
+                     <div class="px-4 py-2.5 rounded-xl bg-purple-50 border border-purple-100 text-purple-600 text-xs font-bold flex items-center gap-2 ml-auto cursor-pointer hover:bg-purple-100 transition-colors">
+                         <i class="fas fa-magic"></i> AI 润色
+                     </div>
+                 </div>
+
+                 <!-- 确认按钮 -->
+                 <button class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-transform">
+                     <i class="fas fa-paper-plane"></i> 创建任务
+                 </button>
+             </div>
+             <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-900 rounded-full z-30"></div>
+        </div>
+
+        <!-- ================= 08. 专注模式 (Focus Mode) ================= -->
+        <div class="relative w-[375px] h-[812px] bg-[#000000] rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto text-white ring-8 ring-slate-900/5">
+             <div class="h-12 w-full flex justify-between items-center px-6 pt-2 z-20">
+                <span class="text-xs font-bold">9:45</span>
+                <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2 border border-slate-800"></div>
+                <div class="flex gap-1"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+            </div>
+
+            <div class="px-6 pt-4 flex justify-between items-center">
+                <button class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-slate-300 backdrop-blur-sm hover:bg-white/20 transition-colors"><i class="fas fa-chevron-down"></i></button>
+                <span class="text-[10px] font-bold text-slate-400 bg-white/5 px-3 py-1 rounded-full border border-white/10 tracking-widest">FOCUS</span>
+                <button class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-slate-300 backdrop-blur-sm hover:bg-white/20 transition-colors"><i class="fas fa-music"></i></button>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-center relative">
+                <!-- 呼吸灯效 -->
+                <div class="absolute w-72 h-72 bg-indigo-600 rounded-full blur-[120px] opacity-20 animate-pulse"></div>
+                
+                <div class="w-72 h-72 rounded-full border-[8px] border-slate-800/50 flex items-center justify-center relative shadow-2xl">
+                     <!-- 进度条 SVG -->
+                     <svg class="absolute top-0 left-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                         <circle cx="50" cy="50" r="46" fill="none" stroke="#6366f1" stroke-width="8" stroke-dasharray="289" stroke-dashoffset="40" stroke-linecap="round" class="drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]"></circle>
+                     </svg>
+                     
+                     <div class="text-center z-10">
+                         <div class="text-7xl font-bold tracking-tighter font-mono mb-1">24:59</div>
+                         <p class="text-indigo-400 text-xs font-bold tracking-[0.2em] uppercase">Remaining</p>
+                     </div>
+                </div>
+                
+                <div class="mt-16 text-center px-8">
+                    <div class="flex items-center justify-center gap-2 mb-4">
+                        <span class="w-2 h-2 bg-indigo-500 rounded-full animate-ping"></span>
+                        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Doing Now</p>
+                    </div>
+                    <h3 class="text-2xl font-bold leading-snug">深度工作：核心代码实现</h3>
+                </div>
+            </div>
+
+            <div class="pb-16 px-10 w-full">
+                <div class="flex justify-between items-center max-w-[280px] mx-auto">
+                    <button class="w-16 h-16 rounded-full bg-white/5 text-slate-300 flex items-center justify-center hover:bg-white/10 transition-colors active:scale-95"><i class="fas fa-stop"></i></button>
+                    <button class="w-24 h-24 rounded-[2.5rem] bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/40 text-3xl hover:scale-105 active:scale-95 transition-transform border-4 border-indigo-900"><i class="fas fa-pause"></i></button>
+                    <button class="w-16 h-16 rounded-full bg-white/5 text-slate-300 flex items-center justify-center hover:bg-white/10 transition-colors active:scale-95"><i class="fas fa-step-forward"></i></button>
+                </div>
+            </div>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-700 rounded-full z-30"></div>
+        </div>
+
+        <!-- ================= 09. 个人中心 (Profile) ================= -->
+        <div class="relative w-[375px] h-[812px] bg-[#FAFAFA] rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+             <div class="h-12 w-full flex justify-between items-center px-6 pt-2 z-20 bg-white">
+                <span class="text-xs font-bold">9:46</span>
+                <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2"></div>
+                <div class="flex gap-1"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+            </div>
+
+            <div class="bg-white px-6 pb-8 pt-2 mb-4 rounded-b-[2.5rem] shadow-sm border-b border-slate-100/50">
+                <div class="flex justify-between items-start mb-8">
+                    <h2 class="text-2xl font-extrabold text-slate-800">个人中心</h2>
+                    <button class="p-2 bg-slate-50 rounded-full text-slate-400 border border-slate-100 hover:bg-slate-100"><i class="fas fa-cog"></i></button>
+                </div>
+                <div class="flex items-center gap-5">
+                    <div class="w-24 h-24 rounded-full p-1.5 bg-gradient-to-tr from-indigo-500 via-purple-500 to-orange-400 shadow-lg">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" class="w-full h-full rounded-full border-[3px] border-white bg-slate-100" alt="Avatar">
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-900">Alex Chen</h3>
+                        <p class="text-slate-500 text-sm mb-3 font-medium">Lv.5 规划大师</p>
+                        <div class="flex items-center gap-2">
+                             <div class="w-32 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-indigo-500 w-[70%] rounded-full"></div>
+                            </div>
+                            <span class="text-[10px] font-bold text-indigo-600">1200 XP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-24 px-6">
+                <!-- 数据概览 -->
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center group hover:border-emerald-200 transition-colors">
+                        <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><i class="fas fa-check-circle text-lg"></i></div>
+                        <div class="text-3xl font-bold text-slate-800">128</div>
+                        <div class="text-xs text-slate-400 font-bold mt-1">完成任务</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center group hover:border-blue-200 transition-colors">
+                        <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><i class="fas fa-hourglass-half text-lg"></i></div>
+                        <div class="text-3xl font-bold text-slate-800">42<span class="text-base">h</span></div>
+                        <div class="text-xs text-slate-400 font-bold mt-1">专注时长</div>
+                    </div>
+                </div>
+
+                <!-- 勋章墙 -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800">勋章收藏</h3>
+                        <span class="text-xs text-slate-400 font-bold cursor-pointer hover:text-indigo-600 transition-colors">查看全部 <i class="fas fa-chevron-right ml-1 text-[10px]"></i></span>
+                    </div>
+                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                        <div class="flex gap-2 justify-between">
+                            <div class="flex flex-col items-center gap-2 w-1/4 group cursor-pointer">
+                                <div class="w-14 h-14 bg-gradient-to-b from-yellow-50 to-amber-100 rounded-2xl flex items-center justify-center text-2xl border border-amber-200 shadow-sm group-hover:-translate-y-1 transition-transform">🏆</div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center">7日连胜</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 w-1/4 group cursor-pointer">
+                                <div class="w-14 h-14 bg-gradient-to-b from-indigo-50 to-blue-100 rounded-2xl flex items-center justify-center text-2xl border border-indigo-200 shadow-sm group-hover:-translate-y-1 transition-transform">⚡️</div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center">效率之星</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 w-1/4 opacity-40 grayscale">
+                                <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl border border-slate-200">🧘</div>
+                                <span class="text-[10px] font-bold text-slate-400 text-center">冥想大师</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 w-1/4 opacity-40 grayscale">
+                                <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl border border-slate-200">📅</div>
+                                <span class="text-[10px] font-bold text-slate-400 text-center">全勤月</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nav Bar -->
+            <div class="absolute bottom-0 w-full glass-nav px-6 pb-8 pt-4 flex justify-between items-center z-20">
+                <div class="flex flex-col items-center text-slate-300 gap-1"><i class="fas fa-house text-xl"></i></div>
+                <div class="flex flex-col items-center text-slate-300 gap-1"><i class="fas fa-compass text-xl"></i></div>
+                <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center text-white shadow-2xl shadow-slate-900/40 -mt-10 border-[6px] border-[#FAFAFA] relative z-30"><i class="fas fa-plus text-2xl"></i></div>
+                <div class="flex flex-col items-center text-slate-300 gap-1"><i class="fas fa-calendar-alt text-xl"></i></div>
+                <div class="flex flex-col items-center text-indigo-600 gap-1"><i class="fas fa-user text-xl"></i></div>
+            </div>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-900 rounded-full z-30"></div>
+        </div>
+
+        <!-- ================= 10. 消息通知 (Notifications) [NEW] ================= -->
+        <div class="relative w-[375px] h-[812px] bg-[#FAFAFA] rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+            <div class="h-12 w-full flex justify-between items-center px-6 pt-2 z-20 bg-white">
+               <span class="text-xs font-bold">9:47</span>
+               <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2"></div>
+               <div class="flex gap-1"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+           </div>
+
+           <div class="bg-white px-6 pb-4 pt-2 flex justify-between items-center border-b border-slate-50 sticky top-0 z-10">
+               <h3 class="text-2xl font-extrabold text-slate-800">通知消息</h3>
+               <div class="w-9 h-9 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 border border-slate-100"><i class="fas fa-check-double text-sm"></i></div>
+           </div>
+
+           <div class="flex-1 overflow-y-auto hide-scrollbar p-6 pb-24">
+               <div class="mb-6">
+                   <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">今天</h4>
+                   <!-- 通知 1: AI 完成 -->
+                   <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex gap-4 mb-3 relative cursor-pointer hover:bg-slate-50 transition-colors">
+                       <div class="absolute top-4 right-4 w-2 h-2 bg-red-500 rounded-full ring-4 ring-white"></div>
+                       <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 text-xl flex-shrink-0">
+                           <i class="fas fa-magic"></i>
+                       </div>
+                       <div>
+                           <h5 class="font-bold text-slate-800 text-sm mb-1">计划生成完毕</h5>
+                           <p class="text-xs text-slate-500 leading-relaxed">你的 "2024 年书单计划" 已完成拆解，包含 3 个阶段共 15 个任务。</p>
+                           <span class="text-[10px] text-slate-300 mt-2 block font-bold">2 分钟前</span>
+                       </div>
+                   </div>
+                   <!-- 通知 2: 好友互动 -->
+                   <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex gap-4 mb-3 cursor-pointer hover:bg-slate-50 transition-colors">
+                        <div class="w-12 h-12 rounded-xl p-0.5 bg-gradient-to-tr from-pink-500 to-orange-400 flex-shrink-0">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" class="w-full h-full rounded-[10px] bg-white">
+                        </div>
+                       <div>
+                           <h5 class="font-bold text-slate-800 text-sm mb-1">Sarah 赞了你的计划</h5>
+                           <p class="text-xs text-slate-500 leading-relaxed">Sarah 觉得你的 "30天腹肌训练" 很棒，并收藏了模板。</p>
+                           <span class="text-[10px] text-slate-300 mt-2 block font-bold">1 小时前</span>
+                       </div>
+                   </div>
+               </div>
+
+               <div class="mb-6">
+                   <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">昨天</h4>
+                   <!-- 通知 3: 系统提醒 -->
+                   <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex gap-4 mb-3 opacity-60 hover:opacity-100 transition-opacity">
+                       <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 text-xl flex-shrink-0">
+                           <i class="fas fa-bell"></i>
+                       </div>
+                       <div>
+                           <h5 class="font-bold text-slate-800 text-sm mb-1">每日回顾提醒</h5>
+                           <p class="text-xs text-slate-500 leading-relaxed">你今天完成了 4 个任务，别忘了填写每日总结哦。</p>
+                           <span class="text-[10px] text-slate-300 mt-2 block font-bold">昨天 20:00</span>
+                       </div>
+                   </div>
+               </div>
+           </div>
+           <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-900 rounded-full z-30"></div>
+       </div>
+
+       <!-- ================= 11. 设置页面 (Settings) [NEW] ================= -->
+       <div class="relative w-[375px] h-[812px] bg-[#FAFAFA] rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+            <div class="h-12 w-full flex justify-between items-center px-6 pt-2 z-20 bg-white">
+               <span class="text-xs font-bold">9:48</span>
+               <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2"></div>
+               <div class="flex gap-1"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+           </div>
+           
+           <div class="bg-white px-6 pb-4 pt-2 flex items-center gap-4 border-b border-slate-50 sticky top-0 z-10">
+                <div class="w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center text-slate-600 bg-slate-50 hover:bg-slate-100 cursor-pointer">
+                    <i class="fas fa-arrow-left text-sm"></i>
+                </div>
+                <div class="flex-1 text-center pr-10">
+                    <h3 class="font-bold text-slate-800">设置</h3>
+                </div>
+            </div>
+
+           <div class="flex-1 overflow-y-auto hide-scrollbar p-6">
+                <!-- 账号卡片 -->
+               <div class="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm mb-6 flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow">
+                   <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" class="w-14 h-14 rounded-full bg-slate-100">
+                   <div class="flex-1">
+                       <h4 class="font-bold text-slate-800 text-lg">Alex Chen</h4>
+                       <p class="text-xs text-slate-400">alex.chen@example.com</p>
+                   </div>
+                   <button class="bg-slate-50 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-100">编辑</button>
+               </div>
+
+               <!-- 设置分组 1 -->
+               <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pl-2">通用</h4>
+               <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm mb-6 overflow-hidden">
+                   <div class="p-4 border-b border-slate-50 flex justify-between items-center hover:bg-slate-50 transition-colors cursor-pointer">
+                       <div class="flex items-center gap-3">
+                           <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600"><i class="fas fa-moon text-sm"></i></div>
+                           <span class="text-sm font-bold text-slate-700">深色模式</span>
+                       </div>
+                       <div class="text-xs text-slate-400 font-bold flex items-center gap-2">跟随系统 <i class="fas fa-chevron-right text-[10px]"></i></div>
+                   </div>
+                   <div class="p-4 border-b border-slate-50 flex justify-between items-center hover:bg-slate-50 transition-colors cursor-pointer">
+                       <div class="flex items-center gap-3">
+                           <div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-500"><i class="fas fa-bell text-sm"></i></div>
+                           <span class="text-sm font-bold text-slate-700">通知提醒</span>
+                       </div>
+                       <div class="w-10 h-6 bg-indigo-600 rounded-full relative"><div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div></div>
+                   </div>
+                   <div class="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors cursor-pointer">
+                       <div class="flex items-center gap-3">
+                           <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500"><i class="fas fa-globe text-sm"></i></div>
+                           <span class="text-sm font-bold text-slate-700">语言</span>
+                       </div>
+                       <div class="text-xs text-slate-400 font-bold flex items-center gap-2">简体中文 <i class="fas fa-chevron-right text-[10px]"></i></div>
+                   </div>
+               </div>
+
+               <!-- 设置分组 2 -->
+               <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pl-2">数据与安全</h4>
+               <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm mb-6 overflow-hidden">
+                   <div class="p-4 border-b border-slate-50 flex justify-between items-center hover:bg-slate-50 transition-colors cursor-pointer">
+                       <div class="flex items-center gap-3">
+                           <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-500"><i class="fas fa-cloud text-sm"></i></div>
+                           <span class="text-sm font-bold text-slate-700">iCloud 同步</span>
+                       </div>
+                       <div class="w-10 h-6 bg-slate-200 rounded-full relative"><div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div></div>
+                   </div>
+                    <div class="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors cursor-pointer">
+                       <div class="flex items-center gap-3">
+                           <div class="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-500"><i class="fas fa-shield-alt text-sm"></i></div>
+                           <span class="text-sm font-bold text-slate-700">隐私政策</span>
+                       </div>
+                       <i class="fas fa-chevron-right text-slate-300 text-[10px]"></i>
+                   </div>
+               </div>
+
+               <button class="w-full py-4 text-red-500 font-bold text-sm bg-white border border-red-100 rounded-2xl hover:bg-red-50 transition-colors active:scale-95">
+                   退出登录
+               </button>
+           </div>
+           <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-900 rounded-full z-30"></div>
+       </div>
+
+       <!-- ================= 12. 深色模式首页 (Dark Mode) [NEW] ================= -->
+       <div class="relative w-[375px] h-[812px] bg-[#0F172A] rounded-[3.5rem] border-[10px] border-[#0F172A] overflow-hidden ios-shadow flex flex-col mx-auto ring-8 ring-slate-900/5">
+            <div class="h-12 w-full flex justify-between items-center px-6 pt-2 z-20">
+                <span class="text-xs font-bold text-white">9:49</span>
+                <div class="w-20 h-6 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2 border border-slate-800"></div>
+                <div class="flex gap-1 text-white"><i class="fas fa-signal text-xs"></i><i class="fas fa-wifi text-xs"></i><i class="fas fa-battery-full text-xs"></i></div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-24">
+                <div class="px-6 pt-6 pb-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <p class="text-slate-400 text-xs font-bold tracking-wider uppercase mb-1">Wed, 20 Nov</p>
+                            <h2 class="text-2xl font-black text-white">晚安, Alex 🌙</h2>
+                        </div>
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" class="w-12 h-12 rounded-full border-2 border-slate-700 bg-slate-800">
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-slate-500 text-sm"></i>
+                        <input type="text" placeholder="搜索..." class="w-full bg-slate-800 py-3.5 pl-10 pr-4 rounded-2xl text-sm font-medium outline-none text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 border border-slate-700/50">
+                    </div>
+                </div>
+
+                <div class="px-6 mt-4">
+                    <div class="bg-gradient-to-br from-indigo-900 to-slate-800 rounded-[2rem] p-6 border border-slate-700 relative overflow-hidden shadow-xl shadow-black/20">
+                        <div class="flex justify-between items-start mb-8 relative z-10">
+                            <div>
+                                <p class="text-indigo-300 text-xs font-bold mb-1 uppercase">今日专注度</p>
+                                <h3 class="text-4xl font-black text-white tracking-tight">85<span class="text-lg text-slate-400 ml-1 font-normal">%</span></h3>
+                            </div>
+                            <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 backdrop-blur-md">
+                                <i class="fas fa-moon text-xl text-indigo-300"></i>
+                            </div>
+                        </div>
+                         <div class="w-full bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
+                            <div class="h-full bg-indigo-500 w-[85%] rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 mt-8">
+                     <h3 class="font-bold text-lg text-white mb-4">进行中</h3>
+                     <div class="bg-slate-800/50 p-5 rounded-[2rem] mb-4 border border-slate-700 backdrop-blur-sm hover:bg-slate-800 transition-colors cursor-pointer">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="bg-orange-900/50 text-orange-400 px-3 py-1 rounded-xl text-[10px] font-bold border border-orange-500/20 uppercase tracking-wide">Trip</span>
+                            <i class="fas fa-ellipsis-h text-slate-500"></i>
+                        </div>
+                        <h4 class="font-bold text-white text-lg mb-1">🇯🇵 东京跨年之旅</h4>
+                        <p class="text-slate-400 text-xs mb-4 font-medium">还有 25 天出发</p>
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 h-2.5 bg-slate-700/50 rounded-full overflow-hidden">
+                                <div class="h-full bg-orange-500 w-[65%] rounded-full shadow-[0_0_10px_rgba(249,115,22,0.3)]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dark Mode Nav -->
+             <div class="absolute bottom-0 w-full glass-dark px-6 pb-8 pt-4 flex justify-between items-center z-20">
+                <div class="flex flex-col items-center text-indigo-400 gap-1"><i class="fas fa-house text-xl"></i></div>
+                <div class="flex flex-col items-center text-slate-500 gap-1"><i class="fas fa-compass text-xl"></i></div>
+                <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-2xl shadow-indigo-900/50 -mt-10 border-[6px] border-[#0F172A] relative z-30"><i class="fas fa-plus text-2xl"></i></div>
+                <div class="flex flex-col items-center text-slate-500 gap-1"><i class="fas fa-calendar-alt text-xl"></i></div>
+                <div class="flex flex-col items-center text-slate-500 gap-1"><i class="fas fa-user text-xl"></i></div>
+            </div>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-700 rounded-full z-30"></div>
+       </div>
+
+    </div>
+
+</body>
+</html>
