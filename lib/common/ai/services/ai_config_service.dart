@@ -9,6 +9,7 @@ class AiConfigService {
   static const String defaultBaseUrl = 'https://api.openai.com/v1';
   static const String defaultDeepSeekUrl = 'https://api.deepseek.com/v1';
   static const String defaultTongyiUrl = 'https://dashscope.aliyuncs.com/api/v1';
+  static const String defaultGeminiUrl = 'https://generativelanguage.googleapis.com/v1beta';
   static const String defaultModel = 'gpt-3.5-turbo';
 
   // 获取API密钥
@@ -108,6 +109,13 @@ class AiConfigService {
   static Future<void> setTongyi({required String apiKey, String model = 'qwen-turbo'}) async {
     await setApiKey(apiKey);
     await setApiBaseUrl(defaultTongyiUrl);
+    await setModel(model);
+  }
+
+  // 设置使用Gemini（Google）
+  static Future<void> setGemini({required String apiKey, String model = 'gemini-pro'}) async {
+    await setApiKey(apiKey);
+    await setApiBaseUrl(defaultGeminiUrl);
     await setModel(model);
   }
 }

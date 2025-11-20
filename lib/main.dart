@@ -29,18 +29,13 @@ void main() async {
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
     await CalendarSyncService.init();
     
-    // 配置通义千问API key（如果未配置）
+    // 配置Gemini API key（如果未配置）
     final isConfigured = await AiConfigService.isConfigured();
     if (!isConfigured) {
-      // 使用默认的通义千问API key
-      // TODO: 如果项目中有写死的key，请替换下面的值
-      const defaultTongyiApiKey = 'sk-xxxxx'; // 请替换为实际的通义千问API key
-      if (defaultTongyiApiKey != 'sk-xxxxx' && defaultTongyiApiKey.isNotEmpty) {
-        await AiConfigService.setTongyi(apiKey: defaultTongyiApiKey);
-        debugPrint('已自动配置通义千问API key');
-      } else {
-        debugPrint('未配置通义千问API key，请在设置中手动配置');
-      }
+      // 使用Gemini API key
+      const geminiApiKey = 'AIzaSyDHGwpV6HWeZ_K0OP37LtRvkvf3UYbuc34';
+      await AiConfigService.setGemini(apiKey: geminiApiKey);
+      debugPrint('已自动配置Gemini API key');
     }
   
   // Set preferred orientations

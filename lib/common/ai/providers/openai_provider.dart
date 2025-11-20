@@ -64,8 +64,9 @@ class OpenAIProvider {
     final baseUrl = await AiConfigService.getApiBaseUrl();
     final model = await AiConfigService.getModel();
     
-    // 判断是否为通义千问API
+    // 判断API类型
     final isTongyi = baseUrl.contains('dashscope');
+    final isGemini = baseUrl.contains('generativelanguage.googleapis.com');
 
     // 构建消息列表
     final messages = <Map<String, dynamic>>[
@@ -74,16 +75,42 @@ class OpenAIProvider {
       {'role': 'user', 'content': message},
     ];
 
-    // 通义千问使用不同的API端点
-    final endpoint = isTongyi 
-        ? 'services/aigc/text-generation/generation'
-        : 'chat/completions';
-    final url = Uri.parse('$baseUrl/$endpoint');
-    
-    // 构建请求体
+    // 构建URL和请求体
+    Uri url;
     Map<String, dynamic> requestBody;
-    if (isTongyi) {
-      // 通义千问的API格式
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+
+    if (isGemini) {
+      // Gemini API格式
+      url = Uri.parse('$baseUrl/models/$model:generateContent?key=$apiKey');
+      
+      // 转换消息格式为Gemini格式
+      final contents = <Map<String, dynamic>>[];
+      for (var msg in messages) {
+        if (msg['role'] == 'system') {
+          // Gemini不支持system role，将system消息作为第一个user消息的一部分
+          continue;
+        }
+        contents.add({
+          'role': msg['role'] == 'assistant' ? 'model' : 'user',
+          'parts': [{'text': msg['content']}],
+        });
+      }
+      
+      requestBody = {
+        'contents': contents,
+        'generationConfig': {
+          'temperature': 0.7,
+          'maxOutputTokens': 2000,
+        },
+      };
+    } else if (isTongyi) {
+      // 通义千问使用不同的API端点
+      url = Uri.parse('$baseUrl/services/aigc/text-generation/generation');
+      headers['Authorization'] = 'Bearer $apiKey';
+      
       requestBody = {
         'model': model,
         'input': {
@@ -96,6 +123,9 @@ class OpenAIProvider {
       };
     } else {
       // OpenAI格式
+      url = Uri.parse('$baseUrl/chat/completions');
+      headers['Authorization'] = 'Bearer $apiKey';
+      
       requestBody = {
         'model': model,
         'messages': messages,
@@ -106,10 +136,7 @@ class OpenAIProvider {
     
     final response = await http.post(
       url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $apiKey',
-      },
+      headers: headers,
       body: jsonEncode(requestBody),
     ).timeout(
       const Duration(seconds: 30),
@@ -170,15 +197,29 @@ class OpenAIProvider {
         throw Exception('API密钥未配置');
       }
 
-      // 通义千问使用不同的API端点
-      final endpoint = isTongyi 
-          ? 'services/aigc/text-generation/generation'
-          : 'chat/completions';
-      final url = Uri.parse('$baseUrl/$endpoint');
-      
-      // 构建请求体
+      // 构建URL和请求体
+      Uri url;
       Map<String, dynamic> requestBody;
-      if (isTongyi) {
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
+
+      if (isGemini) {
+        url = Uri.parse('$baseUrl/models/$model:generateContent?key=$apiKey');
+        requestBody = {
+          'contents': [
+            {
+              'role': 'user',
+              'parts': [{'text': 'Hello'}],
+            }
+          ],
+          'generationConfig': {
+            'maxOutputTokens': 5,
+          },
+        };
+      } else if (isTongyi) {
+        url = Uri.parse('$baseUrl/services/aigc/text-generation/generation');
+        headers['Authorization'] = 'Bearer $apiKey';
         requestBody = {
           'model': model,
           'input': {
@@ -191,6 +232,8 @@ class OpenAIProvider {
           },
         };
       } else {
+        url = Uri.parse('$baseUrl/chat/completions');
+        headers['Authorization'] = 'Bearer $apiKey';
         requestBody = {
           'model': model,
           'messages': [
@@ -202,10 +245,7 @@ class OpenAIProvider {
 
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $apiKey',
-        },
+        headers: headers,
         body: jsonEncode(requestBody),
       ).timeout(
         const Duration(seconds: 10),
@@ -217,7 +257,10 @@ class OpenAIProvider {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         
-        if (isTongyi) {
+        if (isGemini) {
+          final candidates = data['candidates'] as List?;
+          return candidates != null && candidates.isNotEmpty;
+        } else if (isTongyi) {
           final output = data['output'] as Map<String, dynamic>?;
           return output != null && output['text'] != null;
         } else {
