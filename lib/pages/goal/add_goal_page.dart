@@ -20,14 +20,25 @@ class _AddGoalPageState extends State<AddGoalPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _milestoneController = TextEditingController();
+  final _krTitleController = TextEditingController();
+  final _krTargetController = TextEditingController();
+  final _krUnitController = TextEditingController();
+  
   DateTime? _targetDate;
   GoalType _type = GoalType.monthly;
   bool _isLoading = false;
+  List<String> _milestones = [];
+  List<KeyResult> _keyResults = [];
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _milestoneController.dispose();
+    _krTitleController.dispose();
+    _krTargetController.dispose();
+    _krUnitController.dispose();
     super.dispose();
   }
 
@@ -45,6 +56,51 @@ class _AddGoalPageState extends State<AddGoalPage> {
     }
   }
 
+  void _addMilestone() {
+    final milestone = _milestoneController.text.trim();
+    if (milestone.isNotEmpty && !_milestones.contains(milestone)) {
+      setState(() {
+        _milestones.add(milestone);
+        _milestoneController.clear();
+      });
+    }
+  }
+
+  void _removeMilestone(String milestone) {
+    setState(() {
+      _milestones.remove(milestone);
+    });
+  }
+
+  void _addKeyResult() {
+    final title = _krTitleController.text.trim();
+    if (title.isEmpty) {
+      ErrorService.showWarning('请输入关键结果标题');
+      return;
+    }
+
+    final targetValue = _krTargetController.text.trim();
+    final unit = _krUnitController.text.trim();
+
+    setState(() {
+      _keyResults.add(KeyResult(
+        title: title,
+        targetValue: targetValue.isNotEmpty ? int.tryParse(targetValue) : null,
+        currentValue: 0,
+        unit: unit.isEmpty ? null : unit,
+      ));
+      _krTitleController.clear();
+      _krTargetController.clear();
+      _krUnitController.clear();
+    });
+  }
+
+  void _removeKeyResult(KeyResult kr) {
+    setState(() {
+      _keyResults.remove(kr);
+    });
+  }
+
   Future<void> _saveGoal() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -60,6 +116,8 @@ class _AddGoalPageState extends State<AddGoalPage> {
             : _descriptionController.text.trim(),
         type: _type,
         targetDate: _targetDate ?? DateTime.now().add(const Duration(days: 30)),
+        milestones: _milestones.isEmpty ? null : _milestones,
+        keyResults: _keyResults.isEmpty ? null : _keyResults,
       );
 
       await DatabaseService.addGoal(goal);
@@ -84,17 +142,25 @@ class _AddGoalPageState extends State<AddGoalPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark
+          ? DesignTokens.backgroundDark
+          : DesignTokens.backgroundLight,
       appBar: AppBar(
         title: const Text('创建目标'),
+        backgroundColor: isDark
+            ? DesignTokens.backgroundDark
+            : Colors.white,
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(DesignTokens.spacing4),
+          padding: const EdgeInsets.all(DesignTokens.spacing6),
           children: [
             PraxisCard(
-              padding: const EdgeInsets.all(DesignTokens.spacing4),
+              padding: const EdgeInsets.all(DesignTokens.spacing5),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -175,7 +241,226 @@ class _AddGoalPageState extends State<AddGoalPage> {
                 ],
               ),
             ),
+            
+            const SizedBox(height: DesignTokens.spacing6),
+            
+            // 关键结果管理
+            PraxisCard(
+              padding: const EdgeInsets.all(DesignTokens.spacing5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '关键结果 (Key Results)',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeBodyMedium,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: isDark
+                          ? DesignTokens.onSurfaceDark
+                          : DesignTokens.onSurfaceLight,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
+                  PraxisTextField(
+                    controller: _krTitleController,
+                    label: '关键结果标题',
+                    hint: '例如：完成10个功能模块',
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: PraxisTextField(
+                          controller: _krTargetController,
+                          label: '目标值（可选）',
+                          hint: '例如：10',
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: DesignTokens.spacing3),
+                      Expanded(
+                        child: PraxisTextField(
+                          controller: _krUnitController,
+                          label: '单位（可选）',
+                          hint: '例如：个',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
+                  PraxisButton(
+                    text: '添加关键结果',
+                    onPressed: _addKeyResult,
+                    type: PraxisButtonType.outline,
+                    size: PraxisButtonSize.medium,
+                    isFullWidth: true,
+                  ),
+                  if (_keyResults.isNotEmpty) ...[
+                    const SizedBox(height: DesignTokens.spacing4),
+                    ..._keyResults.map((kr) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: DesignTokens.spacing3),
+                        padding: const EdgeInsets.all(DesignTokens.spacing4),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? DesignTokens.surfaceDarkSecondary
+                              : DesignTokens.surfaceLightSecondary,
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                          border: Border.all(
+                            color: isDark
+                                ? DesignTokens.borderDark
+                                : DesignTokens.borderLight,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    kr.title,
+                                    style: DesignTokens.textStyle(
+                                      fontSize: DesignTokens.fontSizeBodySmall,
+                                      fontWeight: DesignTokens.fontWeightBold,
+                                      color: isDark
+                                          ? DesignTokens.onSurfaceDark
+                                          : DesignTokens.onSurfaceLight,
+                                    ),
+                                  ),
+                                  if (kr.targetValue != null) ...[
+                                    const SizedBox(height: DesignTokens.spacing1),
+                                    Text(
+                                      '目标: ${kr.targetValue}${kr.unit ?? ''}',
+                                      style: DesignTokens.textStyle(
+                                        fontSize: DesignTokens.fontSizeLabelSmall,
+                                        color: isDark
+                                            ? DesignTokens.textSecondaryDark
+                                            : DesignTokens.textSecondaryLight,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => _removeKeyResult(kr),
+                              iconSize: 18,
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: DesignTokens.spacing6),
+            
+            // 里程碑管理
+            PraxisCard(
+              padding: const EdgeInsets.all(DesignTokens.spacing5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '里程碑',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeBodyMedium,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: isDark
+                          ? DesignTokens.onSurfaceDark
+                          : DesignTokens.onSurfaceLight,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _milestoneController,
+                          decoration: InputDecoration(
+                            hintText: '输入里程碑并按回车',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: DesignTokens.spacing4,
+                              vertical: DesignTokens.spacing3,
+                            ),
+                          ),
+                          onSubmitted: (_) => _addMilestone(),
+                        ),
+                      ),
+                      const SizedBox(width: DesignTokens.spacing3),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: _addMilestone,
+                      ),
+                    ],
+                  ),
+                  if (_milestones.isNotEmpty) ...[
+                    const SizedBox(height: DesignTokens.spacing3),
+                    Wrap(
+                      spacing: DesignTokens.spacing2,
+                      runSpacing: DesignTokens.spacing2,
+                      children: _milestones.map((milestone) {
+                        return GestureDetector(
+                          onTap: () => _removeMilestone(milestone),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: DesignTokens.spacing3,
+                              vertical: DesignTokens.spacing2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? DesignTokens.surfaceDarkSecondary
+                                  : DesignTokens.surfaceLightSecondary,
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                              border: Border.all(
+                                color: isDark
+                                    ? DesignTokens.borderDark
+                                    : DesignTokens.borderLight,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  milestone,
+                                  style: DesignTokens.textStyle(
+                                    fontSize: DesignTokens.fontSizeLabelSmall,
+                                    fontWeight: DesignTokens.fontWeightBold,
+                                    color: isDark
+                                        ? DesignTokens.onSurfaceDark
+                                        : DesignTokens.onSurfaceLight,
+                                  ),
+                                ),
+                                const SizedBox(width: DesignTokens.spacing1),
+                                Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: isDark
+                                      ? DesignTokens.textSecondaryDark
+                                      : DesignTokens.textSecondaryLight,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            
             const SizedBox(height: DesignTokens.spacing8),
+            
             PraxisButton(
               text: '保存目标',
               onPressed: _isLoading ? null : _saveGoal,
@@ -190,4 +475,3 @@ class _AddGoalPageState extends State<AddGoalPage> {
     );
   }
 }
-
