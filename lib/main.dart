@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/services/locale_service.dart';
 import 'package:praxis/common/services/calendar_sync_service.dart';
+import 'package:praxis/common/ai/services/ai_config_service.dart';
 import 'package:praxis/common/i18n/translations.dart';
 import 'package:praxis/pages/focus/focus_page.dart';
 import 'package:praxis/pages/main/main_page.dart';
@@ -27,6 +28,17 @@ void main() async {
     await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
     await CalendarSyncService.init();
+    
+    // 配置通义千问API key（如果未配置）
+    final isConfigured = await AiConfigService.isConfigured();
+    if (!isConfigured) {
+      // 使用默认的通义千问API key（请替换为实际的API key）
+      // 注意：这里应该从环境变量或配置文件读取，不要硬编码
+      const defaultTongyiApiKey = 'sk-your-tongyi-api-key-here';
+      if (defaultTongyiApiKey != 'sk-your-tongyi-api-key-here') {
+        await AiConfigService.setTongyi(apiKey: defaultTongyiApiKey);
+      }
+    }
   
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([

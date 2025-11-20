@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/common/models/todo.dart';
-import 'package:praxis/common/models/goal.dart';
-import 'package:praxis/common/models/project.dart';
 import 'package:praxis/pages/settings/settings_page.dart';
 import 'package:get/get.dart';
 
@@ -328,6 +325,7 @@ class ProfilePage extends StatelessWidget {
         boxShadow: DesignTokens.shadowIOS,
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
@@ -348,15 +346,20 @@ class ProfilePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                value,
-                style: DesignTokens.textStyle(
-                  fontSize: 32,
-                  fontWeight: DesignTokens.fontWeightBold,
-                  color: isDark
-                      ? DesignTokens.onSurfaceDark
-                      : DesignTokens.onSurfaceLight,
+              Flexible(
+                child: Text(
+                  value,
+                  style: DesignTokens.textStyle(
+                    fontSize: 28,
+                    fontWeight: DesignTokens.fontWeightBold,
+                    color: isDark
+                        ? DesignTokens.onSurfaceDark
+                        : DesignTokens.onSurfaceLight,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (unit != null) ...[
