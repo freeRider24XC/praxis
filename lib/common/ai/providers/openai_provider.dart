@@ -212,6 +212,7 @@ class OpenAIProvider {
       final model = await AiConfigService.getModel();
       
       final isTongyi = baseUrl.contains('dashscope');
+      final isGemini = baseUrl.contains('generativelanguage.googleapis.com');
 
       if (apiKey == null || apiKey.isEmpty) {
         throw Exception('API密钥未配置');
