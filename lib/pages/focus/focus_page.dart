@@ -22,6 +22,17 @@ class _FocusPageState extends State<FocusPage> {
   int _remainingSeconds = 25 * 60;
   bool _isRunning = false;
   bool _isPaused = false;
+  String? _selectedSound;
+  bool _soundEnabled = false;
+  
+  final List<Map<String, dynamic>> _soundOptions = [
+    {'name': '无', 'icon': Icons.volume_off, 'value': null},
+    {'name': '雨声', 'icon': Icons.water_drop, 'value': 'rain'},
+    {'name': '海浪', 'icon': Icons.waves, 'value': 'ocean'},
+    {'name': '森林', 'icon': Icons.forest, 'value': 'forest'},
+    {'name': '咖啡厅', 'icon': Icons.local_cafe, 'value': 'cafe'},
+    {'name': '白噪音', 'icon': Icons.graphic_eq, 'value': 'white'},
+  ];
 
   @override
   void dispose() {
@@ -137,18 +148,18 @@ class _FocusPageState extends State<FocusPage> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      // 白噪音控制
-                    },
+                    onTap: _showSoundSelector,
                     child: Container(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: _soundEnabled
+                            ? DesignTokens.primaryColor.withOpacity(0.3)
+                            : Colors.white.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.music_note,
+                        _soundEnabled ? Icons.volume_up : Icons.volume_off,
                         color: Colors.white.withOpacity(0.7),
                       ),
                     ),
@@ -302,6 +313,125 @@ class _FocusPageState extends State<FocusPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showSoundSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(DesignTokens.radiusXLarge),
+            topRight: Radius.circular(DesignTokens.radiusXLarge),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: DesignTokens.spacing3),
+                width: 48,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(DesignTokens.spacing6),
+                child: Column(
+                  children: [
+                    Text(
+                      '背景音效',
+                      style: DesignTokens.textStyle(
+                        fontSize: DesignTokens.fontSizeHeadlineSmall,
+                        fontWeight: DesignTokens.fontWeightBold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: DesignTokens.spacing6),
+                    ..._soundOptions.map((sound) {
+                      final isSelected = _selectedSound == sound['value'];
+                      
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (sound['value'] == null) {
+                              _soundEnabled = false;
+                              _selectedSound = null;
+                            } else {
+                              _soundEnabled = true;
+                              _selectedSound = sound['value'] as String;
+                            }
+                          });
+                          Get.back();
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: DesignTokens.spacing3),
+                          padding: const EdgeInsets.all(DesignTokens.spacing4),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? DesignTokens.primaryColor.withOpacity(0.2)
+                                : Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+                            border: Border.all(
+                              color: isSelected
+                                  ? DesignTokens.primaryColor
+                                  : Colors.white.withOpacity(0.1),
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? DesignTokens.primaryColor.withOpacity(0.2)
+                                      : Colors.white.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                                ),
+                                child: Icon(
+                                  sound['icon'] as IconData,
+                                  color: isSelected
+                                      ? DesignTokens.primaryColor
+                                      : Colors.white.withOpacity(0.7),
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: DesignTokens.spacing4),
+                              Expanded(
+                                child: Text(
+                                  sound['name'] as String,
+                                  style: DesignTokens.textStyle(
+                                    fontSize: DesignTokens.fontSizeBodyMedium,
+                                    fontWeight: DesignTokens.fontWeightBold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: DesignTokens.primaryColor,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
