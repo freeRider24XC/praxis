@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:praxis/common/ai/services/ai_service.dart';
+import 'package:praxis/common/ai/providers/openai_provider.dart';
 import 'package:praxis/common/ai/parsers/entity_extractor.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/error_service.dart';
