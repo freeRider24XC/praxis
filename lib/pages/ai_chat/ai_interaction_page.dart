@@ -159,8 +159,60 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
                 vertical: DesignTokens.spacing4,
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  if (_isChatMode)
+                    GestureDetector(
+                      onTap: () {
+                        _aiService.clearHistory();
+                        setState(() {
+                          _isChatMode = false;
+                          _pendingExtraction = null;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: DesignTokens.spacing3,
+                          vertical: DesignTokens.spacing2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? DesignTokens.surfaceDarkSecondary
+                              : DesignTokens.surfaceLightSecondary,
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                          border: Border.all(
+                            color: isDark
+                                ? DesignTokens.borderDark
+                                : DesignTokens.borderLight,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.delete_outline,
+                              size: 16,
+                              color: isDark
+                                  ? DesignTokens.textSecondaryDark
+                                  : DesignTokens.textSecondaryLight,
+                            ),
+                            const SizedBox(width: DesignTokens.spacing1),
+                            Text(
+                              '清除',
+                              style: DesignTokens.textStyle(
+                                fontSize: DesignTokens.fontSizeLabelSmall,
+                                color: isDark
+                                    ? DesignTokens.textSecondaryDark
+                                    : DesignTokens.textSecondaryLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox.shrink(),
                   GestureDetector(
                     onTap: () => Get.back(),
                     child: Container(
