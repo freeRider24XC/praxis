@@ -67,6 +67,9 @@ class OpenAIProvider {
     // 判断API类型
     final isTongyi = baseUrl.contains('dashscope');
     final isGemini = baseUrl.contains('generativelanguage.googleapis.com');
+    
+    // 调试日志
+    debugPrint('🔵 AI请求 - BaseURL: $baseUrl, Model: $model, IsTongyi: $isTongyi');
 
     // 构建消息列表
     final messages = <Map<String, dynamic>>[
@@ -111,16 +114,26 @@ class OpenAIProvider {
       url = Uri.parse('$baseUrl/services/aigc/text-generation/generation');
       headers['Authorization'] = 'Bearer $apiKey';
       
+      // 通义千问需要过滤system消息，因为可能不支持
+      final filteredMessages = messages.where((msg) => msg['role'] != 'system').toList();
+      // 如果有system消息，将其合并到第一个user消息中
+      final systemMsg = messages.firstWhere((msg) => msg['role'] == 'system', orElse: () => {});
+      if (systemMsg.isNotEmpty && filteredMessages.isNotEmpty) {
+        filteredMessages[0]['content'] = '${systemMsg['content']}\n\n${filteredMessages[0]['content']}';
+      }
+      
       requestBody = {
         'model': model,
         'input': {
-          'messages': messages,
+          'messages': filteredMessages,
         },
         'parameters': {
           'temperature': 0.7,
           'max_tokens': 2000,
         },
       };
+      
+      debugPrint('🔵 通义千问请求体: ${jsonEncode(requestBody)}');
     } else {
       // OpenAI格式
       url = Uri.parse('$baseUrl/chat/completions');
@@ -134,16 +147,23 @@ class OpenAIProvider {
       };
     }
     
-    final response = await http.post(
-      url,
-      headers: headers,
-      body: jsonEncode(requestBody),
-    ).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () {
-        throw Exception('请求超时，请检查网络连接');
-      },
-    );
+    debugPrint('🔵 发送请求到: $url');
+    
+    try {
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(requestBody),
+      ).timeout(
+        Duration(seconds: isTongyi ? 60 : 30), // 通义千问可能需要更长时间
+        onTimeout: () {
+          debugPrint('❌ 请求超时 - URL: $url, 超时时间: ${isTongyi ? 60 : 30}秒');
+          throw Exception('请求超时，请检查网络连接。如果使用通义千问，可能需要更长时间');
+        },
+      );
+      
+      debugPrint('🔵 响应状态码: ${response.statusCode}');
+      debugPrint('🔵 响应体: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
