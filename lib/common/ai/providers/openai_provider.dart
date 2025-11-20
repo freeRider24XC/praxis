@@ -149,7 +149,27 @@ class OpenAIProvider {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       
       String content;
-      if (isTongyi) {
+      if (isGemini) {
+        // Gemini的响应格式
+        final candidates = data['candidates'] as List?;
+        if (candidates != null && candidates.isNotEmpty) {
+          final candidate = candidates[0] as Map<String, dynamic>;
+          final contentObj = candidate['content'] as Map<String, dynamic>?;
+          if (contentObj != null) {
+            final parts = contentObj['parts'] as List?;
+            if (parts != null && parts.isNotEmpty) {
+              final part = parts[0] as Map<String, dynamic>;
+              content = part['text'] as String? ?? '';
+            } else {
+              throw Exception('AI返回了空响应');
+            }
+          } else {
+            throw Exception('AI返回了空响应');
+          }
+        } else {
+          throw Exception('AI返回了空响应');
+        }
+      } else if (isTongyi) {
         // 通义千问的响应格式
         final output = data['output'] as Map<String, dynamic>?;
         if (output != null) {
