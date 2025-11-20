@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/common/widgets/search_bar.dart' as custom;
 import 'package:praxis/common/widgets/index.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/models/todo.dart';
-import 'package:praxis/pages/ai_chat/ai_interaction_page.dart';
 import 'package:praxis/pages/project/project_detail_page.dart';
 
 /// 首页概览
@@ -18,7 +16,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final TextEditingController _searchController = TextEditingController();
   List<Project> _activeProjects = [];
   List<Todo> _todayTodos = [];
   int _focusScore = 85;
@@ -31,8 +28,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 当页面重新显示时刷新数据
+    _loadData();
+  }
+
+  @override
   void dispose() {
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -181,13 +184,6 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                   
-                  const SizedBox(height: DesignTokens.spacing4),
-                  
-                  // 搜索栏
-                  custom.SearchBar(
-                    hintText: '搜索计划或任务...',
-                    controller: _searchController,
-                  ),
                 ],
               ),
             ),
@@ -282,8 +278,10 @@ class _HomePageState extends State<HomePage> {
                         progress: proj.progress,
                         color: _parseColor(proj.color),
                         category: _getCategoryFromTags(proj.tags),
-                        onTap: () {
-                          Get.to(() => ProjectDetailPage(projectId: proj.id));
+                        onTap: () async {
+                          await Get.to(() => ProjectDetailPage(projectId: proj.id));
+                          // 返回时刷新数据
+                          _loadData();
                         },
                         trailing: IconButton(
                           icon: Icon(
@@ -321,13 +319,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      floatingActionButton: FabButton(
-        icon: Icons.add,
-        onPressed: () {
-          Get.to(() => const AiInteractionPage());
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

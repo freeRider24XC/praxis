@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/services/locale_service.dart';
+import 'package:praxis/common/services/calendar_sync_service.dart';
 import 'package:praxis/common/i18n/translations.dart';
 import 'package:praxis/pages/focus/focus_page.dart';
 import 'package:praxis/pages/main/main_page.dart';
@@ -13,7 +14,7 @@ import 'package:praxis/pages/project/project_detail_page.dart';
 import 'package:praxis/pages/todo/add_todo_page.dart';
 import 'package:praxis/pages/goal/add_goal_page.dart';
 import 'package:praxis/pages/project/add_project_page.dart';
-import 'package:praxis/pages/ai_chat/ai_chat_page.dart';
+import 'package:praxis/pages/ai_chat/ai_interaction_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,7 @@ void main() async {
     // Initialize services
     await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
+    await CalendarSyncService.init();
   
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
@@ -79,7 +81,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/todo/add', page: () => const AddTodoPage()),
         GetPage(name: '/goal/add', page: () => const AddGoalPage()),
         GetPage(name: '/project/add', page: () => const AddProjectPage()),
-        GetPage(name: '/ai/chat', page: () => const AiChatPage()),
+        GetPage(name: '/ai/chat', page: () => const AiInteractionPage()),
             GetPage(
                 name: '/project/detail/:id',
                 page: () {

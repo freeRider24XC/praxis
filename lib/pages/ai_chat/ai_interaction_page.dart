@@ -80,6 +80,8 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
         _isLoading = false;
         if (extraction.hasTodo || extraction.hasGoal || extraction.hasTodos) {
           _pendingExtraction = extraction;
+          // 自动创建实体
+          _confirmCreate();
         }
       });
 
@@ -114,6 +116,7 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
       });
       
       Get.back();
+      // 刷新首页数据（通过GetX的全局更新）
     } catch (e) {
       LoggerService.error('创建实体失败', 'AiInteractionPage', e);
       ErrorService.handleError(e, context: '创建实体');
@@ -349,30 +352,6 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
                 children: [
                   Row(
                     children: [
-                      // 语音输入按钮
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? DesignTokens.surfaceDarkSecondary
-                              : DesignTokens.surfaceLightSecondary,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark
-                                ? DesignTokens.borderDark
-                                : DesignTokens.borderLight,
-                            width: 1,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.mic,
-                          color: isDark
-                              ? DesignTokens.textSecondaryDark
-                              : DesignTokens.textSecondaryLight,
-                        ),
-                      ),
-                      
                       const Spacer(),
                       
                       // 字符计数

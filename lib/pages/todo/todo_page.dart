@@ -38,10 +38,6 @@ class _TodoPageState extends State<TodoPage> with SingleTickerProviderStateMixin
       appBar: AppBar(
         title: const Text('待办事项'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () => _showSearchDialog(),
-          ),
           PopupMenuButton<TodoSortOption>(
             icon: const Icon(Icons.sort),
             onSelected: _onSortChanged,
@@ -408,8 +404,13 @@ class _TodoPageState extends State<TodoPage> with SingleTickerProviderStateMixin
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  void _toggleTodo(Todo todo) {
+  void _toggleTodo(Todo todo) async {
     todo.toggleDone();
+    await DatabaseService.updateTodo(todo);
+    
+    // 更新日历同步
+    await CalendarSyncService.updateTodo(todo);
+    
     setState(() {});
   }
 
@@ -432,27 +433,14 @@ class _TodoPageState extends State<TodoPage> with SingleTickerProviderStateMixin
     );
 
     if (confirmed == true) {
+      // 从日历移除
+      await CalendarSyncService.removeTodo(todo);
+      
       await DatabaseService.deleteTodo(todo);
       setState(() {});
     }
   }
 
-  void _showSearchDialog() {
-    // 暂时显示提示，搜索功能待实现
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('搜索功能'),
-        content: const Text('搜索功能正在开发中，敬请期待！'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('确定'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _onSortChanged(TodoSortOption option) {
     // Implement sort logic

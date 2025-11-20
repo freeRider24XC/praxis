@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/common/widgets/tag_chip.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/calendar_sync_service.dart';
 import 'package:praxis/common/models/todo.dart';
 import 'package:get/get.dart';
 
@@ -45,6 +46,12 @@ class _QuickAddModalState extends State<QuickAddModal> {
     );
 
     await DatabaseService.addTodo(todo);
+    
+    // 同步到日历（如果启用）
+    if (todo.dueDate != null) {
+      await CalendarSyncService.syncTodo(todo);
+    }
+    
     Get.back();
   }
 

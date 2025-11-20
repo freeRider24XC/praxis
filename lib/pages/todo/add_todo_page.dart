@@ -6,6 +6,7 @@ import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/error_service.dart';
 import 'package:praxis/common/services/logger_service.dart';
+import 'package:praxis/common/services/calendar_sync_service.dart';
 import 'package:praxis/common/widgets/praxis_text_field.dart';
 import 'package:praxis/common/widgets/praxis_button.dart';
 import 'package:praxis/common/widgets/praxis_card.dart';
@@ -320,6 +321,11 @@ class _AddTodoPageState extends State<AddTodoPage> {
       );
 
       await DatabaseService.addTodo(todo);
+      
+      // 同步到日历（如果启用）
+      if (todo.dueDate != null) {
+        await CalendarSyncService.syncTodo(todo);
+      }
       
       if (mounted) {
         Get.back();

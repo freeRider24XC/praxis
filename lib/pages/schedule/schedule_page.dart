@@ -246,13 +246,15 @@ class _SchedulePageState extends State<SchedulePage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
+        onPressed: () async {
+          await showModalBottomSheet(
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
             builder: (context) => const QuickAddModal(),
           );
+          // 返回时刷新数据
+          _loadTodos();
         },
         child: const Icon(Icons.add),
       ),

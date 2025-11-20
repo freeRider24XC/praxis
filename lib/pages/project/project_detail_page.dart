@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/common/widgets/time_indicator.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/calendar_sync_service.dart';
 import 'package:praxis/common/models/todo.dart';
+import 'package:praxis/pages/focus/focus_page.dart';
 import 'package:get/get.dart';
 
 /// 计划详情页
-class ProjectDetailPage extends StatelessWidget {
+class ProjectDetailPage extends StatefulWidget {
   final String projectId;
 
   const ProjectDetailPage({
@@ -15,8 +17,24 @@ class ProjectDetailPage extends StatelessWidget {
   });
 
   @override
+  State<ProjectDetailPage> createState() => _ProjectDetailPageState();
+}
+
+class _ProjectDetailPageState extends State<ProjectDetailPage> {
+  void _refreshData() {
+    setState(() {});
+  }
+
+  Color _parseColor(String colorString) {
+    if (colorString.startsWith('#')) {
+      return Color(int.parse(colorString.substring(1), radix: 16) | 0xFF000000);
+    }
+    return DesignTokens.primaryColor;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final project = DatabaseService.getProjectById(projectId);
+    final project = DatabaseService.getProjectById(widget.projectId);
     if (project == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('项目不存在')),
@@ -31,13 +49,6 @@ class ProjectDetailPage extends StatelessWidget {
             return todo;
           }).whereType<Todo>().toList()
         : <Todo>[];
-
-    Color _parseColor(String colorString) {
-      if (colorString.startsWith('#')) {
-        return Color(int.parse(colorString.substring(1), radix: 16) | 0xFF000000);
-      }
-      return DesignTokens.primaryColor;
-    }
 
     return Scaffold(
       backgroundColor: isDark
@@ -320,7 +331,9 @@ class ProjectDetailPage extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Get.to(() => FocusPage(taskTitle: project.name));
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isDark
                       ? DesignTokens.surfaceDark
@@ -546,8 +559,14 @@ class ProjectDetailPage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.spacing3),
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           todo.toggleDone();
+          await DatabaseService.updateTodo(todo);
+          
+          // 更新日历同步
+          await CalendarSyncService.updateTodo(todo);
+          
+          _refreshData();
         },
         child: Container(
           padding: const EdgeInsets.all(DesignTokens.spacing4),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/services/theme_service.dart';
+import 'package:praxis/common/services/calendar_sync_service.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 
 /// 设置页面（按设计稿重构）
@@ -12,8 +13,19 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _notificationsEnabled = true;
-  bool _iCloudSyncEnabled = false;
+  bool _calendarSyncEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    setState(() {
+      _calendarSyncEnabled = CalendarSyncService.isEnabled;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -268,27 +280,6 @@ class _SettingsPageState extends State<SettingsPage> {
                             : DesignTokens.borderLight,
                       ),
                       _buildSettingItem(
-                        icon: Icons.notifications,
-                        iconColor: DesignTokens.secondaryOrange,
-                        title: '通知提醒',
-                        trailing: Switch(
-                          value: _notificationsEnabled,
-                          onChanged: (value) {
-                            setState(() {
-                              _notificationsEnabled = value;
-                            });
-                          },
-                          activeColor: DesignTokens.primaryColor,
-                        ),
-                        isDark: isDark,
-                      ),
-                      Divider(
-                        height: 1,
-                        color: isDark
-                            ? DesignTokens.borderDark
-                            : DesignTokens.borderLight,
-                      ),
-                      _buildSettingItem(
                         icon: Icons.language,
                         iconColor: DesignTokens.primaryColor,
                         title: '语言',
@@ -342,15 +333,17 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Column(
                     children: [
                       _buildSettingItem(
-                        icon: Icons.cloud,
+                        icon: Icons.calendar_today,
                         iconColor: DesignTokens.secondaryEmerald,
-                        title: 'iCloud 同步',
+                        title: '日历同步',
+                        subtitle: '同步任务到系统日历',
                         trailing: Switch(
-                          value: _iCloudSyncEnabled,
-                          onChanged: (value) {
+                          value: _calendarSyncEnabled,
+                          onChanged: (value) async {
                             setState(() {
-                              _iCloudSyncEnabled = value;
+                              _calendarSyncEnabled = value;
                             });
+                            await CalendarSyncService.setEnabled(value);
                           },
                           activeColor: DesignTokens.primaryColor,
                         ),
@@ -601,4 +594,5 @@ class _SettingsPageState extends State<SettingsPage> {
       );
     });
   }
+
 }

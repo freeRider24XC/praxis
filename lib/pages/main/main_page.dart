@@ -95,8 +95,12 @@ class _MainPageState extends State<MainPage> {
               child: Center(
                 child: FabButton(
                   icon: Icons.add,
-                  onPressed: () {
-                    Get.to(() => const AiInteractionPage());
+                  onPressed: () async {
+                    await Get.to(() => const AiInteractionPage());
+                    // 返回时刷新首页数据
+                    if (_currentIndex == 0) {
+                      // 触发首页刷新（通过key或controller）
+                    }
                   },
                 ),
               ),
