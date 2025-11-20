@@ -29,14 +29,12 @@ void main() async {
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
     await CalendarSyncService.init();
     
-    // 配置通义千问API key（如果未配置）
-    final isConfigured = await AiConfigService.isConfigured();
-    if (!isConfigured) {
-      // 使用通义千问API key
-      const tongyiApiKey = 'sk-6aed399eac434b389bd831bff6f456d1';
-      await AiConfigService.setTongyi(apiKey: tongyiApiKey);
-      debugPrint('已自动配置通义千问API key');
-    }
+    // 强制配置通义千问API key
+    const tongyiApiKey = 'sk-6aed399eac434b389bd831bff6f456d1';
+    await AiConfigService.setTongyi(apiKey: tongyiApiKey);
+    debugPrint('✅ 已配置通义千问API key');
+    debugPrint('✅ BaseURL: ${await AiConfigService.getApiBaseUrl()}');
+    debugPrint('✅ Model: ${await AiConfigService.getModel()}');
   
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
