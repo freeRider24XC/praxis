@@ -29,10 +29,11 @@ void main() async {
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
     await CalendarSyncService.init();
     
-    // 强制配置通义千问API key
+    // 强制配置通义千问API key（先清除旧配置）
+    await AiConfigService.clearConfig();
     const tongyiApiKey = 'sk-6aed399eac434b389bd831bff6f456d1';
     await AiConfigService.setTongyi(apiKey: tongyiApiKey);
-    debugPrint('✅ 已配置通义千问API key');
+    debugPrint('✅ 已清除旧配置并配置通义千问API key');
     debugPrint('✅ BaseURL: ${await AiConfigService.getApiBaseUrl()}');
     debugPrint('✅ Model: ${await AiConfigService.getModel()}');
   
