@@ -4,7 +4,7 @@ import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/common/widgets/glass_nav_bar.dart';
 import 'package:praxis/common/widgets/fab_button.dart';
 import 'package:praxis/pages/home/home_page.dart';
-import 'package:praxis/pages/explore/explore_page.dart';
+import 'package:praxis/pages/management/management_page.dart';
 import 'package:praxis/pages/ai_chat/ai_interaction_page.dart';
 import 'package:praxis/pages/schedule/schedule_page.dart';
 import 'package:praxis/pages/profile/profile_page.dart';
@@ -22,7 +22,7 @@ class _MainPageState extends State<MainPage> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    const ExplorePage(),
+    const ManagementPage(),
     const AiInteractionPage(),
     const SchedulePage(),
     const ProfilePage(),
@@ -35,9 +35,9 @@ class _MainPageState extends State<MainPage> {
       label: '首页',
     ),
     NavBarItem(
-      icon: Icons.explore_outlined,
-      selectedIcon: Icons.explore,
-      label: '发现',
+      icon: Icons.dashboard_outlined,
+      selectedIcon: Icons.dashboard,
+      label: '管理',
     ),
     NavBarItem(
       icon: Icons.smart_toy_outlined,
@@ -281,19 +281,16 @@ class _MainPageState extends State<MainPage> {
               children: _pages,
             ),
             
-            // 居中悬浮FAB（仅在首页显示）
+            // 右上角悬浮FAB（仅在首页显示）
             if (_currentIndex == 0)
               Positioned(
-                bottom: 80,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: FabButton(
-                    icon: Icons.add,
-                    onPressed: () {
-                      _showCreateMenu(context);
-                    },
-                  ),
+                top: DesignTokens.spacing6,
+                right: DesignTokens.spacing6,
+                child: FabButton(
+                  icon: Icons.add,
+                  onPressed: () {
+                    _showCreateMenu(context);
+                  },
                 ),
               ),
           ],

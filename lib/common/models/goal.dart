@@ -65,6 +65,9 @@ class Goal extends HiveObject {
   @HiveField(19)
   String? unit;
 
+  @HiveField(20)
+  List<String>? projectIds;
+
   Goal({
     String? id,
     required this.title,
@@ -86,6 +89,7 @@ class Goal extends HiveObject {
     this.targetValue,
     this.currentValue,
     this.unit,
+    this.projectIds,
   })  : id = id ?? const Uuid().v4(),
         startDate = startDate ?? DateTime.now(),
         status = status ?? GoalStatus.notStarted,
@@ -113,6 +117,7 @@ class Goal extends HiveObject {
     int? targetValue,
     int? currentValue,
     String? unit,
+    List<String>? projectIds,
   }) {
     return Goal(
       id: id ?? this.id,
@@ -135,6 +140,7 @@ class Goal extends HiveObject {
       targetValue: targetValue ?? this.targetValue,
       currentValue: currentValue ?? this.currentValue,
       unit: unit ?? this.unit,
+      projectIds: projectIds ?? this.projectIds,
     );
   }
 

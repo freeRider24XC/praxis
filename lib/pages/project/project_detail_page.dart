@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/common/widgets/time_indicator.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/calendar_sync_service.dart';
 import 'package:praxis/common/models/todo.dart';
+import 'package:praxis/common/models/project.dart';
+import 'package:praxis/common/constants/task_attributes.dart';
 import 'package:praxis/pages/focus/focus_page.dart';
 import 'package:get/get.dart';
 
@@ -21,7 +22,387 @@ class ProjectDetailPage extends StatefulWidget {
 }
 
 class _ProjectDetailPageState extends State<ProjectDetailPage> {
-  void _refreshData() {
+  @override
+  void initState() {
+    super.initState();
+    DatabaseService.recalculateProjectProgress(widget.projectId);
+  }
+
+  Widget _buildRoadmapEmptyHint(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
+      decoration: BoxDecoration(
+        color: isDark
+            ? DesignTokens.surfaceDarkSecondary
+            : DesignTokens.surfaceLightSecondary,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+      ),
+      child: Text(
+        '暂无任务，长按任务卡可拖动调整顺序',
+        style: DesignTokens.textStyle(
+          color: isDark
+              ? DesignTokens.textSecondaryDark
+              : DesignTokens.textSecondaryLight,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimelineTaskList({
+    required Project project,
+    ProjectPhase? phase,
+    required List<Todo> todos,
+    required bool isDark,
+  }) {
+    return ReorderableListView.builder(
+      key: ValueKey('route-${phase?.id ?? 'general'}'),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      buildDefaultDragHandles: false,
+      itemCount: todos.length,
+      onReorder: (oldIndex, newIndex) {
+        _handleReorder(project, phase, todos, oldIndex, newIndex);
+      },
+      itemBuilder: (context, index) {
+        final todo = todos[index];
+        return ReorderableDelayedDragStartListener(
+          key: ValueKey('${phase?.id ?? 'general'}-${todo.id}'),
+          index: index,
+          child: _buildTimelineTaskItem(
+            todo: todo,
+            isFirstItem: index == 0,
+            isLastItem: index == todos.length - 1,
+            isDark: isDark,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTimelineTaskItem({
+    required Todo todo,
+    required bool isFirstItem,
+    required bool isLastItem,
+    required bool isDark,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: DesignTokens.spacing3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTaskTimelineIndicator(isFirstItem, isLastItem, isDark),
+          Expanded(
+            child: _buildRouteTaskCard(todo, isDark),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaskTimelineIndicator(
+    bool isFirstItem,
+    bool isLastItem,
+    bool isDark,
+  ) {
+    final lineColor =
+        isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    return SizedBox(
+      width: 32,
+      child: Column(
+        children: [
+          if (!isFirstItem)
+            Container(
+              width: 2,
+              height: 12,
+              color: lineColor,
+            ),
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: DesignTokens.primaryColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          if (!isLastItem)
+            Container(
+              width: 2,
+              height: 12,
+              color: lineColor,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRouteTaskCard(Todo todo, bool isDark) {
+    final project = todo.projectId != null
+        ? DatabaseService.getProjectById(todo.projectId!)
+        : null;
+    final goal =
+        todo.goalId != null ? DatabaseService.getGoalById(todo.goalId!) : null;
+    final attribute = TaskAttributes.extractAttributeFromTags(todo.tags);
+
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.spacing4),
+      decoration: BoxDecoration(
+        color: isDark ? DesignTokens.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+        border: Border.all(
+          color: isDark ? DesignTokens.borderDark : DesignTokens.borderLight,
+          width: 0.5,
+        ),
+        boxShadow: DesignTokens.shadowIOS,
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => _handleTaskToggle(todo),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _getPriorityColor(todo.priority),
+                  width: 2,
+                ),
+              ),
+              child: todo.isDone
+                  ? Icon(
+                      Icons.check,
+                      size: 16,
+                      color: _getPriorityColor(todo.priority),
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(width: DesignTokens.spacing4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  todo.title,
+                  style: DesignTokens.textStyle(
+                    fontSize: DesignTokens.fontSizeBodyMedium,
+                    fontWeight: DesignTokens.fontWeightBold,
+                    color: isDark
+                        ? DesignTokens.onSurfaceDark
+                        : DesignTokens.onSurfaceLight,
+                  ).copyWith(
+                    decoration: todo.isDone ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.spacing2),
+                Wrap(
+                  spacing: DesignTokens.spacing2,
+                  runSpacing: DesignTokens.spacing1,
+                  children: [
+                    if (project != null)
+                      _buildAssociationChip(
+                        icon: Icons.folder,
+                        label: project.name,
+                        color: _parseColor(project.color),
+                        isDark: isDark,
+                      ),
+                    if (goal != null)
+                      _buildAssociationChip(
+                        icon: Icons.flag,
+                        label: goal.title,
+                        color: DesignTokens.secondaryPurple,
+                        isDark: isDark,
+                      ),
+                    if (attribute != null)
+                      _buildAssociationChip(
+                        icon: TaskAttributes.getIcon(attribute),
+                        label: TaskAttributes.getDisplayName(attribute),
+                        color: TaskAttributes.getColor(attribute, isDark),
+                        isDark: isDark,
+                      ),
+                    if (todo.dueDate != null)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            size: 12,
+                            color: isDark
+                                ? DesignTokens.textSecondaryDark
+                                : DesignTokens.textSecondaryLight,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatDueDate(todo.dueDate!),
+                            style: DesignTokens.textStyle(
+                              fontSize: DesignTokens.fontSizeLabelSmall,
+                              color: isDark
+                                  ? DesignTokens.textSecondaryDark
+                                  : DesignTokens.textSecondaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (!todo.isDone)
+            IconButton(
+              icon: Icon(
+                Icons.timer_outlined,
+                color: DesignTokens.primaryColor,
+                size: 24,
+              ),
+              tooltip: '专注',
+              onPressed: () {
+                Get.to(() => FocusPage(taskTitle: todo.title));
+              },
+            ),
+          Container(
+            width: 4,
+            height: 50,
+            decoration: BoxDecoration(
+              color: _getPriorityColor(todo.priority),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssociationChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.spacing2,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 10,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: DesignTokens.textStyle(
+              fontSize: DesignTokens.fontSizeLabelSmall,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleTaskToggle(Todo todo) async {
+    final original = DatabaseService.getTodoById(todo.id);
+    if (original == null) return;
+    original.isDone = !original.isDone;
+    original.completedAt = original.isDone ? DateTime.now() : null;
+    original.updatedAt = DateTime.now();
+    await DatabaseService.updateTodo(original);
+    await CalendarSyncService.updateTodo(original);
+    if (original.projectId != null) {
+      await DatabaseService.recalculateProjectProgress(original.projectId!);
+    }
+    if (original.goalId != null) {
+      await DatabaseService.recalculateGoalProgress(original.goalId!);
+    }
+    await _refreshData();
+  }
+
+  Future<void> _handleReorder(
+    Project project,
+    ProjectPhase? phase,
+    List<Todo> todos,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    final movedTodo = todos.removeAt(oldIndex);
+    todos.insert(newIndex, movedTodo);
+    final reorderedIds = todos.map((todo) => todo.id).toList();
+
+    final latestProject = DatabaseService.getProjectById(project.id);
+    if (latestProject == null) return;
+
+    if (phase != null) {
+      final phases = latestProject.phases ?? [];
+      final targetIndex = phases.indexWhere((p) => p.id == phase.id);
+      if (targetIndex != -1) {
+        final updatedPhase = phases[targetIndex];
+        updatedPhase.todoIds = reorderedIds;
+        phases[targetIndex] = updatedPhase;
+        latestProject.phases = phases;
+      }
+    } else {
+      final phases = latestProject.phases ?? [];
+      final orderedPhaseIds = <String>[];
+      for (final phaseItem in phases) {
+        if (phaseItem.todoIds != null) {
+          orderedPhaseIds.addAll(phaseItem.todoIds!);
+        }
+      }
+      latestProject.todoIds = [
+        ...orderedPhaseIds,
+        ...reorderedIds,
+      ];
+    }
+
+    latestProject.updatedAt = DateTime.now();
+    await DatabaseService.updateProject(latestProject);
+    await DatabaseService.recalculateProjectProgress(latestProject.id);
+    await _refreshData();
+  }
+
+  Color _getPriorityColor(TodoPriority priority) {
+    switch (priority) {
+      case TodoPriority.urgent:
+        return DesignTokens.errorColor;
+      case TodoPriority.high:
+        return DesignTokens.warningColor;
+      case TodoPriority.medium:
+        return DesignTokens.infoColor;
+      case TodoPriority.low:
+        return DesignTokens.textSecondaryLight;
+    }
+  }
+
+  String _formatDueDate(DateTime dueDate) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final diff = target.difference(today).inDays;
+
+    if (diff == 0) return '今天';
+    if (diff == 1) return '明天';
+    if (diff == -1) return '昨天';
+    if (diff > 0 && diff <= 7) return '$diff天后';
+    if (diff < 0 && diff >= -7) return '${-diff}天前';
+    return '${dueDate.month}月${dueDate.day}日';
+  }
+
+  Future<void> _refreshData() async {
+    if (!mounted) return;
     setState(() {});
   }
 
@@ -49,6 +430,21 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             return todo;
           }).whereType<Todo>().toList()
         : <Todo>[];
+
+    final phases = project.phases ?? [];
+    final phaseTodoIds = <String>{};
+    for (final phase in phases) {
+      if (phase.todoIds != null) {
+        phaseTodoIds.addAll(phase.todoIds!);
+      }
+    }
+    final remainingTodoIds = (project.todoIds ?? [])
+        .where((id) => !phaseTodoIds.contains(id))
+        .toList();
+    final remainingTodos = remainingTodoIds
+        .map(DatabaseService.getTodoById)
+        .whereType<Todo>()
+        .toList();
 
     return Scaffold(
       backgroundColor: isDark
@@ -269,45 +665,111 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 
                 const SizedBox(height: DesignTokens.spacing8),
                 
-                // 执行路线图标题
-                Text(
-                  '执行路线图',
-                  style: DesignTokens.textStyle(
-                    fontSize: DesignTokens.fontSizeLabelSmall,
-                    fontWeight: DesignTokens.fontWeightBold,
-                    color: isDark
-                        ? DesignTokens.textSecondaryDark
-                        : DesignTokens.textSecondaryLight,
-                  ),
+                // 执行路线图
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '执行路线图',
+                      style: DesignTokens.textStyle(
+                        fontSize: DesignTokens.fontSizeLabelSmall,
+                        fontWeight: DesignTokens.fontWeightBold,
+                        color: isDark
+                            ? DesignTokens.textSecondaryDark
+                            : DesignTokens.textSecondaryLight,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _showManageTasks(project),
+                      icon: const Icon(Icons.link_outlined, size: 16),
+                      label: const Text('管理任务'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: DesignTokens.primaryColor,
+                      ),
+                    ),
+                  ],
                 ),
                 
                 const SizedBox(height: DesignTokens.spacing6),
                 
-                // 阶段列表
-                if (project.phases != null && project.phases!.isNotEmpty)
-                  ...project.phases!.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final phase = entry.value;
-                    final phaseTodos = phase.todoIds != null
-                        ? phase.todoIds!.map((id) {
-                            final todo = DatabaseService.getTodoById(id);
-                            return todo;
-                          }).whereType<Todo>().toList()
-                        : <Todo>[];
-                    
-                    final isActive = phase.status.toString().contains('active');
-                    final isCompleted = phase.status.toString().contains('completed');
-                    
-                    return _buildPhaseSection(
-                      phase.name,
-                      phaseTodos,
-                      isActive,
-                      isCompleted,
-                      index == 0,
-                      index == project.phases!.length - 1,
-                      isDark,
+                Builder(
+                  builder: (context) {
+                    final totalSections =
+                        phases.length + (remainingTodos.isNotEmpty ? 1 : 0);
+                    if (totalSections == 0) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(DesignTokens.spacing5),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? DesignTokens.surfaceDarkSecondary
+                              : DesignTokens.surfaceLightSecondary,
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusLarge),
+                        ),
+                        child: Text(
+                          '暂无执行路线，先为项目添加任务吧',
+                          style: DesignTokens.textStyle(
+                            color: isDark
+                                ? DesignTokens.textSecondaryDark
+                                : DesignTokens.textSecondaryLight,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final widgets = <Widget>[];
+                    for (final entry in phases.asMap().entries) {
+                      final index = entry.key;
+                      final phase = entry.value;
+                      final phaseTodos = phase.todoIds != null
+                          ? phase.todoIds!
+                              .map((id) => DatabaseService.getTodoById(id))
+                              .whereType<Todo>()
+                              .toList()
+                          : <Todo>[];
+
+                      final isActive =
+                          phase.status.toString().contains('active');
+                      final isCompleted =
+                          phase.status.toString().contains('completed');
+
+                      widgets.add(
+                        _buildPhaseSection(
+                          project: project,
+                          phase: phase,
+                          phaseName: phase.name,
+                          todos: phaseTodos,
+                          isActive: isActive,
+                          isCompleted: isCompleted,
+                          isFirstSection: index == 0,
+                          isLastSection:
+                              index == totalSections - 1 && remainingTodos.isEmpty,
+                          isDark: isDark,
+                        ),
+                      );
+                    }
+
+                    if (remainingTodos.isNotEmpty) {
+                      widgets.add(
+                        _buildPhaseSection(
+                          project: project,
+                          phaseName: '关联任务',
+                          todos: remainingTodos,
+                          isActive: true,
+                          isCompleted: false,
+                          isFirstSection: phases.isEmpty,
+                          isLastSection: true,
+                          isDark: isDark,
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: widgets,
                     );
-                  }),
+                  },
+                ),
               ],
             ),
           ),
@@ -412,41 +874,53 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     );
   }
 
-  Widget _buildPhaseSection(
-    String phaseName,
-    List<Todo> todos,
-    bool isActive,
-    bool isCompleted,
-    bool isFirst,
-    bool isLast,
-    bool isDark,
-  ) {
+  Widget _buildPhaseSection({
+    required Project project,
+    ProjectPhase? phase,
+    required String phaseName,
+    required List<Todo> todos,
+    required bool isActive,
+    required bool isCompleted,
+    required bool isFirstSection,
+    required bool isLastSection,
+    required bool isDark,
+  }) {
+    final lineColor = isActive || isCompleted
+        ? DesignTokens.primaryColor.withOpacity(0.35)
+        : (isDark ? DesignTokens.borderDark : DesignTokens.borderLight);
+
     return Padding(
       padding: EdgeInsets.only(
-        bottom: isLast ? 0 : DesignTokens.spacing10,
+        bottom: isLastSection ? 0 : DesignTokens.spacing10,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 时间轴
+          // 左侧路线节点
           Column(
             children: [
-              if (!isFirst)
+              if (!isFirstSection)
                 Container(
                   width: 3,
                   height: 20,
-                  color: isActive || isCompleted
-                      ? DesignTokens.primaryColor.withOpacity(0.3)
-                      : (isDark
-                          ? DesignTokens.borderDark
-                          : DesignTokens.borderLight),
+                  color: lineColor,
                 ),
               Container(
-                width: 20,
-                height: 20,
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
+                  gradient: isActive || isCompleted
+                      ? LinearGradient(
+                          colors: [
+                            DesignTokens.primaryColor,
+                            DesignTokens.primaryColor.withOpacity(0.6),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        )
+                      : null,
                   color: isActive || isCompleted
-                      ? DesignTokens.primaryColor
+                      ? null
                       : (isDark
                           ? DesignTokens.surfaceDarkSecondary
                           : DesignTokens.surfaceLightSecondary),
@@ -454,22 +928,16 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                   border: Border.all(
                     color: isActive || isCompleted
                         ? DesignTokens.primaryColor
-                        : (isDark
-                            ? DesignTokens.borderDark
-                            : DesignTokens.borderLight),
+                        : lineColor,
                     width: 4,
                   ),
                 ),
               ),
-              if (!isLast)
+              if (!isLastSection)
                 Expanded(
                   child: Container(
                     width: 3,
-                    color: isActive
-                        ? DesignTokens.primaryColor.withOpacity(0.3)
-                        : (isDark
-                            ? DesignTokens.borderDark
-                            : DesignTokens.borderLight),
+                    color: lineColor,
                   ),
                 ),
             ],
@@ -506,20 +974,19 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                       ),
                       decoration: BoxDecoration(
                         color: isActive
-                            ? DesignTokens.primaryColor.withOpacity(0.1)
+                            ? DesignTokens.primaryColor.withOpacity(0.12)
                             : (isCompleted
-                                ? DesignTokens.secondaryEmerald.withOpacity(0.1)
+                                ? DesignTokens.secondaryEmerald.withOpacity(0.12)
                                 : (isDark
                                     ? DesignTokens.surfaceDarkSecondary
                                     : DesignTokens.surfaceLightSecondary)),
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusMedium),
                       ),
                       child: Text(
                         isActive
                             ? '进行中'
-                            : (isCompleted
-                                ? '已完成'
-                                : '未开始'),
+                            : (isCompleted ? '已完成' : '未开始'),
                         style: DesignTokens.textStyle(
                           fontSize: 10,
                           fontWeight: DesignTokens.fontWeightBold,
@@ -538,10 +1005,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 
                 const SizedBox(height: DesignTokens.spacing3),
                 
-                // 任务列表
-                ...todos.map((todo) {
-                  return _buildTaskItem(todo, isActive, isDark);
-                }),
+                todos.isEmpty
+                    ? _buildRoadmapEmptyHint(isDark)
+                    : _buildTimelineTaskList(
+                        project: project,
+                        phase: phase,
+                        todos: todos,
+                        isDark: isDark,
+                      ),
               ],
             ),
           ),
@@ -550,104 +1021,135 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     );
   }
 
-  Widget _buildTaskItem(Todo todo, bool isPhaseActive, bool isDark) {
-    final isToday = todo.dueDate != null &&
-        todo.dueDate!.year == DateTime.now().year &&
-        todo.dueDate!.month == DateTime.now().month &&
-        todo.dueDate!.day == DateTime.now().day;
-    
-    return Padding(
-      padding: const EdgeInsets.only(bottom: DesignTokens.spacing3),
-      child: GestureDetector(
-        onTap: () async {
-          todo.toggleDone();
-          await DatabaseService.updateTodo(todo);
-          
-          // 更新日历同步
-          await CalendarSyncService.updateTodo(todo);
-          
-          _refreshData();
-        },
-        child: Container(
-          padding: const EdgeInsets.all(DesignTokens.spacing4),
-          decoration: BoxDecoration(
-            color: isDark
-                ? DesignTokens.surfaceDark
-                : Colors.white,
-            borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-            border: Border.all(
-              color: todo.isDone
-                  ? DesignTokens.secondaryEmerald.withOpacity(0.3)
-                  : (isPhaseActive && isToday
-                      ? DesignTokens.primaryColor.withOpacity(0.5)
-                      : (isDark
-                          ? DesignTokens.borderDark
-                          : DesignTokens.borderLight)),
-              width: todo.isDone || (isPhaseActive && isToday) ? 2 : 1,
-            ),
-            boxShadow: isPhaseActive && isToday
-                ? DesignTokens.shadowIOS
-                : null,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: todo.isDone
-                      ? DesignTokens.secondaryEmerald
-                      : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: todo.isDone
-                        ? DesignTokens.secondaryEmerald
-                        : (isPhaseActive && isToday
-                            ? DesignTokens.primaryColor
-                            : (isDark
+  void _showManageTasks(Project project) {
+    final selectedIds = <String>{...?project.todoIds};
+    final allTodos = DatabaseService.getAllTodos();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final maxHeight = MediaQuery.of(context).size.height * 0.7;
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? DesignTokens.surfaceDark
+                    : Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(DesignTokens.radiusXLarge),
+                  topRight: Radius.circular(DesignTokens.radiusXLarge),
+                ),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(DesignTokens.spacing6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 48,
+                          height: 5,
+                          margin:
+                              const EdgeInsets.only(bottom: DesignTokens.spacing4),
+                          decoration: BoxDecoration(
+                            color: isDark
                                 ? DesignTokens.borderDark
-                                : DesignTokens.borderLight)),
-                    width: 2,
+                                : DesignTokens.borderLight,
+                            borderRadius:
+                                BorderRadius.circular(DesignTokens.radiusRound),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '管理关联任务',
+                        style: DesignTokens.textStyle(
+                          fontSize: DesignTokens.fontSizeTitleLarge,
+                          fontWeight: DesignTokens.fontWeightBold,
+                          color: isDark
+                              ? DesignTokens.onSurfaceDark
+                              : DesignTokens.onSurfaceLight,
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spacing4),
+                      if (allTodos.isEmpty)
+                        Text(
+                          '暂无任务可选',
+                          style: DesignTokens.textStyle(
+                            color: isDark
+                                ? DesignTokens.textSecondaryDark
+                                : DesignTokens.textSecondaryLight,
+                          ),
+                        )
+                      else
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: maxHeight,
+                          ),
+                          child: ListView(
+                            shrinkWrap: true,
+                            children: allTodos.map((todo) {
+                              final checked = selectedIds.contains(todo.id);
+                              return CheckboxListTile(
+                                value: checked,
+                                title: Text(todo.title),
+                                subtitle: todo.dueDate != null
+                                    ? Text(
+                                        '截止 ${todo.dueDate!.month}/${todo.dueDate!.day}',
+                                      )
+                                    : null,
+                                onChanged: (value) {
+                                  setStateModal(() {
+                                    if (value == true) {
+                                      selectedIds.add(todo.id);
+                                    } else {
+                                      selectedIds.remove(todo.id);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      const SizedBox(height: DesignTokens.spacing4),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await DatabaseService.setProjectTodoLinks(
+                              project.id,
+                              selectedIds.toList(),
+                            );
+                            Get.back();
+                            await _refreshData();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: DesignTokens.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: DesignTokens.spacing3,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(DesignTokens.radiusXLarge),
+                            ),
+                          ),
+                          child: const Text('完成'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: todo.isDone
-                    ? const Icon(
-                        Icons.check,
-                        size: 16,
-                        color: Colors.white,
-                      )
-                    : null,
               ),
-              
-              const SizedBox(width: DesignTokens.spacing4),
-              
-              Expanded(
-                child: Text(
-                  todo.title,
-                  style: DesignTokens.textStyle(
-                    fontSize: DesignTokens.fontSizeBodyMedium,
-                    fontWeight: todo.isDone
-                        ? DesignTokens.fontWeightMedium
-                        : DesignTokens.fontWeightBold,
-                    color: todo.isDone
-                        ? (isDark
-                            ? DesignTokens.textSecondaryDark
-                            : DesignTokens.textSecondaryLight)
-                        : (isDark
-                            ? DesignTokens.onSurfaceDark
-                            : DesignTokens.onSurfaceLight),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              
-              if (isToday && isPhaseActive)
-                TimeIndicator(date: todo.dueDate),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 }

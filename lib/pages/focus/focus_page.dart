@@ -228,25 +228,23 @@ class _FocusPageState extends State<FocusPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // 呼吸灯效果
-                    Container(
-                      width: 288,
-                      height: 288,
-                      decoration: BoxDecoration(
-                        color: DesignTokens.primaryColor.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: -288),
-                    
-                    // 圆形进度条
+                    // 使用Stack实现呼吸灯效果和进度条重叠
                     SizedBox(
                       width: 288,
                       height: 288,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
+                          // 呼吸灯效果（背景）
+                          Container(
+                            width: 288,
+                            height: 288,
+                            decoration: BoxDecoration(
+                              color: DesignTokens.primaryColor.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          
                           // 进度圆环
                           SizedBox(
                             width: 288,

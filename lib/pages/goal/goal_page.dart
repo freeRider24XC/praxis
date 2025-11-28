@@ -5,6 +5,7 @@ import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/widgets/empty_state.dart';
 import 'package:praxis/common/widgets/praxis_card.dart';
 import 'package:praxis/common/style/design_tokens.dart';
+import 'package:praxis/pages/goal/goal_detail_page.dart';
 
 class GoalPage extends StatefulWidget {
   const GoalPage({super.key});
@@ -173,7 +174,10 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
       builder: (context, animatedProgress, child) {
         return PraxisCard(
           margin: const EdgeInsets.only(bottom: DesignTokens.spacing3),
-          onTap: () => _showGoalDetail(goal),
+          onTap: () async {
+            await Get.to(() => GoalDetailPage(goalId: goal.id));
+            setState(() {});
+          },
           padding: const EdgeInsets.all(DesignTokens.spacing4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,66 +346,6 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
     if (progress >= 0.5) return DesignTokens.primaryColor;
     if (progress >= 0.3) return DesignTokens.warningColor;
     return DesignTokens.errorColor;
-  }
-
-  void _showGoalDetail(Goal goal) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(goal.title),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (goal.description != null && goal.description!.isNotEmpty) ...[
-                const Text(
-                  '描述',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(goal.description!),
-                const SizedBox(height: 16),
-              ],
-              Row(
-                children: [
-                  const Text(
-                    '类型: ',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Chip(
-                    label: Text(goal.type.displayName),
-                    backgroundColor: Colors.purple.shade100,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '目标日期: ${_formatDate(goal.targetDate)}',
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '状态: ${goal.status.displayName}',
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '进度: ${(goal.progress * 100).toStringAsFixed(0)}%',
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   void _showGoalAnalytics() {

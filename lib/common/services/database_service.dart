@@ -147,6 +147,12 @@ class DatabaseService {
 
   static Future<void> updateTodo(Todo todo) async {
     await todo.save();
+    if (todo.projectId != null) {
+      await recalculateProjectProgress(todo.projectId!);
+    }
+    if (todo.goalId != null) {
+      await recalculateGoalProgress(todo.goalId!);
+    }
   }
 
   static Future<void> deleteTodo(Todo todo) async {
@@ -174,12 +180,51 @@ class DatabaseService {
         .toList();
   }
 
+  static Goal? getGoalById(String id) {
+    try {
+      return goalBox.values.firstWhere((goal) => goal.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
   static Future<void> updateGoal(Goal goal) async {
     await goal.save();
   }
 
   static Future<void> deleteGoal(Goal goal) async {
     await goal.delete();
+  }
+
+  /// 重新计算目标进度（优先使用数值，其次关联项目平均值）
+  static Future<void> recalculateGoalProgress(String goalId) async {
+    final goal = getGoalById(goalId);
+    if (goal == null) return;
+
+    double newProgress = goal.progress;
+    final hasValueTarget = (goal.targetValue ?? 0) > 0 && goal.currentValue != null;
+
+    if (hasValueTarget) {
+      newProgress = (goal.currentValue! / goal.targetValue!).clamp(0.0, 1.0);
+    } else if (goal.projectIds != null && goal.projectIds!.isNotEmpty) {
+      final linkedProjects = goal.projectIds!
+          .map(getProjectById)
+          .whereType<Project>()
+          .toList();
+      if (linkedProjects.isNotEmpty) {
+        final total = linkedProjects.fold<double>(
+          0,
+          (sum, project) => sum + project.progress,
+        );
+        newProgress = (total / linkedProjects.length).clamp(0.0, 1.0);
+      } else {
+        newProgress = 0;
+      }
+    }
+
+    goal.progress = newProgress;
+    goal.updatedAt = DateTime.now();
+    await goal.save();
   }
 
   // Project operations
@@ -211,6 +256,122 @@ class DatabaseService {
 
   static Future<void> deleteProject(Project project) async {
     await project.delete();
+  }
+
+  /// 根据关联任务完成度重新计算项目进度
+  static Future<void> recalculateProjectProgress(String projectId) async {
+    final project = getProjectById(projectId);
+    if (project == null) return;
+
+    final todos = project.todoIds
+            ?.map(getTodoById)
+            .whereType<Todo>()
+            .toList() ??
+        [];
+
+    double progress = 0;
+    if (todos.isNotEmpty) {
+      final completedCount = todos.where((todo) => todo.isDone).length;
+      progress = (completedCount / todos.length).clamp(0.0, 1.0);
+    }
+
+    project.progress = progress;
+    project.updatedAt = DateTime.now();
+    await project.save();
+
+    if (project.goalIds != null) {
+      for (final goalId in project.goalIds!) {
+        await recalculateGoalProgress(goalId);
+      }
+    }
+  }
+
+  /// 链接或解绑目标与项目（批量覆盖）
+  static Future<void> setGoalProjectLinks(
+    String goalId,
+    List<String> projectIds,
+  ) async {
+    final goal = getGoalById(goalId);
+    if (goal == null) return;
+
+    goal.projectIds = projectIds.isEmpty ? null : projectIds;
+    await goal.save();
+
+    for (final project in projectBox.values) {
+      final goalIds = List<String>.from(project.goalIds ?? []);
+      final shouldContain = projectIds.contains(project.id);
+      final contains = goalIds.contains(goalId);
+
+      if (shouldContain && !contains) {
+        goalIds.add(goalId);
+        project.goalIds = goalIds;
+        await project.save();
+      } else if (!shouldContain && contains) {
+        goalIds.remove(goalId);
+        project.goalIds = goalIds.isEmpty ? null : goalIds;
+        await project.save();
+      }
+    }
+
+    await recalculateGoalProgress(goalId);
+  }
+
+  /// 将任务分配给项目（或取消）
+  static Future<void> setProjectTodoLinks(
+    String projectId,
+    List<String> todoIds,
+  ) async {
+    final project = getProjectById(projectId);
+    if (project == null) return;
+
+    final previousIds = List<String>.from(project.todoIds ?? []);
+    final affectedProjectIds = <String>{projectId};
+
+    // 需要移除的任务
+    for (final id in previousIds) {
+      if (!todoIds.contains(id)) {
+        final todo = getTodoById(id);
+        if (todo != null && todo.projectId == projectId) {
+          todo.projectId = null;
+          await todo.save();
+          if (todo.goalId != null) {
+            await recalculateGoalProgress(todo.goalId!);
+          }
+        }
+      }
+    }
+
+    // 需要新增或更新的任务
+    for (final id in todoIds) {
+      final todo = getTodoById(id);
+      if (todo == null) continue;
+
+      if (todo.projectId != null && todo.projectId != projectId) {
+        final oldProject = getProjectById(todo.projectId!);
+        if (oldProject != null) {
+          final oldTodoIds = List<String>.from(oldProject.todoIds ?? []);
+          if (oldTodoIds.remove(id)) {
+            oldProject.todoIds =
+                oldTodoIds.isEmpty ? null : oldTodoIds;
+            await oldProject.save();
+            affectedProjectIds.add(oldProject.id);
+          }
+        }
+      }
+
+      todo.projectId = projectId;
+      await todo.save();
+      if (todo.goalId != null) {
+        await recalculateGoalProgress(todo.goalId!);
+      }
+    }
+
+    project.todoIds = todoIds.isEmpty ? null : todoIds;
+    await project.save();
+
+    for (final id in affectedProjectIds) {
+      await recalculateProjectProgress(id);
+    }
   }
 
   // Settings operations

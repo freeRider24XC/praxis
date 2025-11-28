@@ -1,26 +1,33 @@
 import 'dart:convert';
 import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/models/goal.dart';
+import 'package:praxis/common/models/project.dart';
 
 class EntityExtractionResult {
-  final String? action; // 'create_todo', 'create_goal'
+  final String? action; // 'create_todo', 'create_goal', 'create_project'
   final Todo? todo;
   final Goal? goal;
+  final Project? project;
   final List<Todo>? todos; // 用于批量创建
+  final List<Project>? projects; // 用于批量创建项目
   final String? error;
 
   EntityExtractionResult({
     this.action,
     this.todo,
     this.goal,
+    this.project,
     this.todos,
+    this.projects,
     this.error,
   });
 
   bool get hasError => error != null;
   bool get hasTodo => todo != null;
   bool get hasGoal => goal != null;
+  bool get hasProject => project != null;
   bool get hasTodos => todos != null && todos!.isNotEmpty;
+  bool get hasProjects => projects != null && projects!.isNotEmpty;
 }
 
 class EntityExtractor {
@@ -201,6 +208,8 @@ class EntityExtractor {
           return _extractTodo(data);
         } else if (action == 'create_goal') {
           return _extractGoal(data);
+        } else if (action == 'create_project') {
+          return _extractProject(data);
         }
       }
       
@@ -381,6 +390,70 @@ class EntityExtractor {
     }
     
     return null;
+  }
+
+  // 提取Project
+  static EntityExtractionResult _extractProject(Map<String, dynamic> data) {
+    try {
+      final name = data['name'] as String?;
+      if (name == null || name.isEmpty) {
+        return EntityExtractionResult(error: '项目名称不能为空');
+      }
+
+      final description = data['description'] as String?;
+      final color = data['color'] as String? ?? '#2196F3';
+      final endDateStr = data['endDate'] as String?;
+      final statusStr = (data['status'] as String?)?.toLowerCase() ?? 'planning';
+
+      // 解析状态
+      ProjectStatus status;
+      switch (statusStr) {
+        case 'active':
+        case '进行中':
+          status = ProjectStatus.active;
+          break;
+        case 'onhold':
+        case '暂停':
+          status = ProjectStatus.onHold;
+          break;
+        case 'completed':
+        case '完成':
+          status = ProjectStatus.completed;
+          break;
+        case 'cancelled':
+        case '取消':
+          status = ProjectStatus.cancelled;
+          break;
+        case 'archived':
+        case '归档':
+          status = ProjectStatus.archived;
+          break;
+        default:
+          status = ProjectStatus.planning;
+      }
+
+      // 解析结束日期
+      DateTime? endDate;
+      if (endDateStr != null && endDateStr.isNotEmpty) {
+        try {
+          endDate = DateTime.parse(endDateStr);
+        } catch (_) {
+          // 日期解析失败，使用null
+        }
+      }
+
+      final project = Project(
+        name: name,
+        description: description,
+        status: status,
+        color: color,
+        endDate: endDate,
+      );
+
+      return EntityExtractionResult(action: 'create_project', project: project);
+    } catch (e) {
+      return EntityExtractionResult(error: '创建项目失败: $e');
+    }
   }
 }
 

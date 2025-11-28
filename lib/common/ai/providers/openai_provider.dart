@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:praxis/common/ai/services/ai_config_service.dart';
 
 class ChatMessage {
@@ -21,8 +22,8 @@ class ChatMessage {
 }
 
 class OpenAIProvider {
-  // 系统提示词
-  static const String systemPrompt = '''你是Praxis AI助手，帮助用户拆解目标、制定任务、安排日程。
+  // 系统提示词（基础内容）
+  static const String _baseSystemPrompt = '''你是Praxis AI助手，帮助用户拆解目标、制定任务、安排日程。
 
 **重要：当用户要求创建任务或拆解目标时，请直接返回格式化的待办事项列表！**
 
@@ -50,6 +51,16 @@ class OpenAIProvider {
 3. 学习状态管理（截止日期：2025-01-20）[优先级：中]
 4. 完成一个实战项目（截止日期：2025-01-30）[优先级：高]"''';
 
+  String _buildDynamicSystemPrompt() {
+    final now = DateTime.now();
+    final localTime = DateFormat('yyyy-MM-dd HH:mm').format(now);
+    final weekday = DateFormat('EEEE', 'zh_CN').format(now);
+    final timeZone = now.timeZoneName;
+    return '''$_baseSystemPrompt
+
+当前本地时间：$localTime（$weekday，$timeZone）。请务必依据此时间安排计划和截止日期，除非用户明确指定其他日期或时区。''';
+  }
+
   // 检查是否已配置
   Future<bool> isConfigured() async {
     return await AiConfigService.isConfigured();
@@ -73,6 +84,7 @@ class OpenAIProvider {
     debugPrint('🔵 AI请求 - BaseURL: $baseUrl, Model: $model, IsTongyi: $isTongyi');
 
     // 构建消息列表
+    final systemPrompt = _buildDynamicSystemPrompt();
     final messages = <Map<String, dynamic>>[
       {'role': 'system', 'content': systemPrompt},
       ...history.map((msg) => msg.toJson()),
@@ -151,17 +163,17 @@ class OpenAIProvider {
     debugPrint('🔵 发送请求到: $url');
     
     try {
-      final response = await http.post(
-        url,
+    final response = await http.post(
+      url,
         headers: headers,
-        body: jsonEncode(requestBody),
-      ).timeout(
+      body: jsonEncode(requestBody),
+    ).timeout(
         Duration(seconds: isTongyi ? 60 : 30), // 通义千问可能需要更长时间
-        onTimeout: () {
+      onTimeout: () {
           debugPrint('❌ 请求超时 - URL: $url, 超时时间: ${isTongyi ? 60 : 30}秒');
           throw Exception('请求超时，请检查网络连接。如果使用通义千问，可能需要更长时间');
-        },
-      );
+      },
+    );
       
       debugPrint('🔵 响应状态码: ${response.statusCode}');
       if (response.body.length > 200) {
@@ -170,7 +182,7 @@ class OpenAIProvider {
         debugPrint('🔵 响应体: ${response.body}');
       }
 
-      if (response.statusCode == 200) {
+    if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       
       String content;
@@ -213,26 +225,26 @@ class OpenAIProvider {
       }
       
       return content;
-      } else if (response.statusCode == 401) {
+    } else if (response.statusCode == 401) {
         debugPrint('❌ API密钥无效');
-        throw Exception('API密钥无效，请检查密钥是否正确');
-      } else if (response.statusCode == 402) {
+      throw Exception('API密钥无效，请检查密钥是否正确');
+    } else if (response.statusCode == 402) {
         debugPrint('❌ 账户余额不足');
-        throw Exception(isTongyi 
-          ? '账户余额不足，请前往阿里云DashScope平台充值' 
-          : '账户余额不足，请前往DeepSeek平台充值');
-      } else if (response.statusCode == 429) {
+      throw Exception(isTongyi 
+        ? '账户余额不足，请前往阿里云DashScope平台充值' 
+        : '账户余额不足，请前往DeepSeek平台充值');
+    } else if (response.statusCode == 429) {
         debugPrint('❌ API调用次数超限');
-        throw Exception('API调用次数超限，请稍后再试');
-      } else {
+      throw Exception('API调用次数超限，请稍后再试');
+    } else {
         debugPrint('❌ API请求失败 - 状态码: ${response.statusCode}');
         debugPrint('❌ 响应体: ${response.body}');
         try {
-          final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+      final errorData = jsonDecode(response.body) as Map<String, dynamic>;
           final errorMessage = errorData['error']?['message'] ?? 
                               errorData['message'] ?? 
                               '请求失败';
-          throw Exception('API请求失败: $errorMessage');
+      throw Exception('API请求失败: $errorMessage');
         } catch (e) {
           throw Exception('API请求失败: HTTP ${response.statusCode} - ${response.body}');
         }

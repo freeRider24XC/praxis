@@ -89,7 +89,7 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
       
       setState(() {
         _isLoading = false;
-        if (extraction.hasTodo || extraction.hasGoal || extraction.hasTodos) {
+        if (extraction.hasTodo || extraction.hasGoal || extraction.hasProject || extraction.hasTodos || extraction.hasProjects) {
           _pendingExtraction = extraction;
         }
       });
@@ -115,14 +115,25 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
       } else if (_pendingExtraction!.hasGoal && _pendingExtraction!.goal != null) {
         await DatabaseService.addGoal(_pendingExtraction!.goal!);
         ErrorService.showSuccess('目标已创建');
+      } else if (_pendingExtraction!.hasProject && _pendingExtraction!.project != null) {
+        await DatabaseService.addProject(_pendingExtraction!.project!);
+        ErrorService.showSuccess('项目已创建');
       } else if (_pendingExtraction!.hasTodos && _pendingExtraction!.todos != null) {
         await DatabaseService.addTodos(_pendingExtraction!.todos!);
         ErrorService.showSuccess('已创建${_pendingExtraction!.todos!.length}个待办事项');
+      } else if (_pendingExtraction!.hasProjects && _pendingExtraction!.projects != null) {
+        for (final project in _pendingExtraction!.projects!) {
+          await DatabaseService.addProject(project);
+        }
+        ErrorService.showSuccess('已创建${_pendingExtraction!.projects!.length}个项目');
       }
 
       setState(() {
         _pendingExtraction = null;
       });
+      
+      // 返回并刷新首页
+      Get.back(result: true);
     } catch (e) {
       LoggerService.error('创建实体失败', 'AiInteractionPage', e);
       ErrorService.handleError(e, context: '创建实体');

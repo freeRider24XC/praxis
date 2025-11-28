@@ -37,13 +37,14 @@ class GoalAdapter extends TypeAdapter<Goal> {
       targetValue: fields[17] as int?,
       currentValue: fields[18] as int?,
       unit: fields[19] as String?,
+      projectIds: (fields[20] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Goal obj) {
     writer
-      ..writeByte(20)
+      ..writeByte(21)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -83,7 +84,9 @@ class GoalAdapter extends TypeAdapter<Goal> {
       ..writeByte(18)
       ..write(obj.currentValue)
       ..writeByte(19)
-      ..write(obj.unit);
+      ..write(obj.unit)
+      ..writeByte(20)
+      ..write(obj.projectIds);
   }
 
   @override

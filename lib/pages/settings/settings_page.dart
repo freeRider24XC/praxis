@@ -24,7 +24,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadSettings() async {
     setState(() {
       _calendarSyncEnabled = CalendarSyncService.isEnabled;
-    });
+      });
   }
 
   @override
@@ -58,7 +58,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             child: Row(
-              children: [
+                children: [
                 GestureDetector(
                   onTap: () => Get.back(),
                   child: Container(
@@ -84,8 +84,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           : DesignTokens.textSecondaryLight,
                     ),
                   ),
-                ),
-                const Spacer(),
+                      ),
+                      const Spacer(),
                 Text(
                   '设置',
                   style: DesignTokens.textStyle(
@@ -138,7 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           Icons.person,
                           size: 28,
                         ),
-                      ),
+                  ),
                       const SizedBox(width: DesignTokens.spacing4),
                       Expanded(
                         child: Column(
@@ -163,15 +163,15 @@ class _SettingsPageState extends State<SettingsPage> {
                                     ? DesignTokens.textSecondaryDark
                                     : DesignTokens.textSecondaryLight,
                               ),
-                            ),
+                      ),
                           ],
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: DesignTokens.spacing4,
+                        horizontal: DesignTokens.spacing4,
                           vertical: DesignTokens.spacing2,
-                        ),
+                      ),
                         decoration: BoxDecoration(
                           color: isDark
                               ? DesignTokens.surfaceDarkSecondary
@@ -211,7 +211,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ? DesignTokens.textSecondaryDark
                         : DesignTokens.textSecondaryLight,
                   ),
-                ),
+                  ),
                 
                 const SizedBox(height: DesignTokens.spacing3),
                 
@@ -255,10 +255,10 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: isDark
                                       ? DesignTokens.textSecondaryDark
                                       : DesignTokens.textSecondaryLight,
-                                ),
+                        ),
                               );
                             }),
-                            const SizedBox(width: DesignTokens.spacing2),
+                      const SizedBox(width: DesignTokens.spacing2),
                             Icon(
                               Icons.chevron_right,
                               size: 14,
@@ -303,7 +303,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: DesignTokens.spacing6),
                 
                 // 数据与安全
-                Text(
+                  Text(
                   '数据与安全',
                   style: DesignTokens.textStyle(
                     fontSize: DesignTokens.fontSizeLabelSmall,
@@ -311,8 +311,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     color: isDark
                         ? DesignTokens.textSecondaryDark
                         : DesignTokens.textSecondaryLight,
+                    ),
                   ),
-                ),
                 
                 const SizedBox(height: DesignTokens.spacing3),
                 
@@ -354,7 +354,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         color: isDark
                             ? DesignTokens.borderDark
                             : DesignTokens.borderLight,
-                      ),
+                        ),
                       _buildSettingItem(
                         icon: Icons.shield,
                         iconColor: isDark
@@ -372,13 +372,13 @@ class _SettingsPageState extends State<SettingsPage> {
                           // 打开隐私政策
                         },
                         isDark: isDark,
-                      ),
-                    ],
                   ),
-                ),
-                
+                ],
+              ),
+            ),
+          
                 const SizedBox(height: DesignTokens.spacing8),
-                
+          
                 // 退出登录按钮
                 SizedBox(
                   width: double.infinity,
@@ -414,7 +414,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 
                 SizedBox(height: MediaQuery.of(context).padding.bottom),
               ],
-            ),
+                  ),
           ),
         ],
       ),
@@ -433,7 +433,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(DesignTokens.spacing4),
+            padding: const EdgeInsets.all(DesignTokens.spacing4),
         child: Row(
           children: [
             Container(
@@ -451,7 +451,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(width: DesignTokens.spacing3),
             Expanded(
-              child: Column(
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -462,7 +462,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       color: isDark
                           ? DesignTokens.onSurfaceDark
                           : DesignTokens.onSurfaceLight,
-                    ),
+                  ),
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
@@ -536,11 +536,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       ThemeMode.system,
                       themeService,
                       isDark,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
+        ],
           ),
         ),
       ),
