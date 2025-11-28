@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:praxis/common/style/design_tokens.dart';
+import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/models/focus_session.dart';
 import 'package:get/get.dart';
 
 /// 专注模式页
@@ -24,6 +26,9 @@ class _FocusPageState extends State<FocusPage> {
   bool _isPaused = false;
   String? _selectedSound;
   bool _soundEnabled = false;
+  DateTime? _sessionStartTime;
+  int _pausedDuration = 0; // 暂停的总时长（秒）
+  DateTime? _pauseStartTime;
   
   final List<Map<String, dynamic>> _soundOptions = [
     {'name': '无', 'icon': Icons.volume_off, 'value': null},
@@ -49,6 +54,17 @@ class _FocusPageState extends State<FocusPage> {
     setState(() {
       _isRunning = true;
       _isPaused = false;
+      
+      // 记录开始时间（首次启动时）
+      if (_sessionStartTime == null) {
+        _sessionStartTime = DateTime.now();
+      }
+      
+      // 如果是从暂停恢复，计算暂停时长
+      if (_pauseStartTime != null) {
+        _pausedDuration += DateTime.now().difference(_pauseStartTime!).inSeconds;
+        _pauseStartTime = null;
+      }
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -57,7 +73,7 @@ class _FocusPageState extends State<FocusPage> {
           _remainingSeconds--;
         });
       } else {
-        _stopTimer();
+        _stopTimer(completed: true);
       }
     });
   }
@@ -66,21 +82,59 @@ class _FocusPageState extends State<FocusPage> {
     setState(() {
       _isRunning = false;
       _isPaused = true;
+      _pauseStartTime = DateTime.now();
     });
     _timer?.cancel();
   }
 
-  void _stopTimer() {
+  void _stopTimer({bool completed = false}) {
     setState(() {
       _isRunning = false;
       _isPaused = false;
       _remainingSeconds = _totalSeconds;
     });
     _timer?.cancel();
+    
+    // 如果倒计时完成，记录专注会话
+    if (completed && _sessionStartTime != null) {
+      _recordFocusSession(completed: true);
+    }
+    
+    // 重置会话状态
+    _sessionStartTime = null;
+    _pausedDuration = 0;
+    _pauseStartTime = null;
+  }
+  
+  Future<void> _recordFocusSession({required bool completed}) async {
+    if (_sessionStartTime == null) return;
+    
+    final endTime = DateTime.now();
+    // 计算实际专注时长（总时长 - 暂停时长）
+    final actualDuration = _totalSeconds - _pausedDuration;
+    
+    // 只记录至少完成一半的会话
+    if (actualDuration < _totalSeconds ~/ 2) {
+      return;
+    }
+    
+    final session = FocusSession(
+      startTime: _sessionStartTime!,
+      endTime: endTime,
+      duration: actualDuration,
+      taskTitle: widget.taskTitle,
+      completed: completed,
+    );
+    
+    try {
+      await DatabaseService.addFocusSession(session);
+    } catch (e) {
+      debugPrint('记录专注会话失败: $e');
+    }
   }
 
   void _skipTimer() {
-    _stopTimer();
+    _stopTimer(completed: false);
     // 可以跳转到下一个任务
   }
 

@@ -13,7 +13,7 @@ class ProfilePage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final todos = DatabaseService.getAllTodos();
     final completedTodos = todos.where((t) => t.isDone).length;
-    final focusHours = 42; // 可以从统计数据中获取
+    final focusHours = DatabaseService.getTotalFocusDuration();
     
     return Scaffold(
       backgroundColor: isDark
@@ -42,7 +42,7 @@ class ProfilePage extends StatelessWidget {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+          children: [
                 Text(
                   '个人中心',
                   style: DesignTokens.textStyle(
@@ -64,9 +64,9 @@ class ProfilePage extends StatelessWidget {
                     Get.to(() => const SettingsPage());
                   },
                 ),
-              ],
-            ),
-          ),
+          ],
+        ),
+      ),
 
           // 内容区域
           Expanded(
@@ -83,9 +83,9 @@ class ProfilePage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge + 8),
                     boxShadow: DesignTokens.shadowIOS,
                   ),
-                  child: Row(
-                    children: [
-                      // 头像
+      child: Row(
+        children: [
+          // 头像
                       Container(
                         width: 96,
                         height: 96,
@@ -111,18 +111,18 @@ class ProfilePage extends StatelessWidget {
                           child: const Icon(
                             Icons.person,
                             size: 48,
-                            color: DesignTokens.primaryColor,
-                          ),
-                        ),
+                        color: DesignTokens.primaryColor,
                       ),
-                      
+            ),
+          ),
+          
                       const SizedBox(width: DesignTokens.spacing5),
-                      
-                      // 用户信息
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+          
+          // 用户信息
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                             Text(
                               'Alex Chen',
                               style: DesignTokens.textStyle(
@@ -145,9 +145,9 @@ class ProfilePage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: DesignTokens.spacing3),
-                            Row(
-                              children: [
-                                Expanded(
+                Row(
+                  children: [
+                    Expanded(
                                   child: Container(
                                     height: 10,
                                     decoration: BoxDecoration(
@@ -165,9 +165,9 @@ class ProfilePage extends StatelessWidget {
                                           borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                ),
+                        ),
+                      ),
+                    ),
                                 const SizedBox(width: DesignTokens.spacing2),
                                 Text(
                                   '1200 XP',
@@ -176,34 +176,34 @@ class ProfilePage extends StatelessWidget {
                                     fontWeight: DesignTokens.fontWeightBold,
                                     color: DesignTokens.primaryColor,
                                   ),
-                                ),
-                              ],
-                            ),
+                    ),
+                  ],
+                ),
                           ],
-                        ),
-                      ),
-                    ],
                   ),
                 ),
+              ],
+            ),
+          ),
                 
                 const SizedBox(height: DesignTokens.spacing8),
                 
                 // 数据概览
                 GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
                   crossAxisSpacing: DesignTokens.spacing4,
                   mainAxisSpacing: DesignTokens.spacing4,
-                  children: [
-                    _buildStatCard(
+      children: [
+        _buildStatCard(
                       icon: Icons.check_circle,
-                      value: completedTodos.toString(),
+          value: completedTodos.toString(),
                       label: '完成任务',
                       color: DesignTokens.secondaryEmerald,
                       isDark: isDark,
-                    ),
-                    _buildStatCard(
+        ),
+        _buildStatCard(
                       icon: Icons.hourglass_empty,
                       value: '$focusHours',
                       unit: 'h',
@@ -218,12 +218,12 @@ class ProfilePage extends StatelessWidget {
                 
                 // 勋章墙
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
                           '勋章收藏',
                           style: DesignTokens.textStyle(
                             fontSize: DesignTokens.fontSizeTitleLarge,
@@ -237,8 +237,8 @@ class ProfilePage extends StatelessWidget {
                           onTap: () {
                             // 查看全部勋章
                           },
-                          child: Row(
-                            children: [
+                  child: Row(
+                    children: [
                               Text(
                                 '查看全部',
                                 style: DesignTokens.textStyle(
@@ -258,12 +258,12 @@ class ProfilePage extends StatelessWidget {
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: DesignTokens.spacing4),
-                    
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: DesignTokens.spacing4),
+          
                     Container(
                       padding: const EdgeInsets.all(DesignTokens.spacing6),
                       decoration: BoxDecoration(
@@ -324,7 +324,7 @@ class ProfilePage extends StatelessWidget {
         ),
         boxShadow: DesignTokens.shadowIOS,
       ),
-      child: Column(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -342,14 +342,15 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: DesignTokens.spacing2),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
                   value,
                   style: DesignTokens.textStyle(
                     fontSize: 28,
@@ -358,33 +359,37 @@ class ProfilePage extends StatelessWidget {
                         ? DesignTokens.onSurfaceDark
                         : DesignTokens.onSurfaceLight,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              if (unit != null) ...[
-                Text(
-                  unit,
-                  style: DesignTokens.textStyle(
-                    fontSize: DesignTokens.fontSizeBodyMedium,
-                    fontWeight: DesignTokens.fontWeightMedium,
-                    color: isDark
-                        ? DesignTokens.onSurfaceDark
-                        : DesignTokens.onSurfaceLight,
+                if (unit != null) ...[
+                  const SizedBox(width: 2),
+                  Text(
+                    unit,
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeBodyMedium,
+                      fontWeight: DesignTokens.fontWeightMedium,
+                      color: isDark
+                          ? DesignTokens.onSurfaceDark
+                          : DesignTokens.onSurfaceLight,
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
           const SizedBox(height: DesignTokens.spacing1),
-          Text(
-            label,
-            style: DesignTokens.textStyle(
-              fontSize: DesignTokens.fontSizeLabelSmall,
-              fontWeight: DesignTokens.fontWeightBold,
-              color: isDark
-                  ? DesignTokens.textSecondaryDark
-                  : DesignTokens.textSecondaryLight,
+          Flexible(
+            child: Text(
+              label,
+              style: DesignTokens.textStyle(
+                fontSize: DesignTokens.fontSizeLabelSmall,
+                fontWeight: DesignTokens.fontWeightBold,
+                color: isDark
+                    ? DesignTokens.textSecondaryDark
+                    : DesignTokens.textSecondaryLight,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

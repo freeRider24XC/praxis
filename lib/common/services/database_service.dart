@@ -6,11 +6,13 @@ class DatabaseService {
   static const String goalBoxName = 'goals';
   static const String projectBoxName = 'projects';
   static const String settingsBoxName = 'settings';
+  static const String focusSessionBoxName = 'focus_sessions';
 
   static late Box<Todo> todoBox;
   static late Box<Goal> goalBox;
   static late Box<Project> projectBox;
   static late Box settingsBox;
+  static late Box<FocusSession> focusSessionBox;
 
   static bool _isInitialized = false;
 
@@ -77,6 +79,11 @@ class DatabaseService {
     if (!Hive.isAdapterRegistered(12)) {
       Hive.registerAdapter(ProjectHealthAdapter());
     }
+
+    // FocusSession adapters
+    if (!Hive.isAdapterRegistered(13)) {
+      Hive.registerAdapter(FocusSessionAdapter());
+    }
   }
 
   static Future<void> _openBoxes() async {
@@ -84,6 +91,7 @@ class DatabaseService {
     goalBox = await Hive.openBox<Goal>(goalBoxName);
     projectBox = await Hive.openBox<Project>(projectBoxName);
     settingsBox = await Hive.openBox(settingsBoxName);
+    focusSessionBox = await Hive.openBox<FocusSession>(focusSessionBoxName);
   }
 
   // Todo operations
@@ -419,5 +427,41 @@ class DatabaseService {
       notes: map['notes'],
       metadata: map['metadata'] != null ? Map<String, dynamic>.from(map['metadata']) : null,
     );
+  }
+
+  // FocusSession operations
+  static Future<void> addFocusSession(FocusSession session) async {
+    await focusSessionBox.add(session);
+  }
+
+  static List<FocusSession> getAllFocusSessions() {
+    return focusSessionBox.values.toList();
+  }
+
+  static List<FocusSession> getFocusSessionsByDate(DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    
+    return focusSessionBox.values.where((session) {
+      return session.startTime.isAfter(startOfDay) && 
+             session.startTime.isBefore(endOfDay);
+    }).toList();
+  }
+
+  static int getTotalFocusDuration() {
+    // 计算总专注时长（小时）
+    final totalSeconds = focusSessionBox.values
+        .where((session) => session.completed)
+        .fold<int>(0, (sum, session) => sum + session.duration);
+    
+    return (totalSeconds / 3600).round(); // 转换为小时并四舍五入
+  }
+
+  static Future<void> deleteFocusSession(String id) async {
+    final session = focusSessionBox.values.firstWhere(
+      (s) => s.id == id,
+      orElse: () => throw Exception('FocusSession not found'),
+    );
+    await session.delete();
   }
 }

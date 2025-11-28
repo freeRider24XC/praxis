@@ -65,6 +65,17 @@ class _MainPageState extends State<MainPage> {
       duration: DesignTokens.durationNormal,
       curve: DesignTokens.curveDefault,
     );
+    
+    // 切换到首页时刷新数据
+    if (index == 0) {
+      _refreshHomePage();
+    }
+  }
+  
+  void _refreshHomePage() {
+    // 通过GlobalKey或StatefulWidget的key来刷新首页
+    // 由于HomePage已经有didChangeDependencies，这里可以触发重建
+    setState(() {});
   }
 
   @override
@@ -113,9 +124,13 @@ class _MainPageState extends State<MainPage> {
                         icon: Icons.check_circle_outline,
                         title: '创建待办事项',
                         subtitle: '添加新的任务',
-                        onTap: () {
+                        onTap: () async {
                           Get.back();
-                          Get.toNamed('/todo/add');
+                          final result = await Get.toNamed('/todo/add');
+                          // 如果返回成功，刷新首页数据
+                          if (result == true && _currentIndex == 0) {
+                            _refreshHomePage();
+                          }
                         },
                         isDark: isDark,
                       ),
@@ -125,9 +140,13 @@ class _MainPageState extends State<MainPage> {
                         icon: Icons.folder_outlined,
                         title: '创建项目',
                         subtitle: '开始新的项目',
-                        onTap: () {
+                        onTap: () async {
                           Get.back();
-                          Get.toNamed('/project/add');
+                          final result = await Get.toNamed('/project/add');
+                          // 如果返回成功，刷新首页数据
+                          if (result == true && _currentIndex == 0) {
+                            _refreshHomePage();
+                          }
                         },
                         isDark: isDark,
                       ),
@@ -137,9 +156,13 @@ class _MainPageState extends State<MainPage> {
                         icon: Icons.flag_outlined,
                         title: '创建目标',
                         subtitle: '设定新的目标',
-                        onTap: () {
+                        onTap: () async {
                           Get.back();
-                          Get.toNamed('/goal/add');
+                          final result = await Get.toNamed('/goal/add');
+                          // 如果返回成功，刷新首页数据
+                          if (result == true && _currentIndex == 0) {
+                            _refreshHomePage();
+                          }
                         },
                         isDark: isDark,
                       ),
@@ -149,9 +172,13 @@ class _MainPageState extends State<MainPage> {
                         icon: Icons.smart_toy_outlined,
                         title: 'AI智能规划',
                         subtitle: '让AI帮你拆解任务',
-                        onTap: () {
+                        onTap: () async {
                           Get.back();
-                          Get.to(() => const AiInteractionPage());
+                          final result = await Get.to(() => const AiInteractionPage());
+                          // 如果返回成功，刷新首页数据
+                          if (result == true && _currentIndex == 0) {
+                            _refreshHomePage();
+                          }
                         },
                         isDark: isDark,
                       ),

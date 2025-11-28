@@ -15,7 +15,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   List<Project> _activeProjects = [];
   List<Todo> _todayTodos = [];
   int _focusScore = 85;
@@ -24,6 +25,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _loadData();
   }
 
@@ -36,6 +38,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -83,6 +86,40 @@ class _HomePageState extends State<HomePage> {
   String _getCategoryFromTags(List<String>? tags) {
     if (tags == null || tags.isEmpty) return 'Project';
     return tags.first.toUpperCase();
+  }
+
+  Color _getPriorityColor(TodoPriority priority) {
+    switch (priority) {
+      case TodoPriority.urgent:
+        return DesignTokens.errorColor;
+      case TodoPriority.high:
+        return DesignTokens.warningColor;
+      case TodoPriority.medium:
+        return DesignTokens.infoColor;
+      case TodoPriority.low:
+        return DesignTokens.textSecondaryLight;
+    }
+  }
+
+  String _formatDueDate(DateTime dueDate) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final due = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final difference = due.difference(today).inDays;
+    
+    if (difference == 0) {
+      return '今天';
+    } else if (difference == 1) {
+      return '明天';
+    } else if (difference == -1) {
+      return '昨天';
+    } else if (difference > 0 && difference <= 7) {
+      return '$difference天后';
+    } else if (difference < 0 && difference >= -7) {
+      return '${-difference}天前';
+    } else {
+      return '${dueDate.month}月${dueDate.day}日';
+    }
   }
 
   @override
@@ -220,97 +257,54 @@ class _HomePageState extends State<HomePage> {
                   
                   const SizedBox(height: DesignTokens.spacing8),
                   
-                  // 进行中项目
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '进行中',
-                        style: DesignTokens.textStyle(
-                          fontSize: DesignTokens.fontSizeTitleLarge,
-                          fontWeight: DesignTokens.fontWeightBold,
-                          color: isDark
-                              ? DesignTokens.onSurfaceDark
-                              : DesignTokens.onSurfaceLight,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          // 导航到项目列表
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DesignTokens.spacing3,
-                            vertical: DesignTokens.spacing1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: DesignTokens.primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
-                          ),
-                          child: Text(
-                            '全部 (${_activeProjects.length})',
-                            style: DesignTokens.textStyle(
-                              fontSize: DesignTokens.fontSizeLabelSmall,
-                              fontWeight: DesignTokens.fontWeightBold,
-                              color: DesignTokens.primaryColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: DesignTokens.spacing4),
-                  
-                  // 项目卡片列表
-                  ..._activeProjects.take(4).map((proj) {
-                    final daysRemaining = proj.endDate != null
-                        ? proj.endDate!.difference(DateTime.now()).inDays
-                        : null;
-                    
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: DesignTokens.spacing4),
-                      child: PlanCard(
-                        title: proj.name,
-                        subtitle: daysRemaining != null
-                            ? '还有 $daysRemaining 天${proj.endDate != null ? " • ${proj.todoIds?.length ?? 0}/${(proj.todoIds?.length ?? 0) + (proj.phases?.fold<int>(0, (sum, phase) => sum + (phase.todoIds?.length ?? 0)) ?? 0)} 任务" : ""}'
-                            : '${proj.todoIds?.length ?? 0} 任务',
-                        progress: proj.progress,
-                        color: _parseColor(proj.color),
-                        category: _getCategoryFromTags(proj.tags),
-                        onTap: () async {
-                          await Get.to(() => ProjectDetailPage(projectId: proj.id));
-                          // 返回时刷新数据
-                          _loadData();
-                        },
-                        trailing: IconButton(
-                          icon: Icon(
-                            Icons.more_horiz,
-                            color: isDark
-                                ? DesignTokens.textSecondaryDark
-                                : DesignTokens.textSecondaryLight,
-                          ),
-                          onPressed: () {},
-                        ),
-                      ),
-                    );
-                  }),
-                  
-                  if (_activeProjects.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(DesignTokens.spacing8),
-                      child: Center(
-                        child: Text(
-                          '暂无进行中的项目',
-                          style: DesignTokens.textStyle(
-                            fontSize: DesignTokens.fontSizeBodyMedium,
-                            color: isDark
-                                ? DesignTokens.textSecondaryDark
-                                : DesignTokens.textSecondaryLight,
-                          ),
-                        ),
-                      ),
+                  // Tab切换：项目和任务
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? DesignTokens.surfaceDarkSecondary
+                          : DesignTokens.surfaceLightSecondary,
+                      borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
                     ),
+                    child: Column(
+                      children: [
+                        TabBar(
+                          controller: _tabController,
+                          indicator: BoxDecoration(
+                            color: isDark
+                                ? DesignTokens.surfaceDark
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+                          ),
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          dividerColor: Colors.transparent,
+                          labelColor: DesignTokens.primaryColor,
+                          unselectedLabelColor: isDark
+                              ? DesignTokens.textSecondaryDark
+                              : DesignTokens.textSecondaryLight,
+                          labelStyle: DesignTokens.textStyle(
+                            fontSize: DesignTokens.fontSizeBodyMedium,
+                            fontWeight: DesignTokens.fontWeightBold,
+                          ),
+                          tabs: const [
+                            Tab(text: '项目'),
+                            Tab(text: '任务'),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 400,
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              // 项目Tab
+                              _buildProjectsTab(isDark),
+                              // 任务Tab
+                              _buildTasksTab(isDark),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   
                   const SizedBox(height: DesignTokens.spacing16),
                 ],
@@ -319,6 +313,282 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProjectsTab(bool isDark) {
+    return ListView(
+      padding: const EdgeInsets.all(DesignTokens.spacing6),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '进行中',
+              style: DesignTokens.textStyle(
+                fontSize: DesignTokens.fontSizeTitleLarge,
+                fontWeight: DesignTokens.fontWeightBold,
+                color: isDark
+                    ? DesignTokens.onSurfaceDark
+                    : DesignTokens.onSurfaceLight,
+              ),
+            ),
+            if (_activeProjects.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  // 导航到项目列表
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: DesignTokens.spacing3,
+                    vertical: DesignTokens.spacing1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: DesignTokens.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                  ),
+                  child: Text(
+                    '全部 (${_activeProjects.length})',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: DesignTokens.primaryColor,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        
+        const SizedBox(height: DesignTokens.spacing4),
+        
+        // 项目卡片列表
+        ..._activeProjects.take(10).map((proj) {
+          final daysRemaining = proj.endDate != null
+              ? proj.endDate!.difference(DateTime.now()).inDays
+              : null;
+          
+          return Padding(
+            padding: const EdgeInsets.only(bottom: DesignTokens.spacing4),
+            child: PlanCard(
+              title: proj.name,
+              subtitle: daysRemaining != null
+                  ? '还有 $daysRemaining 天${proj.endDate != null ? " • ${proj.todoIds?.length ?? 0}/${(proj.todoIds?.length ?? 0) + (proj.phases?.fold<int>(0, (sum, phase) => sum + (phase.todoIds?.length ?? 0)) ?? 0)} 任务" : ""}'
+                  : '${proj.todoIds?.length ?? 0} 任务',
+              progress: proj.progress,
+              color: _parseColor(proj.color),
+              category: _getCategoryFromTags(proj.tags),
+              onTap: () async {
+                await Get.to(() => ProjectDetailPage(projectId: proj.id));
+                // 返回时刷新数据
+                _loadData();
+              },
+              trailing: IconButton(
+                icon: Icon(
+                  Icons.more_horiz,
+                  color: isDark
+                      ? DesignTokens.textSecondaryDark
+                      : DesignTokens.textSecondaryLight,
+                ),
+                onPressed: () {},
+              ),
+            ),
+          );
+        }),
+        
+        if (_activeProjects.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(DesignTokens.spacing8),
+            child: Center(
+              child: Text(
+                '暂无进行中的项目',
+                style: DesignTokens.textStyle(
+                  fontSize: DesignTokens.fontSizeBodyMedium,
+                  color: isDark
+                      ? DesignTokens.textSecondaryDark
+                      : DesignTokens.textSecondaryLight,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTasksTab(bool isDark) {
+    final incompleteTodos = _todayTodos.where((t) => !t.isDone).toList();
+    
+    return ListView(
+      padding: const EdgeInsets.all(DesignTokens.spacing6),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '今日任务',
+              style: DesignTokens.textStyle(
+                fontSize: DesignTokens.fontSizeTitleLarge,
+                fontWeight: DesignTokens.fontWeightBold,
+                color: isDark
+                    ? DesignTokens.onSurfaceDark
+                    : DesignTokens.onSurfaceLight,
+              ),
+            ),
+            if (_todayTodos.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  // 导航到待办列表页
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: DesignTokens.spacing3,
+                    vertical: DesignTokens.spacing1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: DesignTokens.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                  ),
+                  child: Text(
+                    '全部 (${_todayTodos.length})',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: DesignTokens.primaryColor,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        
+        const SizedBox(height: DesignTokens.spacing4),
+        
+        // 任务列表（显示未完成的优先）
+        ...incompleteTodos.take(10).map((todo) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: DesignTokens.spacing3),
+            padding: const EdgeInsets.all(DesignTokens.spacing4),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? DesignTokens.surfaceDark
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+              border: Border.all(
+                color: isDark
+                    ? DesignTokens.borderDark
+                    : DesignTokens.borderLight,
+                width: 0.5,
+              ),
+              boxShadow: DesignTokens.shadowIOS,
+            ),
+            child: Row(
+              children: [
+                // 复选框
+                GestureDetector(
+                  onTap: () async {
+                    final updatedTodo = todo.copyWith(isDone: true, completedAt: DateTime.now());
+                    await DatabaseService.updateTodo(updatedTodo);
+                    _loadData();
+                  },
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _getPriorityColor(todo.priority),
+                        width: 2,
+                      ),
+                    ),
+                    child: todo.isDone
+                        ? Icon(
+                            Icons.check,
+                            size: 16,
+                            color: _getPriorityColor(todo.priority),
+                          )
+                        : null,
+                  ),
+                ),
+                
+                const SizedBox(width: DesignTokens.spacing4),
+                
+                // 任务信息
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        todo.title,
+                        style: DesignTokens.textStyle(
+                          fontSize: DesignTokens.fontSizeBodyMedium,
+                          fontWeight: DesignTokens.fontWeightBold,
+                          color: isDark
+                              ? DesignTokens.onSurfaceDark
+                              : DesignTokens.onSurfaceLight,
+                        ).copyWith(
+                          decoration: todo.isDone
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                      ),
+                      if (todo.dueDate != null) ...[
+                        const SizedBox(height: DesignTokens.spacing1),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: 12,
+                              color: isDark
+                                  ? DesignTokens.textSecondaryDark
+                                  : DesignTokens.textSecondaryLight,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatDueDate(todo.dueDate!),
+                              style: DesignTokens.textStyle(
+                                fontSize: DesignTokens.fontSizeLabelSmall,
+                                color: isDark
+                                    ? DesignTokens.textSecondaryDark
+                                    : DesignTokens.textSecondaryLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                
+                // 优先级指示器
+                Container(
+                  width: 4,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: _getPriorityColor(todo.priority),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+        
+        if (incompleteTodos.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(DesignTokens.spacing8),
+            child: Center(
+              child: Text(
+                '今日暂无待办任务',
+                style: DesignTokens.textStyle(
+                  fontSize: DesignTokens.fontSizeBodyMedium,
+                  color: isDark
+                      ? DesignTokens.textSecondaryDark
+                      : DesignTokens.textSecondaryLight,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

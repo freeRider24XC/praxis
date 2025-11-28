@@ -123,7 +123,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
       await DatabaseService.addGoal(goal);
       
       if (mounted) {
-        Get.back();
+        Get.back(result: true);
         ErrorService.showSuccess('目标已创建');
       }
     } catch (e) {

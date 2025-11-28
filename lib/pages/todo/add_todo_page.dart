@@ -328,7 +328,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
       }
       
       if (mounted) {
-        Get.back();
+        Get.back(result: true);
         ErrorService.showSuccess('待办事项已创建');
       }
     } catch (e) {

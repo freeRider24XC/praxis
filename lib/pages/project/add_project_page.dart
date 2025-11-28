@@ -82,7 +82,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
       await DatabaseService.addProject(project);
       
       if (mounted) {
-        Get.back();
+        Get.back(result: true);
         ErrorService.showSuccess('项目已创建');
       }
     } catch (e) {
