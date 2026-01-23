@@ -11,11 +11,15 @@ import 'package:zx/pages/todo/add_todo_page.dart';
 import 'package:zx/pages/goal/add_goal_page.dart';
 import 'package:zx/pages/project/add_project_page.dart';
 import 'package:zx/pages/ai_chat/ai_chat_page.dart';
+import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
+    // 加载本地API配置
+    await _loadLocalApiConfig();
+
   // Initialize database
   await DatabaseService.init();
     
@@ -36,6 +40,36 @@ void main() async {
     debugPrint('初始化失败: $e');
     debugPrint('堆栈跟踪: $stackTrace');
     runApp(const ErrorApp());
+  }
+}
+
+/// 加载本地API配置文件
+Future<void> _loadLocalApiConfig() async {
+  try {
+    final configFile = File('local_config/minimax_api_key.txt');
+    if (await configFile.exists()) {
+      final content = await configFile.readAsString();
+      final lines = content.split('\n');
+      String? apiKey;
+
+      for (final line in lines) {
+        if (line.startsWith('API_KEY=')) {
+          apiKey = line.split('=')[1].trim();
+          break;
+        }
+      }
+
+      if (apiKey != null && apiKey.isNotEmpty) {
+        // 检查是否已配置，未配置时才设置
+        final currentKey = await AiConfigService.getApiKey();
+        if (currentKey == null || currentKey.isEmpty) {
+          await AiConfigService.setMiniMax(apiKey: apiKey);
+          debugPrint('已从 local_config/minimax_api_key.txt 加载 MiniMax API 配置');
+        }
+      }
+    }
+  } catch (e) {
+    debugPrint('加载本地API配置失败: $e');
   }
 }
 

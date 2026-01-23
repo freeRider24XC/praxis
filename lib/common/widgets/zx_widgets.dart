@@ -29,30 +29,20 @@ class ZxCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final defaultShadow = [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.1),
-        blurRadius: 8,
-        offset: Offset(0, 2),
-      ),
-    ];
+    final cardColor = backgroundColor ?? theme.colorScheme.surface;
     
     return Container(
-      margin: margin ?? EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Material(
-        color: backgroundColor ?? theme.colorScheme.surface,
+        color: cardColor,
         elevation: elevation ?? 2,
-        shadowColor: Colors.black.withOpacity(0.2),
+        shadowColor: Colors.black.withOpacity(0.15),
         borderRadius: borderRadius ?? BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
           borderRadius: borderRadius ?? BorderRadius.circular(12),
           child: Container(
-            padding: padding ?? EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: borderRadius ?? BorderRadius.circular(12),
-              boxShadow: customShadow ?? defaultShadow,
-            ),
+            padding: padding ?? const EdgeInsets.all(16),
             child: child,
           ),
         ),

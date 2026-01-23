@@ -56,3 +56,6 @@ ios/*.p12
 
 # FVM Version Cache
 .fvm/
+
+# Local API configuration (contains API keys - NEVER commit!)
+local_config/

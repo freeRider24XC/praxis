@@ -9,7 +9,9 @@ class AiConfigService {
   static const String defaultBaseUrl = 'https://api.openai.com/v1';
   static const String defaultDeepSeekUrl = 'https://api.deepseek.com/v1';
   static const String defaultTongyiUrl = 'https://dashscope.aliyuncs.com/api/v1';
+  static const String defaultMiniMaxUrl = 'https://api.minimax.chat/v1';
   static const String defaultModel = 'gpt-3.5-turbo';
+  static const String defaultMiniMaxModel = 'abab6.5s-chat';
 
   // 获取API密钥
   static Future<String?> getApiKey() async {
@@ -108,6 +110,13 @@ class AiConfigService {
   static Future<void> setTongyi({required String apiKey, String model = 'qwen-turbo'}) async {
     await setApiKey(apiKey);
     await setApiBaseUrl(defaultTongyiUrl);
+    await setModel(model);
+  }
+
+  // 设置使用MiniMax
+  static Future<void> setMiniMax({required String apiKey, String model = 'abab6.5s-chat'}) async {
+    await setApiKey(apiKey);
+    await setApiBaseUrl(defaultMiniMaxUrl);
     await setModel(model);
   }
 }
