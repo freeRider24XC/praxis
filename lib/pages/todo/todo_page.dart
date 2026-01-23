@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/models/todo.dart';
-import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/common/widgets/empty_state.dart';
-import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/pages/todo/widgets/todo_list_item.dart';
-import 'package:praxis/pages/todo/widgets/todo_filter_chip.dart';
+import 'package:zx/common/models/todo.dart';
+import 'package:zx/common/services/database_service.dart';
+import 'package:zx/common/widgets/empty_state.dart';
+import 'package:zx/common/style/design_tokens.dart';
+import 'package:zx/pages/todo/widgets/todo_list_item.dart';
+import 'package:zx/pages/todo/widgets/todo_filter_chip.dart';
 
 class TodoPage extends StatefulWidget {
   const TodoPage({super.key});

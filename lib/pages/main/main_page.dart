@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/pages/todo/todo_page.dart';
-import 'package:praxis/pages/goal/goal_page.dart';
-import 'package:praxis/pages/project/project_page.dart';
-import 'package:praxis/pages/profile/profile_page.dart';
-import 'package:praxis/pages/ai_chat/ai_chat_page.dart';
+import 'package:zx/common/style/design_tokens.dart';
+import 'package:zx/pages/todo/todo_page.dart';
+import 'package:zx/pages/goal/goal_page.dart';
+import 'package:zx/pages/project/project_page.dart';
+import 'package:zx/pages/profile/profile_page.dart';
+import 'package:zx/pages/ai_chat/ai_chat_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:praxis/common/models/index.dart';
-import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/common/widgets/praxis_card.dart';
-import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/pages/settings/settings_page.dart';
+import 'package:zx/common/models/index.dart';
+import 'package:zx/common/services/database_service.dart';
+import 'package:zx/common/widgets/zx_widgets.dart';
+import 'package:zx/common/style/design_tokens.dart';
+import 'package:zx/pages/settings/settings_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -63,7 +63,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildProfileHeader() {
-    return PraxisCard(
+    return ZxCard(
       padding: const EdgeInsets.all(DesignTokens.spacing4),
       child: Row(
         children: [
@@ -190,7 +190,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     final theme = Theme.of(context);
     
-    return PraxisCard(
+    return ZxCard(
       padding: const EdgeInsets.all(DesignTokens.spacing4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,7 +221,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildStatsSection() {
-    return PraxisCard(
+    return ZxCard(
       padding: const EdgeInsets.all(DesignTokens.spacing4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,7 +395,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final goals = DatabaseService.getActiveGoals();
     
     if (goals.isEmpty) {
-      return PraxisCard(
+      return ZxCard(
         padding: const EdgeInsets.all(DesignTokens.spacing8),
         child: Center(
           child: Text(
@@ -407,7 +407,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
     
     return Column(
-      children: goals.take(3).map((goal) => PraxisCard(
+      children: goals.take(3).map((goal) => ZxCard(
         margin: const EdgeInsets.only(bottom: DesignTokens.spacing2),
         padding: const EdgeInsets.all(DesignTokens.spacing3),
         child: Column(
@@ -453,7 +453,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
     
     if (statusCounts.isEmpty) {
-      return PraxisCard(
+      return ZxCard(
         padding: const EdgeInsets.all(DesignTokens.spacing8),
         child: Center(
           child: Text(
@@ -487,7 +487,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final score = _calculateProductivityScore();
     final theme = Theme.of(context);
     
-    return PraxisCard(
+    return ZxCard(
       padding: const EdgeInsets.all(DesignTokens.spacing6),
       child: Column(
         children: [
@@ -541,7 +541,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildSettingsSection() {
     return Column(
       children: [
-        PraxisCard(
+        ZxCard(
           padding: const EdgeInsets.all(DesignTokens.spacing4),
           child: ListTile(
             leading: const Icon(Icons.settings_outlined),

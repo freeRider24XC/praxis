@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/services/theme_service.dart';
-import 'package:praxis/common/services/error_service.dart';
-import 'package:praxis/common/services/logger_service.dart';
-import 'package:praxis/common/ai/services/ai_config_service.dart';
-import 'package:praxis/common/ai/providers/openai_provider.dart';
-import 'package:praxis/common/widgets/language_switcher.dart';
-import 'package:praxis/common/widgets/praxis_card.dart';
-import 'package:praxis/common/widgets/praxis_button.dart';
-import 'package:praxis/common/widgets/praxis_text_field.dart';
-import 'package:praxis/common/style/design_tokens.dart';
+import 'package:zx/common/services/theme_service.dart';
+import 'package:zx/common/services/error_service.dart';
+import 'package:zx/common/services/logger_service.dart';
+import 'package:zx/common/ai/services/ai_config_service.dart';
+import 'package:zx/common/ai/providers/openai_provider.dart';
+import 'package:zx/common/widgets/language_switcher.dart';
+import 'package:zx/common/widgets/zx_widgets.dart';
+import 'package:zx/common/widgets/praxis_button.dart';
+import 'package:zx/common/widgets/praxis_text_field.dart';
+import 'package:zx/common/style/design_tokens.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -159,7 +159,7 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: const EdgeInsets.all(DesignTokens.spacing4),
         children: [
           // AI配置
-          PraxisCard(
+          ZxCard(
             padding: const EdgeInsets.all(DesignTokens.spacing4),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +277,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: DesignTokens.spacing4),
           
           // 语言设置
-          PraxisCard(
+          ZxCard(
             padding: const EdgeInsets.all(DesignTokens.spacing4),
             child: const LanguageSelector(),
           ),
@@ -285,7 +285,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: DesignTokens.spacing4),
           
           // 主题设置
-          PraxisCard(
+          ZxCard(
             padding: const EdgeInsets.all(DesignTokens.spacing4),
             child: Obx(() => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +335,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: DesignTokens.spacing4),
           
           // 应用信息
-          PraxisCard(
+          ZxCard(
             padding: const EdgeInsets.all(DesignTokens.spacing4),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +347,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: DesignTokens.spacing4),
                   const ListTile(
                     leading: Icon(Icons.info_outline),
-                    title: Text('Praxis'),
+                    title: Text('ZhiXing'),
                     subtitle: Text('版本 1.0.0'),
                     contentPadding: EdgeInsets.zero,
                   ),

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/models/project.dart';
-import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/common/services/error_service.dart';
-import 'package:praxis/common/services/logger_service.dart';
-import 'package:praxis/common/widgets/praxis_text_field.dart';
-import 'package:praxis/common/widgets/praxis_button.dart';
-import 'package:praxis/common/widgets/praxis_card.dart';
-import 'package:praxis/common/style/design_tokens.dart';
+import 'package:zx/common/models/project.dart';
+import 'package:zx/common/services/database_service.dart';
+import 'package:zx/common/services/error_service.dart';
+import 'package:zx/common/services/logger_service.dart';
+import 'package:zx/common/widgets/praxis_text_field.dart';
+import 'package:zx/common/widgets/praxis_button.dart';
+import 'package:zx/common/widgets/zx_widgets.dart';
+import 'package:zx/common/style/design_tokens.dart';
 
 class AddProjectPage extends StatefulWidget {
   const AddProjectPage({super.key});
@@ -110,7 +110,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
         child: ListView(
           padding: const EdgeInsets.all(DesignTokens.spacing4),
           children: [
-            PraxisCard(
+            ZxCard(
               padding: const EdgeInsets.all(DesignTokens.spacing4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +166,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
               ),
             ),
             const SizedBox(height: DesignTokens.spacing4),
-            PraxisCard(
+            ZxCard(
               padding: const EdgeInsets.all(DesignTokens.spacing4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,7 +219,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
               ),
             ),
             const SizedBox(height: DesignTokens.spacing4),
-            PraxisCard(
+            ZxCard(
               padding: const EdgeInsets.all(DesignTokens.spacing4),
               child: InkWell(
                 onTap: _selectEndDate,

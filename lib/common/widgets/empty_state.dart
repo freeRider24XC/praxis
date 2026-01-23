@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/common/widgets/praxis_button.dart';
+import 'package:zx/common/style/design_tokens.dart';
+import 'package:zx/common/widgets/praxis_button.dart';
 
 /// 统一的空状态组件
 class EmptyState extends StatelessWidget {

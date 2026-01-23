@@ -1,7 +1,7 @@
-import 'package:praxis/common/ai/providers/openai_provider.dart';
+import 'package:zx/common/ai/providers/openai_provider.dart';
 
 // 导出ChatMessage以便外部使用
-export 'package:praxis/common/ai/providers/openai_provider.dart' show ChatMessage;
+export 'package:zx/common/ai/providers/openai_provider.dart' show ChatMessage;
 
 class AiService {
   final OpenAIProvider _provider = OpenAIProvider();

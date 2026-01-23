@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:praxis/common/ai/services/ai_service.dart';
-import 'package:praxis/common/ai/providers/openai_provider.dart';
-import 'package:praxis/common/ai/parsers/entity_extractor.dart';
-import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/common/services/error_service.dart';
-import 'package:praxis/common/services/logger_service.dart';
-import 'package:praxis/common/widgets/loading_indicator.dart';
-import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/common/models/todo.dart';
-import 'package:praxis/common/models/goal.dart';
+import 'package:zx/common/ai/services/ai_service.dart';
+import 'package:zx/common/ai/providers/openai_provider.dart';
+import 'package:zx/common/ai/parsers/entity_extractor.dart';
+import 'package:zx/common/services/database_service.dart';
+import 'package:zx/common/services/error_service.dart';
+import 'package:zx/common/services/logger_service.dart';
+import 'package:zx/common/widgets/loading_indicator.dart';
+import 'package:zx/common/style/design_tokens.dart';
+import 'package:zx/common/models/todo.dart';
+import 'package:zx/common/models/goal.dart';
 
 class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});

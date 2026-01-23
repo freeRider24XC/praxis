@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:praxis/common/models/todo.dart';
-import 'package:praxis/common/models/goal.dart';
+import 'package:zx/common/models/todo.dart';
+import 'package:zx/common/models/goal.dart';
 
 class EntityExtractionResult {
   final String? action; // 'create_todo', 'create_goal'

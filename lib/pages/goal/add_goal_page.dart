@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/models/goal.dart';
-import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/common/services/error_service.dart';
-import 'package:praxis/common/services/logger_service.dart';
-import 'package:praxis/common/widgets/praxis_text_field.dart';
-import 'package:praxis/common/widgets/praxis_button.dart';
-import 'package:praxis/common/widgets/praxis_card.dart';
-import 'package:praxis/common/style/design_tokens.dart';
+import 'package:zx/common/models/goal.dart';
+import 'package:zx/common/services/database_service.dart';
+import 'package:zx/common/services/error_service.dart';
+import 'package:zx/common/services/logger_service.dart';
+import 'package:zx/common/widgets/praxis_text_field.dart';
+import 'package:zx/common/widgets/praxis_button.dart';
+import 'package:zx/common/widgets/zx_widgets.dart';
+import 'package:zx/common/style/design_tokens.dart';
 
 class AddGoalPage extends StatefulWidget {
   const AddGoalPage({super.key});
@@ -93,7 +93,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
         child: ListView(
           padding: const EdgeInsets.all(DesignTokens.spacing4),
           children: [
-            PraxisCard(
+            ZxCard(
               padding: const EdgeInsets.all(DesignTokens.spacing4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

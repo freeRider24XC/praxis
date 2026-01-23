@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/services/index.dart';
-import 'package:praxis/common/services/locale_service.dart';
-import 'package:praxis/common/i18n/translations.dart';
-import 'package:praxis/pages/main/main_page.dart';
-import 'package:praxis/pages/todo/add_todo_page.dart';
-import 'package:praxis/pages/goal/add_goal_page.dart';
-import 'package:praxis/pages/project/add_project_page.dart';
-import 'package:praxis/pages/ai_chat/ai_chat_page.dart';
+import 'package:zx/common/services/index.dart';
+import 'package:zx/common/services/locale_service.dart';
+import 'package:zx/common/i18n/translations.dart';
+import 'package:zx/common/ai/services/zx_ai_service.dart';
+import 'package:zx/pages/main/main_page.dart';
+import 'package:zx/pages/todo/add_todo_page.dart';
+import 'package:zx/pages/goal/add_goal_page.dart';
+import 'package:zx/pages/project/add_project_page.dart';
+import 'package:zx/pages/ai_chat/ai_chat_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ void main() async {
     // Initialize services
     await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
+    Get.put(ZxAIService());
   
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
@@ -46,7 +48,7 @@ class MyApp extends StatelessWidget {
     final themeService = Get.find<ThemeService>();
     
     return Obx(() => GetMaterialApp(
-      title: "Praxis",
+      title: "ZhiXing (知行)",
       debugShowCheckedModeBanner: false,
       translations: AppTranslations(),
       locale: localeService.locale,
@@ -77,7 +79,7 @@ class ErrorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Praxis - 错误",
+      title: "ZhiXing (知行) - 错误",
       home: Scaffold(
         body: Center(
           child: Padding(

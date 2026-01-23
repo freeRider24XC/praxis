@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/widgets/language_switcher.dart';
-import 'package:praxis/pages/settings/settings_page.dart';
+import 'package:zx/common/widgets/language_switcher.dart';
+import 'package:zx/pages/settings/settings_page.dart';
 
 import 'index.dart';
 

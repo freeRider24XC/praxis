@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:praxis/common/ai/services/ai_config_service.dart';
+import 'package:zx/common/ai/services/ai_config_service.dart';
 
 class ChatMessage {
   final String role; // 'user', 'assistant', 'system'
@@ -21,7 +21,7 @@ class ChatMessage {
 
 class OpenAIProvider {
   // 系统提示词
-  static const String systemPrompt = '''你是Praxis AI助手，帮助用户拆解目标、制定任务、安排日程。
+  static const String systemPrompt = '''你是ZhiXing AI助手，帮助用户拆解目标、制定任务、安排日程。
 
 **重要：当用户要求创建任务或拆解目标时，请直接返回格式化的待办事项列表！**
 

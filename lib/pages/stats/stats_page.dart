@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/models/index.dart';
-import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/common/widgets/praxis_card.dart';
-import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/pages/settings/settings_page.dart';
+import 'package:zx/common/models/index.dart';
+import 'package:zx/common/services/database_service.dart';
+import 'package:zx/common/widgets/zx_widgets.dart';
+import 'package:zx/common/style/design_tokens.dart';
+import 'package:zx/pages/settings/settings_page.dart';
 
 class StatsPage extends StatefulWidget {
   const StatsPage({super.key});
@@ -149,35 +149,12 @@ class _StatsPageState extends State<StatsPage> {
     required IconData icon,
     required Color color,
   }) {
-    final theme = Theme.of(context);
-    
-    return PraxisCard(
-      padding: const EdgeInsets.all(DesignTokens.spacing4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: color, size: 24),
-              Text(
-                value,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-          Text(
-            title,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.disabledColor,
-            ),
-          ),
-        ],
-      ),
+    return ZxStatCard(
+      title: title,
+      value: value,
+      icon: icon,
+      valueColor: color,
+      margin: EdgeInsets.zero,
     );
   }
 
@@ -191,8 +168,9 @@ class _StatsPageState extends State<StatsPage> {
   }
 
   Widget _buildTodoCompletionChart() {
-    return PraxisCard(
+    return ZxCard(
       padding: const EdgeInsets.all(DesignTokens.spacing4),
+      margin: EdgeInsets.zero,
       child: SizedBox(
         height: 200,
         child: LineChart(
@@ -267,7 +245,7 @@ class _StatsPageState extends State<StatsPage> {
     }
     
     return Column(
-      children: goals.take(3).map((goal) => PraxisCard(
+      children: goals.take(3).map((goal) => ZxCard(
         margin: const EdgeInsets.only(bottom: DesignTokens.spacing2),
         child: ListTile(
           title: Text(goal.title),
@@ -294,8 +272,9 @@ class _StatsPageState extends State<StatsPage> {
     }
     
     if (statusCounts.isEmpty) {
-      return PraxisCard(
+      return ZxCard(
         padding: const EdgeInsets.all(DesignTokens.spacing8),
+        margin: EdgeInsets.zero,
         child: Center(
           child: Text(
             '暂无项目数据',
@@ -305,8 +284,9 @@ class _StatsPageState extends State<StatsPage> {
       );
     }
     
-    return PraxisCard(
+    return ZxCard(
       padding: const EdgeInsets.all(DesignTokens.spacing4),
+      margin: EdgeInsets.zero,
       child: SizedBox(
         height: 200,
         child: PieChart(
@@ -334,8 +314,9 @@ class _StatsPageState extends State<StatsPage> {
     final score = _calculateProductivityScore();
     final theme = Theme.of(context);
     
-    return PraxisCard(
+    return ZxCard(
       padding: const EdgeInsets.all(DesignTokens.spacing6),
+      margin: EdgeInsets.zero,
       child: Column(
         children: [
           Stack(

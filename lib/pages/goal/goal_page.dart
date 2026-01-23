@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/models/goal.dart';
-import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/common/widgets/empty_state.dart';
-import 'package:praxis/common/widgets/praxis_card.dart';
-import 'package:praxis/common/style/design_tokens.dart';
+import 'package:zx/common/models/goal.dart';
+import 'package:zx/common/services/database_service.dart';
+import 'package:zx/common/widgets/empty_state.dart';
+import 'package:zx/common/widgets/zx_widgets.dart';
+import 'package:zx/common/style/design_tokens.dart';
 
 class GoalPage extends StatefulWidget {
   const GoalPage({super.key});
@@ -171,7 +171,7 @@ class _GoalPageState extends State<GoalPage> with SingleTickerProviderStateMixin
       duration: DesignTokens.durationNormal,
       curve: DesignTokens.curveDefault,
       builder: (context, animatedProgress, child) {
-        return PraxisCard(
+        return ZxCard(
           margin: const EdgeInsets.only(bottom: DesignTokens.spacing3),
           onTap: () => _showGoalDetail(goal),
           padding: const EdgeInsets.all(DesignTokens.spacing4),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:praxis/common/services/logger_service.dart';
-import 'package:praxis/common/style/design_tokens.dart';
+import 'package:zx/common/services/logger_service.dart';
+import 'package:zx/common/style/zx_theme.dart';
 
 class ThemeService extends GetxService {
   static const String _keyThemeMode = 'theme_mode';
@@ -41,103 +41,7 @@ class ThemeService extends GetxService {
     }
   }
   
-  ThemeData get lightTheme => ThemeData(
-        useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-          seedColor: DesignTokens.primaryColor,
-      brightness: Brightness.light,
-    ),
-        appBarTheme: const AppBarTheme(
-      centerTitle: false,
-          elevation: 0,
-        ),
-        cardTheme: CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.spacing4,
-            vertical: DesignTokens.spacing4,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DesignTokens.spacing4,
-              vertical: DesignTokens.spacing3,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-            ),
-            elevation: 2,
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DesignTokens.spacing3,
-              vertical: DesignTokens.spacing2,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-            ),
-          ),
-        ),
-  );
+  ThemeData get lightTheme => ZxTheme.lightTheme;
   
-  ThemeData get darkTheme => ThemeData(
-        useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-          seedColor: DesignTokens.primaryColor,
-      brightness: Brightness.dark,
-    ),
-        appBarTheme: const AppBarTheme(
-      centerTitle: false,
-          elevation: 0,
-        ),
-        cardTheme: CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.spacing4,
-            vertical: DesignTokens.spacing4,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DesignTokens.spacing4,
-              vertical: DesignTokens.spacing3,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-            ),
-            elevation: 2,
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DesignTokens.spacing3,
-              vertical: DesignTokens.spacing2,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-            ),
-          ),
-        ),
-      );
+  ThemeData get darkTheme => ZxTheme.darkTheme;
 }

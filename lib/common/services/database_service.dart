@@ -1,5 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:praxis/common/models/index.dart';
+import 'package:zx/common/models/index.dart';
 
 class DatabaseService {
   static const String todoBoxName = 'todos';

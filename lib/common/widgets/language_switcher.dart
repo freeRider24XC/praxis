@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/services/locale_service.dart';
+import 'package:zx/common/services/locale_service.dart';
 
 class LanguageSwitcher extends StatelessWidget {
   const LanguageSwitcher({super.key});

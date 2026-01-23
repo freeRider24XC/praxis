@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:praxis/common/style/design_tokens.dart';
+import 'package:zx/common/style/design_tokens.dart';
 
 /// 统一的卡片组件
+/// 
+/// @deprecated 请使用 ZxCard 替代。此组件将在未来版本中移除。
+@Deprecated('请使用 ZxCard 替代')
 class PraxisCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;

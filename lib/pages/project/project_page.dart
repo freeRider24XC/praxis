@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/models/project.dart';
-import 'package:praxis/common/services/database_service.dart';
-import 'package:praxis/common/widgets/empty_state.dart';
-import 'package:praxis/common/widgets/praxis_card.dart';
-import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/common/i18n/app_strings.dart';
+import 'package:zx/common/models/project.dart';
+import 'package:zx/common/services/database_service.dart';
+import 'package:zx/common/widgets/empty_state.dart';
+import 'package:zx/common/widgets/zx_widgets.dart';
+import 'package:zx/common/style/design_tokens.dart';
+import 'package:zx/common/i18n/app_strings.dart';
 
 class ProjectPage extends StatefulWidget {
   const ProjectPage({super.key});
@@ -138,7 +138,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
     return AnimatedSwitcher(
       duration: DesignTokens.durationNormal,
-      child: PraxisCard(
+      child: ZxCard(
         key: ValueKey(project.id),
         onTap: () => _showProjectDetail(project),
         padding: const EdgeInsets.all(DesignTokens.spacing4),
@@ -249,7 +249,7 @@ class _ProjectPageState extends State<ProjectPage> {
     final theme = Theme.of(context);
     final color = _parseColor(project.color);
 
-    return PraxisCard(
+    return ZxCard(
       margin: const EdgeInsets.only(bottom: DesignTokens.spacing3),
       onTap: () => _showProjectDetail(project),
       padding: const EdgeInsets.all(DesignTokens.spacing4),
