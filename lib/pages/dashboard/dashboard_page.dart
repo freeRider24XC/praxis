@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
+import 'package:praxis/pages/ai_chat/ai_plan_page.dart';
+import 'package:praxis/pages/life_domains/domain_detail_page.dart';
 import 'package:praxis/pages/review/daily_review_page.dart';
 import 'package:praxis/pages/todo/todo_detail_page.dart';
 
@@ -64,6 +66,16 @@ class _DashboardPageState extends State<DashboardPage> {
     await _loadData();
   }
 
+  Future<void> _openAiPlanning() async {
+    await Get.to(() => const AiPlanPage(initialGoalText: ''));
+    await _loadData();
+  }
+
+  Future<void> _openDailyReview() async {
+    await Get.to(() => const DailyReviewPage());
+    await _loadData();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -91,6 +103,8 @@ class _DashboardPageState extends State<DashboardPage> {
               DesignTokens.spacing10,
             ),
             children: [
+              _buildHeader(isDark),
+              const SizedBox(height: DesignTokens.spacing5),
               _buildLevelCard(isDark, profile, levelProgress, levelMax),
               const SizedBox(height: DesignTokens.spacing5),
               _buildFocusedDomainCard(isDark),
@@ -104,6 +118,114 @@ class _DashboardPageState extends State<DashboardPage> {
               _buildReviewEntry(isDark),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(bool isDark) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Praxis',
+                style: DesignTokens.textStyle(
+                  fontSize: DesignTokens.fontSizeLabelSmall,
+                  fontWeight: DesignTokens.fontWeightBold,
+                  color: isDark
+                      ? DesignTokens.textSecondaryDark
+                      : DesignTokens.textSecondaryLight,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.spacing1),
+              Text(
+                '今天先把一件事推进到底',
+                style: DesignTokens.textStyle(
+                  fontSize: DesignTokens.fontSizeHeadlineSmall,
+                  fontWeight: DesignTokens.fontWeightBold,
+                  color: isDark
+                      ? DesignTokens.onSurfaceDark
+                      : DesignTokens.onSurfaceLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: DesignTokens.spacing4),
+        _buildHeaderAction(
+          isDark: isDark,
+          icon: Icons.nights_stay_outlined,
+          label: '复盘',
+          onTap: _openDailyReview,
+        ),
+        const SizedBox(width: DesignTokens.spacing3),
+        _buildHeaderAction(
+          isDark: isDark,
+          icon: Icons.auto_awesome,
+          label: 'AI规划',
+          onTap: _openAiPlanning,
+          highlighted: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeaderAction({
+    required bool isDark,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool highlighted = false,
+  }) {
+    final backgroundColor = highlighted
+        ? DesignTokens.primaryColor
+        : (isDark ? DesignTokens.surfaceDark : Colors.white);
+    final foregroundColor = highlighted
+        ? Colors.white
+        : (isDark ? DesignTokens.onSurfaceDark : DesignTokens.onSurfaceLight);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.spacing4,
+          vertical: DesignTokens.spacing3,
+        ),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+          border: highlighted
+              ? null
+              : Border.all(
+                  color: isDark
+                      ? DesignTokens.borderDark
+                      : DesignTokens.borderLight,
+                ),
+          boxShadow: highlighted ? DesignTokens.shadowFloat : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: DesignTokens.iconSizeMedium,
+              color: foregroundColor,
+            ),
+            const SizedBox(height: DesignTokens.spacing1),
+            Text(
+              label,
+              style: DesignTokens.textStyle(
+                fontSize: DesignTokens.fontSizeLabelSmall,
+                fontWeight: DesignTokens.fontWeightBold,
+                color: foregroundColor,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -189,62 +311,77 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildFocusedDomainCard(bool isDark) {
     final domain = _focusedDomain;
-    return Container(
-      padding: const EdgeInsets.all(DesignTokens.spacing5),
-      decoration: BoxDecoration(
-        color: isDark ? DesignTokens.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '当前重点领域',
-            style: DesignTokens.textStyle(
-              fontSize: DesignTokens.fontSizeLabelSmall,
-              fontWeight: DesignTokens.fontWeightBold,
-              color: isDark
-                  ? DesignTokens.textSecondaryDark
-                  : DesignTokens.textSecondaryLight,
+    return InkWell(
+      onTap: domain == null
+          ? null
+          : () async {
+              await Get.to(() => DomainDetailPage(domainId: domain.id));
+              await _loadData();
+            },
+      borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+      child: Container(
+        padding: const EdgeInsets.all(DesignTokens.spacing5),
+        decoration: BoxDecoration(
+          color: isDark ? DesignTokens.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '当前重点领域',
+              style: DesignTokens.textStyle(
+                fontSize: DesignTokens.fontSizeLabelSmall,
+                fontWeight: DesignTokens.fontWeightBold,
+                color: isDark
+                    ? DesignTokens.textSecondaryDark
+                    : DesignTokens.textSecondaryLight,
+              ),
             ),
-          ),
-          const SizedBox(height: DesignTokens.spacing3),
-          Row(
-            children: [
-              Text(
-                domain?.icon ?? '🎯',
-                style: const TextStyle(fontSize: 30),
-              ),
-              const SizedBox(width: DesignTokens.spacing3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      domain?.name ?? '尚未选择',
-                      style: DesignTokens.textStyle(
-                        fontSize: DesignTokens.fontSizeTitleLarge,
-                        fontWeight: DesignTokens.fontWeightBold,
-                        color: isDark
-                            ? DesignTokens.onSurfaceDark
-                            : DesignTokens.onSurfaceLight,
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.spacing1),
-                    Text(
-                      '本周进度 ${(100 * _weeklyProgress).round()}%',
-                      style: DesignTokens.textStyle(
-                        color: isDark
-                            ? DesignTokens.textSecondaryDark
-                            : DesignTokens.textSecondaryLight,
-                      ),
-                    ),
-                  ],
+            const SizedBox(height: DesignTokens.spacing3),
+            Row(
+              children: [
+                Text(
+                  domain?.icon ?? '🎯',
+                  style: const TextStyle(fontSize: 30),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: DesignTokens.spacing3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        domain?.name ?? '尚未选择',
+                        style: DesignTokens.textStyle(
+                          fontSize: DesignTokens.fontSizeTitleLarge,
+                          fontWeight: DesignTokens.fontWeightBold,
+                          color: isDark
+                              ? DesignTokens.onSurfaceDark
+                              : DesignTokens.onSurfaceLight,
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spacing1),
+                      Text(
+                        '本周进度 ${(100 * _weeklyProgress).round()}%',
+                        style: DesignTokens.textStyle(
+                          color: isDark
+                              ? DesignTokens.textSecondaryDark
+                              : DesignTokens.textSecondaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: isDark
+                      ? DesignTokens.textSecondaryDark
+                      : DesignTokens.textSecondaryLight,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

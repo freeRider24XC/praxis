@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
+import 'package:praxis/pages/life_domains/domain_detail_page.dart';
 
 class DomainsPage extends StatefulWidget {
   const DomainsPage({super.key});
@@ -86,6 +88,10 @@ class _DomainsPageState extends State<DomainsPage> {
                   ),
                 ),
                 child: ListTile(
+                  onTap: () async {
+                    await Get.to(() => DomainDetailPage(domainId: domain.id));
+                    _load();
+                  },
                   contentPadding: const EdgeInsets.all(DesignTokens.spacing4),
                   leading:
                       Text(domain.icon, style: const TextStyle(fontSize: 28)),

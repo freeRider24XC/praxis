@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/domain_service.dart';
 import 'package:praxis/common/services/error_service.dart';
 import 'package:praxis/common/services/logger_service.dart';
 import 'package:praxis/common/widgets/praxis_text_field.dart';
@@ -10,7 +11,12 @@ import 'package:praxis/common/widgets/praxis_card.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 
 class AddGoalPage extends StatefulWidget {
-  const AddGoalPage({super.key});
+  final String? initialDomainId;
+
+  const AddGoalPage({
+    super.key,
+    this.initialDomainId,
+  });
 
   @override
   State<AddGoalPage> createState() => _AddGoalPageState();
@@ -28,8 +34,15 @@ class _AddGoalPageState extends State<AddGoalPage> {
   DateTime? _targetDate;
   GoalType _type = GoalType.monthly;
   bool _isLoading = false;
-  List<String> _milestones = [];
-  List<KeyResult> _keyResults = [];
+  final List<String> _milestones = [];
+  final List<KeyResult> _keyResults = [];
+  String? _selectedDomainId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDomainId = widget.initialDomainId;
+  }
 
   @override
   void dispose() {
@@ -118,6 +131,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
         targetDate: _targetDate ?? DateTime.now().add(const Duration(days: 30)),
         milestones: _milestones.isEmpty ? null : _milestones,
         keyResults: _keyResults.isEmpty ? null : _keyResults,
+        domainId: _selectedDomainId,
       );
 
       await DatabaseService.addGoal(goal);
@@ -143,6 +157,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final domains = DomainService.getDomains();
     
     return Scaffold(
       backgroundColor: isDark
@@ -209,6 +224,37 @@ class _AddGoalPageState extends State<AddGoalPage> {
                           _type = value;
                         });
                       }
+                    },
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
+                  DropdownButtonFormField<String?>(
+                    value: _selectedDomainId,
+                    decoration: InputDecoration(
+                      labelText: '所属领域',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.spacing4,
+                        vertical: DesignTokens.spacing4,
+                      ),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('暂不指定'),
+                      ),
+                      ...domains.map((domain) {
+                        return DropdownMenuItem<String?>(
+                          value: domain.id,
+                          child: Text('${domain.icon} ${domain.name}'),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedDomainId = value;
+                      });
                     },
                   ),
                   const SizedBox(height: DesignTokens.spacing4),

@@ -4,6 +4,7 @@ import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/domain_service.dart';
 import 'package:praxis/common/services/error_service.dart';
 import 'package:praxis/common/services/logger_service.dart';
 import 'package:praxis/common/services/calendar_sync_service.dart';
@@ -13,7 +14,12 @@ import 'package:praxis/common/widgets/praxis_card.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 
 class AddTodoPage extends StatefulWidget {
-  const AddTodoPage({super.key});
+  final String? initialDomainId;
+
+  const AddTodoPage({
+    super.key,
+    this.initialDomainId,
+  });
 
   @override
   State<AddTodoPage> createState() => _AddTodoPageState();
@@ -27,15 +33,17 @@ class _AddTodoPageState extends State<AddTodoPage> {
   DateTime? _dueDate;
   TodoPriority _priority = TodoPriority.medium;
   bool _isLoading = false;
-  List<String> _tags = [];
+  final List<String> _tags = [];
   String? _selectedProjectId;
   String? _selectedGoalId;
+  String? _selectedDomainId;
   List<Project> _projects = [];
   List<Goal> _goals = [];
 
   @override
   void initState() {
     super.initState();
+    _selectedDomainId = widget.initialDomainId;
     _loadProjectsAndGoals();
   }
 
@@ -142,7 +150,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: _parseColor(project.color).withOpacity(0.1),
+                              color: _parseColor(project.color).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
                             ),
                             child: Icon(
@@ -162,7 +170,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                             Get.back(result: project.id);
                           },
                         );
-                      }).toList(),
+                      }),
                       if (_selectedProjectId != null)
                         ListTile(
                           leading: const Icon(Icons.clear),
@@ -246,7 +254,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: DesignTokens.primaryColor.withOpacity(0.1),
+                              color: DesignTokens.primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
                             ),
                             child: Icon(
@@ -267,7 +275,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                             Get.back(result: goal.id);
                           },
                         );
-                      }).toList(),
+                      }),
                       if (_selectedGoalId != null)
                         ListTile(
                           leading: const Icon(Icons.clear),
@@ -318,6 +326,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
         tags: _tags.isEmpty ? null : _tags,
         projectId: _selectedProjectId,
         goalId: _selectedGoalId,
+        domainId: _selectedDomainId,
       );
 
       await DatabaseService.addTodo(todo);
@@ -348,6 +357,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final domains = DomainService.getDomains();
     
     return Scaffold(
       backgroundColor: isDark
@@ -414,6 +424,37 @@ class _AddTodoPageState extends State<AddTodoPage> {
                           _priority = value;
                         });
                       }
+                    },
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
+                  DropdownButtonFormField<String?>(
+                    value: _selectedDomainId,
+                    decoration: InputDecoration(
+                      labelText: '所属领域',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.spacing4,
+                        vertical: DesignTokens.spacing4,
+                      ),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('暂不指定'),
+                      ),
+                      ...domains.map((domain) {
+                        return DropdownMenuItem<String?>(
+                          value: domain.id,
+                          child: Text('${domain.icon} ${domain.name}'),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedDomainId = value;
+                      });
                     },
                   ),
                   const SizedBox(height: DesignTokens.spacing4),

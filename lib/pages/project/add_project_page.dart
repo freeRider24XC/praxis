@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/domain_service.dart';
 import 'package:praxis/common/services/error_service.dart';
 import 'package:praxis/common/services/logger_service.dart';
 import 'package:praxis/common/widgets/praxis_text_field.dart';
@@ -10,7 +11,12 @@ import 'package:praxis/common/widgets/praxis_card.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 
 class AddProjectPage extends StatefulWidget {
-  const AddProjectPage({super.key});
+  final String? initialDomainId;
+
+  const AddProjectPage({
+    super.key,
+    this.initialDomainId,
+  });
 
   @override
   State<AddProjectPage> createState() => _AddProjectPageState();
@@ -24,6 +30,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
   ProjectStatus _status = ProjectStatus.planning;
   String _color = '#2196F3';
   bool _isLoading = false;
+  String? _selectedDomainId;
 
   final List<Color> _colorOptions = [
     DesignTokens.primaryColor,
@@ -35,6 +42,12 @@ class _AddProjectPageState extends State<AddProjectPage> {
     const Color(0xFF795548), // Brown
     const Color(0xFF607D8B), // Blue Grey
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDomainId = widget.initialDomainId;
+  }
 
   @override
   void dispose() {
@@ -58,7 +71,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
   }
 
   String _colorToHex(Color color) {
-    return '#${color.value.toRadixString(16).substring(2, 8).toUpperCase()}';
+    return '#${color.toARGB32().toRadixString(16).substring(2, 8).toUpperCase()}';
   }
 
   Future<void> _saveProject() async {
@@ -77,6 +90,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
         status: _status,
         color: _color,
         endDate: _endDate,
+        domainId: _selectedDomainId,
       );
 
       await DatabaseService.addProject(project);
@@ -101,6 +115,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
 
   @override
   Widget build(BuildContext context) {
+    final domains = DomainService.getDomains();
     return Scaffold(
       appBar: AppBar(
         title: const Text('新建项目'),
@@ -160,6 +175,37 @@ class _AddProjectPageState extends State<AddProjectPage> {
                           _status = value;
                         });
                       }
+                    },
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
+                  DropdownButtonFormField<String?>(
+                    value: _selectedDomainId,
+                    decoration: InputDecoration(
+                      labelText: '所属领域',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.spacing4,
+                        vertical: DesignTokens.spacing4,
+                      ),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('暂不指定'),
+                      ),
+                      ...domains.map((domain) {
+                        return DropdownMenuItem<String?>(
+                          value: domain.id,
+                          child: Text('${domain.icon} ${domain.name}'),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedDomainId = value;
+                      });
                     },
                   ),
                 ],
@@ -263,4 +309,3 @@ class _AddProjectPageState extends State<AddProjectPage> {
     );
   }
 }
-
