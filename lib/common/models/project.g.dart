@@ -34,13 +34,14 @@ class ProjectAdapter extends TypeAdapter<Project> {
       updatedAt: fields[14] as DateTime?,
       notes: fields[15] as String?,
       metadata: (fields[16] as Map?)?.cast<String, dynamic>(),
+      domainId: fields[17] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Project obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +75,9 @@ class ProjectAdapter extends TypeAdapter<Project> {
       ..writeByte(15)
       ..write(obj.notes)
       ..writeByte(16)
-      ..write(obj.metadata);
+      ..write(obj.metadata)
+      ..writeByte(17)
+      ..write(obj.domainId);
   }
 
   @override

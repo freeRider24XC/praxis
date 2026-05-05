@@ -56,6 +56,9 @@ class Project extends HiveObject {
   @HiveField(16)
   Map<String, dynamic>? metadata;
 
+  @HiveField(17)
+  String? domainId;
+
   Project({
     String? id,
     required this.name,
@@ -74,6 +77,7 @@ class Project extends HiveObject {
     DateTime? updatedAt,
     this.notes,
     this.metadata,
+    this.domainId,
   })  : id = id ?? const Uuid().v4(),
         status = status ?? ProjectStatus.planning,
         startDate = startDate ?? DateTime.now(),
@@ -99,6 +103,7 @@ class Project extends HiveObject {
     DateTime? updatedAt,
     String? notes,
     Map<String, dynamic>? metadata,
+    String? domainId,
   }) {
     return Project(
       id: id ?? this.id,
@@ -118,6 +123,7 @@ class Project extends HiveObject {
       updatedAt: updatedAt ?? this.updatedAt,
       notes: notes ?? this.notes,
       metadata: metadata ?? this.metadata,
+      domainId: domainId ?? this.domainId,
     );
   }
 
@@ -293,4 +299,3 @@ extension ProjectHealthExtension on ProjectHealth {
     }
   }
 }
-

@@ -21,8 +21,29 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # 代码风格
+    prefer_single_quotes: true
+    
+    # 错误预防
+    avoid_print: true  # 强制使用 LoggerService 或 debugPrint
+    avoid_empty_else: true
+    avoid_unnecessary_containers: true
+    
+    # 性能优化
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    
+    # 可维护性
+    prefer_final_fields: true
+    prefer_final_locals: true
+    unnecessary_this: true
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    avoid_print: warning  # 允许 print，但给出警告
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

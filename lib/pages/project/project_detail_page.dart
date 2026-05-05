@@ -157,6 +157,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         boxShadow: DesignTokens.shadowIOS,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
             onTap: () => _handleTaskToggle(todo),
@@ -250,25 +251,37 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
               ],
             ),
           ),
-          if (!todo.isDone)
-            IconButton(
-              icon: Icon(
-                Icons.timer_outlined,
-                color: DesignTokens.primaryColor,
-                size: 24,
+          const SizedBox(width: DesignTokens.spacing2),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!todo.isDone)
+                IconButton(
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(
+                    Icons.timer_outlined,
+                    color: DesignTokens.primaryColor,
+                    size: 22,
+                  ),
+                  tooltip: '专注',
+                  onPressed: () {
+                    Get.to(() => FocusPage(taskTitle: todo.title));
+                  },
+                ),
+              Container(
+                width: 4,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _getPriorityColor(todo.priority),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+                ),
               ),
-              tooltip: '专注',
-              onPressed: () {
-                Get.to(() => FocusPage(taskTitle: todo.title));
-              },
-            ),
-          Container(
-            width: 4,
-            height: 50,
-            decoration: BoxDecoration(
-              color: _getPriorityColor(todo.priority),
-              borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
-            ),
+            ],
           ),
         ],
       ),
@@ -425,10 +438,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final todos = project.todoIds != null
-        ? project.todoIds!.map((id) {
-            final todo = DatabaseService.getTodoById(id);
-            return todo;
-          }).whereType<Todo>().toList()
+        ? project.todoIds!
+            .map((id) {
+              final todo = DatabaseService.getTodoById(id);
+              return todo;
+            })
+            .whereType<Todo>()
+            .toList()
         : <Todo>[];
 
     final phases = project.phases ?? [];
@@ -447,9 +463,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         .toList();
 
     return Scaffold(
-      backgroundColor: isDark
-          ? DesignTokens.backgroundDark
-          : DesignTokens.backgroundLight,
+      backgroundColor:
+          isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight,
       body: Column(
         children: [
           // 顶部栏
@@ -459,9 +474,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
               vertical: DesignTokens.spacing4,
             ),
             decoration: BoxDecoration(
-              color: isDark
-                  ? DesignTokens.backgroundDark
-                  : Colors.white,
+              color: isDark ? DesignTokens.backgroundDark : Colors.white,
               border: Border(
                 bottom: BorderSide(
                   color: isDark
@@ -533,10 +546,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 Container(
                   padding: const EdgeInsets.all(DesignTokens.spacing8),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? DesignTokens.surfaceDark
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge + 8),
+                    color: isDark ? DesignTokens.surfaceDark : Colors.white,
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusXLarge + 8),
                     boxShadow: DesignTokens.shadowIOS,
                   ),
                   child: Column(
@@ -549,10 +561,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                             width: 80,
                             height: 80,
                             decoration: BoxDecoration(
-                              color: _parseColor(project.color).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+                              color:
+                                  _parseColor(project.color).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusXLarge),
                               border: Border.all(
-                                color: _parseColor(project.color).withOpacity(0.3),
+                                color:
+                                    _parseColor(project.color).withOpacity(0.3),
                                 width: 1,
                               ),
                             ),
@@ -562,9 +577,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                               color: _parseColor(project.color),
                             ),
                           ),
-                          
+
                           const SizedBox(width: DesignTokens.spacing5),
-                          
+
                           // 标题和标签
                           Expanded(
                             child: Column(
@@ -573,7 +588,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                 Text(
                                   project.name,
                                   style: DesignTokens.textStyle(
-                                    fontSize: DesignTokens.fontSizeHeadlineSmall,
+                                    fontSize:
+                                        DesignTokens.fontSizeHeadlineSmall,
                                     fontWeight: DesignTokens.fontWeightBold,
                                     color: isDark
                                         ? DesignTokens.onSurfaceDark
@@ -592,17 +608,22 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: isDark
-                                              ? DesignTokens.surfaceDarkSecondary
-                                              : DesignTokens.surfaceLightSecondary,
-                                          borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+                                              ? DesignTokens
+                                                  .surfaceDarkSecondary
+                                              : DesignTokens
+                                                  .surfaceLightSecondary,
+                                          borderRadius: BorderRadius.circular(
+                                              DesignTokens.radiusMedium),
                                         ),
                                         child: Text(
                                           '截止: ${project.endDate!.month}月${project.endDate!.day}日',
                                           style: DesignTokens.textStyle(
-                                            fontSize: DesignTokens.fontSizeLabelSmall,
+                                            fontSize:
+                                                DesignTokens.fontSizeLabelSmall,
                                             color: isDark
                                                 ? DesignTokens.textSecondaryDark
-                                                : DesignTokens.textSecondaryLight,
+                                                : DesignTokens
+                                                    .textSecondaryLight,
                                           ),
                                         ),
                                       ),
@@ -612,13 +633,16 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: DesignTokens.secondaryOrange.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
+                                        color: DesignTokens.secondaryOrange
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(
+                                            DesignTokens.radiusMedium),
                                       ),
                                       child: Text(
                                         '中等难度',
                                         style: DesignTokens.textStyle(
-                                          fontSize: DesignTokens.fontSizeLabelSmall,
+                                          fontSize:
+                                              DesignTokens.fontSizeLabelSmall,
                                           color: DesignTokens.secondaryOrange,
                                         ),
                                       ),
@@ -630,9 +654,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: DesignTokens.spacing6),
-                      
+
                       // 统计信息
                       Row(
                         children: [
@@ -662,9 +686,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: DesignTokens.spacing8),
-                
+
                 // 执行路线图
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -689,9 +713,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: DesignTokens.spacing6),
-                
+
                 Builder(
                   builder: (context) {
                     final totalSections =
@@ -743,8 +767,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                           isActive: isActive,
                           isCompleted: isCompleted,
                           isFirstSection: index == 0,
-                          isLastSection:
-                              index == totalSections - 1 && remainingTodos.isEmpty,
+                          isLastSection: index == totalSections - 1 &&
+                              remainingTodos.isEmpty,
                           isDark: isDark,
                         ),
                       );
@@ -773,14 +797,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
               ],
             ),
           ),
-          
+
           // 底部按钮
           Container(
             padding: const EdgeInsets.all(DesignTokens.spacing5),
             decoration: BoxDecoration(
-              color: isDark
-                  ? DesignTokens.backgroundDark
-                  : Colors.white,
+              color: isDark ? DesignTokens.backgroundDark : Colors.white,
               border: Border(
                 top: BorderSide(
                   color: isDark
@@ -797,15 +819,15 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                   Get.to(() => FocusPage(taskTitle: project.name));
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark
-                      ? DesignTokens.surfaceDark
-                      : Colors.black,
+                  backgroundColor:
+                      isDark ? DesignTokens.surfaceDark : Colors.black,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     vertical: DesignTokens.spacing4,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusXLarge),
                   ),
                 ),
                 child: Row(
@@ -840,9 +862,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             : DesignTokens.surfaceLightSecondary,
         borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
         border: Border.all(
-          color: isDark
-              ? DesignTokens.borderDark
-              : DesignTokens.borderLight,
+          color: isDark ? DesignTokens.borderDark : DesignTokens.borderLight,
           width: 1,
         ),
       ),
@@ -942,9 +962,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 ),
             ],
           ),
-          
+
           const SizedBox(width: DesignTokens.spacing4),
-          
+
           // 阶段内容
           Expanded(
             child: Column(
@@ -976,7 +996,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                         color: isActive
                             ? DesignTokens.primaryColor.withOpacity(0.12)
                             : (isCompleted
-                                ? DesignTokens.secondaryEmerald.withOpacity(0.12)
+                                ? DesignTokens.secondaryEmerald
+                                    .withOpacity(0.12)
                                 : (isDark
                                     ? DesignTokens.surfaceDarkSecondary
                                     : DesignTokens.surfaceLightSecondary)),
@@ -984,9 +1005,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                             BorderRadius.circular(DesignTokens.radiusMedium),
                       ),
                       child: Text(
-                        isActive
-                            ? '进行中'
-                            : (isCompleted ? '已完成' : '未开始'),
+                        isActive ? '进行中' : (isCompleted ? '已完成' : '未开始'),
                         style: DesignTokens.textStyle(
                           fontSize: 10,
                           fontWeight: DesignTokens.fontWeightBold,
@@ -1002,9 +1021,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                     ),
                   ],
                 ),
-                
                 const SizedBox(height: DesignTokens.spacing3),
-                
                 todos.isEmpty
                     ? _buildRoadmapEmptyHint(isDark)
                     : _buildTimelineTaskList(
@@ -1036,9 +1053,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
           builder: (context, setStateModal) {
             return Container(
               decoration: BoxDecoration(
-                color: isDark
-                    ? DesignTokens.surfaceDark
-                    : Colors.white,
+                color: isDark ? DesignTokens.surfaceDark : Colors.white,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(DesignTokens.radiusXLarge),
                   topRight: Radius.circular(DesignTokens.radiusXLarge),
@@ -1055,8 +1070,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                         child: Container(
                           width: 48,
                           height: 5,
-                          margin:
-                              const EdgeInsets.only(bottom: DesignTokens.spacing4),
+                          margin: const EdgeInsets.only(
+                              bottom: DesignTokens.spacing4),
                           decoration: BoxDecoration(
                             color: isDark
                                 ? DesignTokens.borderDark
@@ -1135,8 +1150,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                               vertical: DesignTokens.spacing3,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(DesignTokens.radiusXLarge),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusXLarge),
                             ),
                           ),
                           child: const Text('完成'),
@@ -1153,4 +1168,3 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     );
   }
 }
-

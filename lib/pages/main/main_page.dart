@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/common/widgets/glass_nav_bar.dart';
 import 'package:praxis/common/widgets/fab_button.dart';
-import 'package:praxis/pages/home/home_page.dart';
-import 'package:praxis/pages/management/management_page.dart';
-import 'package:praxis/pages/ai_chat/ai_interaction_page.dart';
-import 'package:praxis/pages/schedule/schedule_page.dart';
+import 'package:praxis/common/widgets/glass_nav_bar.dart';
+import 'package:praxis/pages/ai_chat/ai_plan_page.dart';
+import 'package:praxis/pages/dashboard/dashboard_page.dart';
+import 'package:praxis/pages/life_domains/domains_page.dart';
+import 'package:praxis/pages/goal/goal_page.dart';
 import 'package:praxis/pages/profile/profile_page.dart';
+import 'package:praxis/pages/review/daily_review_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -20,12 +21,11 @@ class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
   final PageController _pageController = PageController();
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ManagementPage(),
-    const AiInteractionPage(),
-    const SchedulePage(),
-    const ProfilePage(),
+  final List<Widget> _pages = const [
+    DashboardPage(),
+    DomainsPage(),
+    GoalPage(),
+    ProfilePage(),
   ];
 
   final List<NavBarItem> _navItems = const [
@@ -35,19 +35,14 @@ class _MainPageState extends State<MainPage> {
       label: '首页',
     ),
     NavBarItem(
-      icon: Icons.dashboard_outlined,
-      selectedIcon: Icons.dashboard,
-      label: '管理',
+      icon: Icons.grid_view_outlined,
+      selectedIcon: Icons.grid_view,
+      label: '领域',
     ),
     NavBarItem(
-      icon: Icons.smart_toy_outlined,
-      selectedIcon: Icons.smart_toy,
-      label: 'AI',
-    ),
-    NavBarItem(
-      icon: Icons.calendar_today_outlined,
-      selectedIcon: Icons.calendar_today,
-      label: '日程',
+      icon: Icons.flag_outlined,
+      selectedIcon: Icons.flag,
+      label: '目标',
     ),
     NavBarItem(
       icon: Icons.person_outline,
@@ -65,17 +60,6 @@ class _MainPageState extends State<MainPage> {
       duration: DesignTokens.durationNormal,
       curve: DesignTokens.curveDefault,
     );
-    
-    // 切换到首页时刷新数据
-    if (index == 0) {
-      _refreshHomePage();
-    }
-  }
-  
-  void _refreshHomePage() {
-    // 通过GlobalKey或StatefulWidget的key来刷新首页
-    // 由于HomePage已经有didChangeDependencies，这里可以触发重建
-    setState(() {});
   }
 
   @override
@@ -84,193 +68,15 @@ class _MainPageState extends State<MainPage> {
     super.dispose();
   }
 
-  void _showCreateMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? DesignTokens.surfaceDark
-                : Colors.white,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(DesignTokens.radiusXLarge),
-              topRight: Radius.circular(DesignTokens.radiusXLarge),
-            ),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: DesignTokens.spacing3),
-                  width: 48,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? DesignTokens.borderDark
-                        : DesignTokens.borderLight,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(DesignTokens.spacing6),
-                  child: Column(
-                    children: [
-                      _buildMenuItem(
-                        context: context,
-                        icon: Icons.check_circle_outline,
-                        title: '创建待办事项',
-                        subtitle: '添加新的任务',
-                        onTap: () async {
-                          Get.back();
-                          final result = await Get.toNamed('/todo/add');
-                          // 如果返回成功，刷新首页数据
-                          if (result == true && _currentIndex == 0) {
-                            _refreshHomePage();
-                          }
-                        },
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: DesignTokens.spacing4),
-                      _buildMenuItem(
-                        context: context,
-                        icon: Icons.folder_outlined,
-                        title: '创建项目',
-                        subtitle: '开始新的项目',
-                        onTap: () async {
-                          Get.back();
-                          final result = await Get.toNamed('/project/add');
-                          // 如果返回成功，刷新首页数据
-                          if (result == true && _currentIndex == 0) {
-                            _refreshHomePage();
-                          }
-                        },
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: DesignTokens.spacing4),
-                      _buildMenuItem(
-                        context: context,
-                        icon: Icons.flag_outlined,
-                        title: '创建目标',
-                        subtitle: '设定新的目标',
-                        onTap: () async {
-                          Get.back();
-                          final result = await Get.toNamed('/goal/add');
-                          // 如果返回成功，刷新首页数据
-                          if (result == true && _currentIndex == 0) {
-                            _refreshHomePage();
-                          }
-                        },
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: DesignTokens.spacing4),
-                      _buildMenuItem(
-                        context: context,
-                        icon: Icons.smart_toy_outlined,
-                        title: 'AI智能规划',
-                        subtitle: '让AI帮你拆解任务',
-                        onTap: () async {
-                          Get.back();
-                          final result = await Get.to(() => const AiInteractionPage());
-                          // 如果返回成功，刷新首页数据
-                          if (result == true && _currentIndex == 0) {
-                            _refreshHomePage();
-                          }
-                        },
-                        isDark: isDark,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMenuItem({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-      child: Container(
-        padding: const EdgeInsets.all(DesignTokens.spacing4),
-        decoration: BoxDecoration(
-          color: isDark
-              ? DesignTokens.surfaceDarkSecondary
-              : DesignTokens.surfaceLightSecondary,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: DesignTokens.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-              ),
-              child: Icon(
-                icon,
-                color: DesignTokens.primaryColor,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: DesignTokens.spacing4),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: DesignTokens.textStyle(
-                      fontSize: DesignTokens.fontSizeBodyMedium,
-                      fontWeight: DesignTokens.fontWeightBold,
-                      color: isDark
-                          ? DesignTokens.onSurfaceDark
-                          : DesignTokens.onSurfaceLight,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: DesignTokens.textStyle(
-                      fontSize: DesignTokens.fontSizeLabelSmall,
-                      color: isDark
-                          ? DesignTokens.textSecondaryDark
-                          : DesignTokens.textSecondaryLight,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: isDark
-                  ? DesignTokens.textTertiaryDark
-                  : DesignTokens.textTertiaryLight,
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _openAiPlanning() async {
+    await Get.to(() => const AiPlanPage(initialGoalText: ''));
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -280,17 +86,25 @@ class _MainPageState extends State<MainPage> {
               physics: const NeverScrollableScrollPhysics(),
               children: _pages,
             ),
-            
-            // 右上角悬浮FAB（仅在首页显示）
+            if (_currentIndex == 0)
+              Positioned(
+                top: DesignTokens.spacing6,
+                left: DesignTokens.spacing6,
+                child: FabButton(
+                  icon: Icons.nights_stay_outlined,
+                  onPressed: () async {
+                    await Get.to(() => const DailyReviewPage());
+                    setState(() {});
+                  },
+                ),
+              ),
             if (_currentIndex == 0)
               Positioned(
                 top: DesignTokens.spacing6,
                 right: DesignTokens.spacing6,
                 child: FabButton(
-                  icon: Icons.add,
-                  onPressed: () {
-                    _showCreateMenu(context);
-                  },
+                  icon: Icons.auto_awesome,
+                  onPressed: _openAiPlanning,
                 ),
               ),
           ],

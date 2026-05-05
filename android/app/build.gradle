@@ -54,6 +54,25 @@ android {
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
         multiDexEnabled true
+        manifestPlaceholders["appLabel"] = "Praxis"
+    }
+
+    flavorDimensions += ["environment"]
+
+    productFlavors {
+        dev {
+            dimension "environment"
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+            manifestPlaceholders["appLabel"] = "Praxis Dev"
+            resValue "string", "app_name", "Praxis Dev"
+        }
+        prod {
+            dimension "environment"
+            applicationId "com.example.praxis"
+            manifestPlaceholders["appLabel"] = "Praxis"
+            resValue "string", "app_name", "Praxis"
+        }
     }
 
     signingConfigs {
@@ -111,4 +130,3 @@ flutter {
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
-

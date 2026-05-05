@@ -33,13 +33,14 @@ class TodoAdapter extends TypeAdapter<Todo> {
       parentId: fields[13] as String?,
       recurrence: fields[14] as RecurrenceRule?,
       updatedAt: fields[15] as DateTime?,
+      domainId: fields[16] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Todo obj) {
     writer
-      ..writeByte(16)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -71,7 +72,9 @@ class TodoAdapter extends TypeAdapter<Todo> {
       ..writeByte(14)
       ..write(obj.recurrence)
       ..writeByte(15)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(16)
+      ..write(obj.domainId);
   }
 
   @override

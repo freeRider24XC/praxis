@@ -53,6 +53,9 @@ class Todo extends HiveObject {
   @HiveField(15)
   late DateTime updatedAt;
 
+  @HiveField(16)
+  String? domainId;
+
   Todo({
     String? id,
     required this.title,
@@ -70,6 +73,7 @@ class Todo extends HiveObject {
     this.parentId,
     this.recurrence,
     DateTime? updatedAt,
+    this.domainId,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         isDone = isDone ?? false,
@@ -93,6 +97,7 @@ class Todo extends HiveObject {
     String? parentId,
     RecurrenceRule? recurrence,
     DateTime? updatedAt,
+    String? domainId,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -111,6 +116,7 @@ class Todo extends HiveObject {
       parentId: parentId ?? this.parentId,
       recurrence: recurrence ?? this.recurrence,
       updatedAt: updatedAt ?? DateTime.now(),
+      domainId: domainId ?? this.domainId,
     );
   }
 

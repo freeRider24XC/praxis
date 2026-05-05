@@ -280,9 +280,12 @@ class _SchedulePageState extends State<SchedulePage> {
             ),
           ),
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: _buildViewContent(isDark),
+            child: SafeArea(
+              top: false,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _buildViewContent(isDark),
+              ),
             ),
           ),
         ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:praxis/common/services/theme_service.dart';
+import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/services/calendar_sync_service.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 
@@ -14,6 +14,10 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _calendarSyncEnabled = false;
+  bool _aiConfigured = false;
+  String _aiProviderLabel = '未配置';
+  String _aiModel = '';
+  String? _maskedApiKey;
 
   @override
   void initState() {
@@ -22,9 +26,19 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadSettings() async {
+    final provider = await AiConfigService.getProviderLabel();
+    final model = await AiConfigService.getModel();
+    final configured = await AiConfigService.isConfigured();
+    final maskedKey = await AiConfigService.getMaskedApiKey();
+
+    if (!mounted) return;
     setState(() {
       _calendarSyncEnabled = CalendarSyncService.isEnabled;
-      });
+      _aiConfigured = configured;
+      _aiProviderLabel = provider;
+      _aiModel = model;
+      _maskedApiKey = maskedKey;
+    });
   }
 
   @override
@@ -300,6 +314,84 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 
+                const SizedBox(height: DesignTokens.spacing6),
+
+                Text(
+                  'AI',
+                  style: DesignTokens.textStyle(
+                    fontSize: DesignTokens.fontSizeLabelSmall,
+                    fontWeight: DesignTokens.fontWeightBold,
+                    color: isDark
+                        ? DesignTokens.textSecondaryDark
+                        : DesignTokens.textSecondaryLight,
+                  ),
+                ),
+
+                const SizedBox(height: DesignTokens.spacing3),
+
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? DesignTokens.surfaceDark
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+                    border: Border.all(
+                      color: isDark
+                          ? DesignTokens.borderDark
+                          : DesignTokens.borderLight,
+                      width: 0.5,
+                    ),
+                    boxShadow: DesignTokens.shadowIOS,
+                  ),
+                  child: Column(
+                    children: [
+                      _buildSettingItem(
+                        icon: Icons.auto_awesome,
+                        iconColor: DesignTokens.secondaryPurple,
+                        title: 'AI 规划模式',
+                        subtitle: _aiConfigured
+                            ? 'Live · $_aiProviderLabel · $_aiModel'
+                            : 'Mock fallback · 未配置 API',
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          size: 14,
+                          color: isDark
+                              ? DesignTokens.textTertiaryDark
+                              : DesignTokens.textTertiaryLight,
+                        ),
+                        onTap: _showAiConfigSheet,
+                        isDark: isDark,
+                      ),
+                      Divider(
+                        height: 1,
+                        color: isDark
+                            ? DesignTokens.borderDark
+                            : DesignTokens.borderLight,
+                      ),
+                      _buildSettingItem(
+                        icon: Icons.key_outlined,
+                        iconColor: DesignTokens.secondaryOrange,
+                        title: 'API 密钥',
+                        subtitle: _maskedApiKey ?? '未设置',
+                        trailing: Text(
+                          _aiConfigured ? '已启用' : '未启用',
+                          style: DesignTokens.textStyle(
+                            fontSize: DesignTokens.fontSizeLabelSmall,
+                            fontWeight: DesignTokens.fontWeightBold,
+                            color: _aiConfigured
+                                ? DesignTokens.secondaryEmerald
+                                : (isDark
+                                    ? DesignTokens.textSecondaryDark
+                                    : DesignTokens.textSecondaryLight),
+                          ),
+                        ),
+                        onTap: _showAiConfigSheet,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: DesignTokens.spacing6),
                 
                 // 数据与安全
@@ -593,6 +685,203 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       );
     });
+  }
+
+  Future<void> _testAiConnection() async {
+    try {
+      final ok = await AiService().testConnection();
+      if (ok) {
+        ErrorService.showSuccess('AI 连接测试成功');
+      } else {
+        ErrorService.showWarning('连接测试失败，请检查配置');
+      }
+    } catch (e) {
+      ErrorService.handleError(e, context: 'AI连接测试');
+    }
+  }
+
+  Future<void> _showAiConfigSheet() async {
+    final currentApiKey = await AiConfigService.getApiKey() ?? '';
+    final currentBaseUrl = await AiConfigService.getApiBaseUrl();
+    final currentModel = await AiConfigService.getModel();
+    final initialProvider = AiConfigService.detectProviderKind(currentBaseUrl);
+
+    if (!mounted) return;
+
+    final apiKeyController = TextEditingController(text: currentApiKey);
+    final modelController = TextEditingController(
+      text: currentModel.isEmpty ? AiConfigService.defaultModel : currentModel,
+    );
+    final baseUrlController = TextEditingController(text: currentBaseUrl);
+    var selectedProvider = initialProvider;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void applyPreset(AiProviderKind kind) {
+              selectedProvider = kind;
+              baseUrlController.text = AiConfigService.defaultBaseUrlForKind(kind);
+              modelController.text = AiConfigService.defaultModelForKind(kind);
+              setSheetState(() {});
+            }
+
+            Future<void> saveConfig() async {
+              final apiKey = apiKeyController.text.trim();
+              final baseUrl = baseUrlController.text.trim();
+              final model = modelController.text.trim();
+
+              if (apiKey.isEmpty || baseUrl.isEmpty || model.isEmpty) {
+                ErrorService.showWarning('请填写完整的 AI 配置');
+                return;
+              }
+
+              await AiConfigService.setApiKey(apiKey);
+              await AiConfigService.setApiBaseUrl(baseUrl);
+              await AiConfigService.setModel(model);
+              await _loadSettings();
+              Navigator.pop(sheetContext);
+              ErrorService.showSuccess('AI 配置已保存');
+            }
+
+            Future<void> clearConfig() async {
+              await AiConfigService.clearConfig();
+              await _loadSettings();
+              Navigator.pop(sheetContext);
+              ErrorService.showInfo('已切换回 Mock fallback');
+            }
+
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark ? DesignTokens.surfaceDark : Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(DesignTokens.radiusXLarge),
+                  topRight: Radius.circular(DesignTokens.radiusXLarge),
+                ),
+              ),
+              padding: EdgeInsets.only(
+                left: DesignTokens.spacing6,
+                right: DesignTokens.spacing6,
+                top: DesignTokens.spacing4,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + DesignTokens.spacing6,
+              ),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 48,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? DesignTokens.borderDark
+                                : DesignTokens.borderLight,
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spacing5),
+                      Text(
+                        'AI 配置',
+                        style: DesignTokens.textStyle(
+                          fontSize: DesignTokens.fontSizeTitleLarge,
+                          fontWeight: DesignTokens.fontWeightBold,
+                          color: isDark
+                              ? DesignTokens.onSurfaceDark
+                              : DesignTokens.onSurfaceLight,
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spacing2),
+                      Text(
+                        '不配置也能走完整个 MVP 闭环；配置后会优先使用真实模型。',
+                        style: DesignTokens.textStyle(
+                          color: isDark
+                              ? DesignTokens.textSecondaryDark
+                              : DesignTokens.textSecondaryLight,
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spacing5),
+                      Wrap(
+                        spacing: DesignTokens.spacing2,
+                        runSpacing: DesignTokens.spacing2,
+                        children: [
+                          for (final kind in [
+                            AiProviderKind.openai,
+                            AiProviderKind.deepseek,
+                            AiProviderKind.tongyi,
+                            AiProviderKind.gemini,
+                            AiProviderKind.minimax,
+                          ])
+                            ChoiceChip(
+                              label: Text(AiConfigService.providerLabelForKind(kind)),
+                              selected: selectedProvider == kind,
+                              onSelected: (_) => applyPreset(kind),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: DesignTokens.spacing4),
+                      TextField(
+                        controller: apiKeyController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'API Key',
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spacing3),
+                      TextField(
+                        controller: baseUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'Base URL',
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spacing3),
+                      TextField(
+                        controller: modelController,
+                        decoration: const InputDecoration(
+                          labelText: 'Model',
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spacing5),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: clearConfig,
+                              child: const Text('使用 Mock'),
+                            ),
+                          ),
+                          const SizedBox(width: DesignTokens.spacing3),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _testAiConnection,
+                              child: const Text('测试连接'),
+                            ),
+                          ),
+                          const SizedBox(width: DesignTokens.spacing3),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: saveConfig,
+                              child: const Text('保存'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
 }

@@ -51,12 +51,24 @@ class OpenAIProvider {
 3. 学习状态管理（截止日期：2025-01-20）[优先级：中]
 4. 完成一个实战项目（截止日期：2025-01-30）[优先级：高]"''';
 
-  String _buildDynamicSystemPrompt() {
+  static const String _structuredPlanningSystemPrompt = '''你是 Praxis AI 规划助手。
+
+你的任务是根据用户输入，返回结构化、可执行、可落库的 JSON 计划。
+
+硬性要求：
+1. 只返回 JSON 对象，不要 markdown，不要代码块，不要解释。
+2. 所有字段都必须尽量完整，尤其是 goal、project、todos。
+3. todos 必须是本周内可以开始执行的最小行动，不要泛泛而谈。
+4. 如果用户目标不够清晰，可以使用 followUpQuestions，但仍然要先给出一个可执行的初版计划。
+5. 不要复用旧目标，不要猜测其他项目背景，只围绕当前这次输入生成。''';
+
+  String _buildDynamicSystemPrompt({String? overrideBasePrompt}) {
     final now = DateTime.now();
     final localTime = DateFormat('yyyy-MM-dd HH:mm').format(now);
     final weekday = DateFormat('EEEE', 'zh_CN').format(now);
     final timeZone = now.timeZoneName;
-    return '''$_baseSystemPrompt
+    final basePrompt = overrideBasePrompt ?? _baseSystemPrompt;
+    return '''$basePrompt
 
 当前本地时间：$localTime（$weekday，$timeZone）。请务必依据此时间安排计划和截止日期，除非用户明确指定其他日期或时区。''';
   }
@@ -67,7 +79,11 @@ class OpenAIProvider {
   }
 
   // 发送聊天消息
-  Future<String> chat(String message, List<ChatMessage> history) async {
+  Future<String> chat(
+    String message,
+    List<ChatMessage> history, {
+    String? systemPromptOverride,
+  }) async {
     if (!await isConfigured()) {
       throw Exception('API密钥未配置，请在设置中配置API密钥');
     }
@@ -75,16 +91,19 @@ class OpenAIProvider {
     final apiKey = await AiConfigService.getApiKey();
     final baseUrl = await AiConfigService.getApiBaseUrl();
     final model = await AiConfigService.getModel();
-    
+
     // 判断API类型
     final isTongyi = baseUrl.contains('dashscope');
     final isGemini = baseUrl.contains('generativelanguage.googleapis.com');
-    
+
     // 调试日志
-    debugPrint('🔵 AI请求 - BaseURL: $baseUrl, Model: $model, IsTongyi: $isTongyi');
+    debugPrint(
+        '🔵 AI请求 - BaseURL: $baseUrl, Model: $model, IsTongyi: $isTongyi');
 
     // 构建消息列表
-    final systemPrompt = _buildDynamicSystemPrompt();
+    final systemPrompt = _buildDynamicSystemPrompt(
+      overrideBasePrompt: systemPromptOverride,
+    );
     final messages = <Map<String, dynamic>>[
       {'role': 'system', 'content': systemPrompt},
       ...history.map((msg) => msg.toJson()),
@@ -101,7 +120,7 @@ class OpenAIProvider {
     if (isGemini) {
       // Gemini API格式
       url = Uri.parse('$baseUrl/models/$model:generateContent?key=$apiKey');
-      
+
       // 转换消息格式为Gemini格式
       final contents = <Map<String, dynamic>>[];
       for (var msg in messages) {
@@ -111,10 +130,12 @@ class OpenAIProvider {
         }
         contents.add({
           'role': msg['role'] == 'assistant' ? 'model' : 'user',
-          'parts': [{'text': msg['content']}],
+          'parts': [
+            {'text': msg['content']}
+          ],
         });
       }
-      
+
       requestBody = {
         'contents': contents,
         'generationConfig': {
@@ -126,15 +147,18 @@ class OpenAIProvider {
       // 通义千问使用不同的API端点
       url = Uri.parse('$baseUrl/services/aigc/text-generation/generation');
       headers['Authorization'] = 'Bearer $apiKey';
-      
+
       // 通义千问需要过滤system消息，因为可能不支持
-      final filteredMessages = messages.where((msg) => msg['role'] != 'system').toList();
+      final filteredMessages =
+          messages.where((msg) => msg['role'] != 'system').toList();
       // 如果有system消息，将其合并到第一个user消息中
-      final systemMsg = messages.firstWhere((msg) => msg['role'] == 'system', orElse: () => {});
+      final systemMsg = messages.firstWhere((msg) => msg['role'] == 'system',
+          orElse: () => {});
       if (systemMsg.isNotEmpty && filteredMessages.isNotEmpty) {
-        filteredMessages[0]['content'] = '${systemMsg['content']}\n\n${filteredMessages[0]['content']}';
+        filteredMessages[0]['content'] =
+            '${systemMsg['content']}\n\n${filteredMessages[0]['content']}';
       }
-      
+
       requestBody = {
         'model': model,
         'input': {
@@ -145,13 +169,13 @@ class OpenAIProvider {
           'max_tokens': 2000,
         },
       };
-      
+
       debugPrint('🔵 通义千问请求体: ${jsonEncode(requestBody)}');
     } else {
       // OpenAI格式
       url = Uri.parse('$baseUrl/chat/completions');
       headers['Authorization'] = 'Bearer $apiKey';
-      
+
       requestBody = {
         'model': model,
         'messages': messages,
@@ -159,22 +183,24 @@ class OpenAIProvider {
         'max_tokens': 2000,
       };
     }
-    
+
     debugPrint('🔵 发送请求到: $url');
-    
+
     try {
-    final response = await http.post(
-      url,
+      final response = await http
+          .post(
+        url,
         headers: headers,
-      body: jsonEncode(requestBody),
-    ).timeout(
+        body: jsonEncode(requestBody),
+      )
+          .timeout(
         Duration(seconds: isTongyi ? 60 : 30), // 通义千问可能需要更长时间
-      onTimeout: () {
+        onTimeout: () {
           debugPrint('❌ 请求超时 - URL: $url, 超时时间: ${isTongyi ? 60 : 30}秒');
           throw Exception('请求超时，请检查网络连接。如果使用通义千问，可能需要更长时间');
-      },
-    );
-      
+        },
+      );
+
       debugPrint('🔵 响应状态码: ${response.statusCode}');
       if (response.body.length > 200) {
         debugPrint('🔵 响应体(前200字符): ${response.body.substring(0, 200)}...');
@@ -182,71 +208,70 @@ class OpenAIProvider {
         debugPrint('🔵 响应体: ${response.body}');
       }
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      
-      String content;
-      if (isGemini) {
-        // Gemini的响应格式
-        final candidates = data['candidates'] as List?;
-        if (candidates != null && candidates.isNotEmpty) {
-          final candidate = candidates[0] as Map<String, dynamic>;
-          final contentObj = candidate['content'] as Map<String, dynamic>?;
-          if (contentObj != null) {
-            final parts = contentObj['parts'] as List?;
-            if (parts != null && parts.isNotEmpty) {
-              final part = parts[0] as Map<String, dynamic>;
-              content = part['text'] as String? ?? '';
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+        String content;
+        if (isGemini) {
+          // Gemini的响应格式
+          final candidates = data['candidates'] as List?;
+          if (candidates != null && candidates.isNotEmpty) {
+            final candidate = candidates[0] as Map<String, dynamic>;
+            final contentObj = candidate['content'] as Map<String, dynamic>?;
+            if (contentObj != null) {
+              final parts = contentObj['parts'] as List?;
+              if (parts != null && parts.isNotEmpty) {
+                final part = parts[0] as Map<String, dynamic>;
+                content = part['text'] as String? ?? '';
+              } else {
+                throw Exception('AI返回了空响应');
+              }
             } else {
               throw Exception('AI返回了空响应');
             }
           } else {
             throw Exception('AI返回了空响应');
           }
+        } else if (isTongyi) {
+          // 通义千问的响应格式
+          final output = data['output'] as Map<String, dynamic>?;
+          if (output != null) {
+            content = output['text'] as String? ?? '';
+          } else {
+            throw Exception('AI返回了空响应');
+          }
         } else {
-          throw Exception('AI返回了空响应');
+          // OpenAI格式
+          final choices = data['choices'] as List;
+          if (choices.isNotEmpty) {
+            content = choices[0]['message']['content'] as String;
+          } else {
+            throw Exception('AI返回了空响应');
+          }
         }
-      } else if (isTongyi) {
-        // 通义千问的响应格式
-        final output = data['output'] as Map<String, dynamic>?;
-        if (output != null) {
-          content = output['text'] as String? ?? '';
-        } else {
-          throw Exception('AI返回了空响应');
-        }
-      } else {
-        // OpenAI格式
-        final choices = data['choices'] as List;
-        if (choices.isNotEmpty) {
-          content = choices[0]['message']['content'] as String;
-        } else {
-          throw Exception('AI返回了空响应');
-        }
-      }
-      
-      return content;
-    } else if (response.statusCode == 401) {
+
+        return content;
+      } else if (response.statusCode == 401) {
         debugPrint('❌ API密钥无效');
-      throw Exception('API密钥无效，请检查密钥是否正确');
-    } else if (response.statusCode == 402) {
+        throw Exception('API密钥无效，请检查密钥是否正确');
+      } else if (response.statusCode == 402) {
         debugPrint('❌ 账户余额不足');
-      throw Exception(isTongyi 
-        ? '账户余额不足，请前往阿里云DashScope平台充值' 
-        : '账户余额不足，请前往DeepSeek平台充值');
-    } else if (response.statusCode == 429) {
+        throw Exception(
+            isTongyi ? '账户余额不足，请前往阿里云DashScope平台充值' : '账户余额不足，请前往DeepSeek平台充值');
+      } else if (response.statusCode == 429) {
         debugPrint('❌ API调用次数超限');
-      throw Exception('API调用次数超限，请稍后再试');
-    } else {
+        throw Exception('API调用次数超限，请稍后再试');
+      } else {
         debugPrint('❌ API请求失败 - 状态码: ${response.statusCode}');
         debugPrint('❌ 响应体: ${response.body}');
         try {
-      final errorData = jsonDecode(response.body) as Map<String, dynamic>;
-          final errorMessage = errorData['error']?['message'] ?? 
-                              errorData['message'] ?? 
-                              '请求失败';
-      throw Exception('API请求失败: $errorMessage');
+          final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+          final errorMessage =
+              errorData['error']?['message'] ?? errorData['message'] ?? '请求失败';
+          throw Exception('API请求失败: $errorMessage');
         } catch (e) {
-          throw Exception('API请求失败: HTTP ${response.statusCode} - ${response.body}');
+          throw Exception(
+              'API请求失败: HTTP ${response.statusCode} - ${response.body}');
         }
       }
     } catch (e) {
@@ -259,13 +284,24 @@ class OpenAIProvider {
     }
   }
 
+  Future<String> structuredPlanningChat(
+    String message, {
+    List<ChatMessage> history = const [],
+  }) {
+    return chat(
+      message,
+      history,
+      systemPromptOverride: _structuredPlanningSystemPrompt,
+    );
+  }
+
   // 测试连接
   Future<bool> testConnection() async {
     try {
       final apiKey = await AiConfigService.getApiKey();
       final baseUrl = await AiConfigService.getApiBaseUrl();
       final model = await AiConfigService.getModel();
-      
+
       final isTongyi = baseUrl.contains('dashscope');
       final isGemini = baseUrl.contains('generativelanguage.googleapis.com');
 
@@ -286,7 +322,9 @@ class OpenAIProvider {
           'contents': [
             {
               'role': 'user',
-              'parts': [{'text': 'Hello'}],
+              'parts': [
+                {'text': 'Hello'}
+              ],
             }
           ],
           'generationConfig': {
@@ -319,11 +357,13 @@ class OpenAIProvider {
         };
       }
 
-      final response = await http.post(
+      final response = await http
+          .post(
         url,
         headers: headers,
         body: jsonEncode(requestBody),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           throw Exception('请求超时，请检查网络连接');
@@ -332,7 +372,7 @@ class OpenAIProvider {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        
+
         if (isGemini) {
           final candidates = data['candidates'] as List?;
           return candidates != null && candidates.isNotEmpty;
@@ -347,9 +387,9 @@ class OpenAIProvider {
         throw Exception('API密钥无效，请检查密钥是否正确');
       } else if (response.statusCode == 402) {
         final isTongyiCheck = baseUrl.contains('dashscope');
-        throw Exception(isTongyiCheck 
-          ? '账户余额不足，请前往阿里云DashScope平台充值' 
-          : '账户余额不足，请前往DeepSeek平台充值');
+        throw Exception(isTongyiCheck
+            ? '账户余额不足，请前往阿里云DashScope平台充值'
+            : '账户余额不足，请前往DeepSeek平台充值');
       } else if (response.statusCode == 429) {
         throw Exception('API调用次数超限，请稍后再试');
       } else {
@@ -367,4 +407,3 @@ class OpenAIProvider {
     }
   }
 }
-

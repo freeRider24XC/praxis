@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/models/goal.dart';
-import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/pages/project/project_detail_page.dart';
 import 'package:praxis/pages/goal/goal_detail_page.dart';
@@ -108,10 +108,14 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
               Checkbox(
                 value: todo.isDone,
                 onChanged: (value) async {
+                  final wasDone = todo.isDone;
                   todo.isDone = value ?? false;
                   todo.completedAt =
                       todo.isDone ? DateTime.now() : null;
                   await DatabaseService.updateTodo(todo);
+                  if (!wasDone && todo.isDone) {
+                    await XpService.awardTodoCompleted(todo);
+                  }
                   _loadTodo();
                 },
               ),
@@ -325,4 +329,3 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
     );
   }
 }
-

@@ -7,26 +7,39 @@ class DatabaseService {
   static const String projectBoxName = 'projects';
   static const String settingsBoxName = 'settings';
   static const String focusSessionBoxName = 'focus_sessions';
+  static const String lifeDomainBoxName = 'life_domains';
+  static const String userProfileBoxName = 'user_profiles';
+  static const String xpEventBoxName = 'xp_events';
+  static const String dailyReviewBoxName = 'daily_reviews';
 
   static late Box<Todo> todoBox;
   static late Box<Goal> goalBox;
   static late Box<Project> projectBox;
   static late Box settingsBox;
   static late Box<FocusSession> focusSessionBox;
+  static late Box<LifeDomain> lifeDomainBox;
+  static late Box<UserProfile> userProfileBox;
+  static late Box<XpEvent> xpEventBox;
+  static late Box<DailyReview> dailyReviewBox;
 
   static bool _isInitialized = false;
 
   // Initialize Hive and register adapters
-  static Future<void> init() async {
+  static Future<void> init({String? hivePath}) async {
     if (_isInitialized) return;
     
-    await Hive.initFlutter();
+    if (hivePath != null && hivePath.isNotEmpty) {
+      Hive.init(hivePath);
+    } else {
+      await Hive.initFlutter();
+    }
 
     // Register adapters
     _registerAdapters();
 
     // Open boxes
     await _openBoxes();
+    await _seedDefaults();
     
     _isInitialized = true;
   }
@@ -84,6 +97,19 @@ class DatabaseService {
     if (!Hive.isAdapterRegistered(13)) {
       Hive.registerAdapter(FocusSessionAdapter());
     }
+
+    if (!Hive.isAdapterRegistered(14)) {
+      Hive.registerAdapter(LifeDomainAdapter());
+    }
+    if (!Hive.isAdapterRegistered(15)) {
+      Hive.registerAdapter(UserProfileAdapter());
+    }
+    if (!Hive.isAdapterRegistered(16)) {
+      Hive.registerAdapter(XpEventAdapter());
+    }
+    if (!Hive.isAdapterRegistered(17)) {
+      Hive.registerAdapter(DailyReviewAdapter());
+    }
   }
 
   static Future<void> _openBoxes() async {
@@ -92,16 +118,45 @@ class DatabaseService {
     projectBox = await Hive.openBox<Project>(projectBoxName);
     settingsBox = await Hive.openBox(settingsBoxName);
     focusSessionBox = await Hive.openBox<FocusSession>(focusSessionBoxName);
+    lifeDomainBox = await Hive.openBox<LifeDomain>(lifeDomainBoxName);
+    userProfileBox = await Hive.openBox<UserProfile>(userProfileBoxName);
+    xpEventBox = await Hive.openBox<XpEvent>(xpEventBoxName);
+    dailyReviewBox = await Hive.openBox<DailyReview>(dailyReviewBoxName);
+  }
+
+  static Future<void> _seedDefaults() async {
+    if (lifeDomainBox.isEmpty) {
+      await lifeDomainBox.addAll([
+        LifeDomain(name: '职业发展', icon: '💼', color: '#4F46E5'),
+        LifeDomain(name: '健康身体', icon: '🏃', color: '#10B981'),
+        LifeDomain(name: '财务管理', icon: '💰', color: '#F59E0B'),
+        LifeDomain(name: '人际关系', icon: '👥', color: '#EC4899'),
+        LifeDomain(name: '成长学习', icon: '📚', color: '#06B6D4'),
+      ]);
+    }
+
+    if (userProfileBox.isEmpty) {
+      final focusedDomainId = lifeDomainBox.values.isNotEmpty
+          ? lifeDomainBox.values.first.id
+          : null;
+      await userProfileBox.add(
+        UserProfile(
+          focusedDomainId: focusedDomainId,
+        ),
+      );
+    }
   }
 
   // Todo operations
   static Future<void> addTodo(Todo todo) async {
+    todo.domainId ??= resolveDomainIdForTodo(todo);
     await todoBox.add(todo);
   }
 
   // 批量添加待办事项
   static Future<void> addTodos(List<Todo> todos) async {
     for (final todo in todos) {
+      todo.domainId ??= resolveDomainIdForTodo(todo);
       await todoBox.add(todo);
     }
   }
@@ -146,6 +201,7 @@ class DatabaseService {
   }
 
   static Future<void> updateTodo(Todo todo) async {
+    todo.domainId ??= resolveDomainIdForTodo(todo);
     await todo.save();
     if (todo.projectId != null) {
       await recalculateProjectProgress(todo.projectId!);
@@ -333,6 +389,9 @@ class DatabaseService {
         final todo = getTodoById(id);
         if (todo != null && todo.projectId == projectId) {
           todo.projectId = null;
+          todo.domainId = todo.goalId != null
+              ? getGoalById(todo.goalId!)?.domainId
+              : null;
           await todo.save();
           if (todo.goalId != null) {
             await recalculateGoalProgress(todo.goalId!);
@@ -360,6 +419,7 @@ class DatabaseService {
       }
 
       todo.projectId = projectId;
+      todo.domainId = project.domainId ?? todo.domainId;
       await todo.save();
       if (todo.goalId != null) {
         await recalculateGoalProgress(todo.goalId!);
@@ -400,6 +460,12 @@ class DatabaseService {
     await goalBox.clear();
     await projectBox.clear();
     await settingsBox.clear();
+    await focusSessionBox.clear();
+    await lifeDomainBox.clear();
+    await userProfileBox.clear();
+    await xpEventBox.clear();
+    await dailyReviewBox.clear();
+    await _seedDefaults();
   }
 
   // Close database
@@ -408,7 +474,13 @@ class DatabaseService {
     await goalBox.close();
     await projectBox.close();
     await settingsBox.close();
+    await focusSessionBox.close();
+    await lifeDomainBox.close();
+    await userProfileBox.close();
+    await xpEventBox.close();
+    await dailyReviewBox.close();
     await Hive.close();
+    _isInitialized = false;
   }
 
   // Backup and restore
@@ -417,6 +489,14 @@ class DatabaseService {
       'todos': todoBox.values.map((todo) => _todoToMap(todo)).toList(),
       'goals': goalBox.values.map((goal) => _goalToMap(goal)).toList(),
       'projects': projectBox.values.map((project) => _projectToMap(project)).toList(),
+      'lifeDomains': lifeDomainBox.values
+          .map((domain) => {
+                'id': domain.id,
+                'name': domain.name,
+                'icon': domain.icon,
+                'color': domain.color,
+              })
+          .toList(),
       'settings': settingsBox.toMap(),
       'backupDate': DateTime.now().toIso8601String(),
     };
@@ -477,6 +557,7 @@ class DatabaseService {
       'subTasks': todo.subTasks,
       'parentId': todo.parentId,
       'updatedAt': todo.updatedAt.toIso8601String(),
+      'domainId': todo.domainId,
     };
   }
 
@@ -497,6 +578,7 @@ class DatabaseService {
       subTasks: map['subTasks'] != null ? List<String>.from(map['subTasks']) : null,
       parentId: map['parentId'],
       updatedAt: DateTime.parse(map['updatedAt']),
+      domainId: map['domainId'] as String?,
     );
   }
 
@@ -521,6 +603,8 @@ class DatabaseService {
       'targetValue': goal.targetValue,
       'currentValue': goal.currentValue,
       'unit': goal.unit,
+      'projectIds': goal.projectIds,
+      'domainId': goal.domainId,
     };
   }
 
@@ -545,6 +629,8 @@ class DatabaseService {
       targetValue: map['targetValue'],
       currentValue: map['currentValue'],
       unit: map['unit'],
+      projectIds: map['projectIds'] != null ? List<String>.from(map['projectIds']) : null,
+      domainId: map['domainId'] as String?,
     );
   }
 
@@ -566,6 +652,7 @@ class DatabaseService {
       'updatedAt': project.updatedAt.toIso8601String(),
       'notes': project.notes,
       'metadata': project.metadata,
+      'domainId': project.domainId,
     };
   }
 
@@ -587,6 +674,7 @@ class DatabaseService {
       updatedAt: DateTime.parse(map['updatedAt']),
       notes: map['notes'],
       metadata: map['metadata'] != null ? Map<String, dynamic>.from(map['metadata']) : null,
+      domainId: map['domainId'] as String?,
     );
   }
 
@@ -624,5 +712,121 @@ class DatabaseService {
       orElse: () => throw Exception('FocusSession not found'),
     );
     await session.delete();
+  }
+
+  static List<LifeDomain> getAllLifeDomains() {
+    return lifeDomainBox.values.toList();
+  }
+
+  static LifeDomain? getLifeDomainById(String id) {
+    try {
+      return lifeDomainBox.values.firstWhere((domain) => domain.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static UserProfile getUserProfile() {
+    if (userProfileBox.values.isEmpty) {
+      throw StateError('UserProfile not initialized');
+    }
+    return userProfileBox.values.first;
+  }
+
+  static Future<void> saveUserProfile(UserProfile profile) async {
+    await profile.save();
+  }
+
+  static List<XpEvent> getAllXpEvents() {
+    final events = xpEventBox.values.toList();
+    events.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return events;
+  }
+
+  static Future<void> addXpEvent(XpEvent event) async {
+    await xpEventBox.add(event);
+  }
+
+  static List<DailyReview> getAllDailyReviews() {
+    final reviews = dailyReviewBox.values.toList();
+    reviews.sort((a, b) => b.date.compareTo(a.date));
+    return reviews;
+  }
+
+  static DailyReview? getDailyReviewByDate(DateTime date) {
+    try {
+      return dailyReviewBox.values.firstWhere((review) =>
+          review.date.year == date.year &&
+          review.date.month == date.month &&
+          review.date.day == date.day);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> upsertDailyReview(DailyReview review) async {
+    final existing = getDailyReviewByDate(review.date);
+    if (existing == null) {
+      await dailyReviewBox.add(review);
+      return;
+    }
+    existing.whatDone = review.whatDone;
+    existing.blockers = review.blockers;
+    existing.topPriorityTomorrow = review.topPriorityTomorrow;
+    existing.xpEarned = review.xpEarned;
+    existing.isCompleted = review.isCompleted;
+    await existing.save();
+  }
+
+  static List<Todo> getTodosByDomain(String domainId) {
+    return todoBox.values.where((todo) => todo.domainId == domainId).toList();
+  }
+
+  static List<Goal> getGoalsByDomain(String domainId) {
+    return goalBox.values.where((goal) => goal.domainId == domainId).toList();
+  }
+
+  static List<Project> getProjectsByDomain(String domainId) {
+    return projectBox.values.where((project) => project.domainId == domainId).toList();
+  }
+
+  static List<Todo> getTopTodosForToday({int limit = 3}) {
+    final now = DateTime.now();
+    final todos = todoBox.values.where((todo) => !todo.isDone).toList();
+    todos.sort((a, b) {
+      final aScore = _todoSortScore(a, now);
+      final bScore = _todoSortScore(b, now);
+      if (aScore != bScore) {
+        return aScore.compareTo(bScore);
+      }
+      return b.priority.value.compareTo(a.priority.value);
+    });
+    return todos.take(limit).toList();
+  }
+
+  static int _todoSortScore(Todo todo, DateTime now) {
+    if (todo.dueDate == null) return 99;
+    final today = DateTime(now.year, now.month, now.day);
+    final due = DateTime(todo.dueDate!.year, todo.dueDate!.month, todo.dueDate!.day);
+    return due.difference(today).inDays;
+  }
+
+  static String? resolveDomainIdForTodo(Todo todo) {
+    if (todo.domainId != null && todo.domainId!.isNotEmpty) {
+      return todo.domainId;
+    }
+    if (todo.projectId != null) {
+      final project = getProjectById(todo.projectId!);
+      if (project?.domainId != null) {
+        return project!.domainId;
+      }
+    }
+    if (todo.goalId != null) {
+      final goal = getGoalById(todo.goalId!);
+      if (goal?.domainId != null) {
+        return goal!.domainId;
+      }
+    }
+    return null;
   }
 }

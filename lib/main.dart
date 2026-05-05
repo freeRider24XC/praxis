@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/services/index.dart';
-import 'package:praxis/common/services/locale_service.dart';
 import 'package:praxis/common/services/calendar_sync_service.dart';
-import 'package:praxis/common/ai/services/ai_config_service.dart';
 import 'package:praxis/common/i18n/translations.dart';
+import 'package:praxis/common/app_bootstrap_stub.dart'
+    if (dart.library.io) 'package:praxis/common/app_bootstrap_io.dart';
 import 'package:praxis/pages/focus/focus_page.dart';
 import 'package:praxis/pages/main/main_page.dart';
 import 'package:praxis/pages/notifications/notifications_page.dart';
@@ -19,31 +20,26 @@ import 'package:praxis/pages/ai_chat/ai_interaction_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
-  // Initialize database
-  await DatabaseService.init();
-    
+    // 加载本地API配置
+    await loadLocalApiConfig();
+
+    // Initialize database
+    await DatabaseService.init();
+
     // Initialize services
     await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
     await CalendarSyncService.init();
-    
-    // 强制配置通义千问API key（先清除旧配置）
-    await AiConfigService.clearConfig();
-    const tongyiApiKey = 'sk-6aed399eac434b389bd831bff6f456d1';
-    await AiConfigService.setTongyi(apiKey: tongyiApiKey);
-    debugPrint('✅ 已清除旧配置并配置通义千问API key');
-    debugPrint('✅ BaseURL: ${await AiConfigService.getApiBaseUrl()}');
-    debugPrint('✅ Model: ${await AiConfigService.getModel()}');
-  
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  
-  runApp(const MyApp());
+
+    // Set preferred orientations
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+
+    runApp(const MyApp());
   } catch (e, stackTrace) {
     // Log error and show error screen
     debugPrint('初始化失败: $e');
@@ -59,22 +55,22 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final localeService = Get.find<LocaleService>();
     final themeService = Get.find<ThemeService>();
-    
+
     return Obx(() => GetMaterialApp(
-      title: "Praxis",
-      debugShowCheckedModeBanner: false,
-      translations: AppTranslations(),
-      locale: localeService.locale,
-      fallbackLocale: const Locale('en', 'US'),
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: LocaleService.supportedLocales,
-      theme: themeService.lightTheme,
-      darkTheme: themeService.darkTheme,
-      themeMode: themeService.themeMode,
+          title: "Praxis",
+          debugShowCheckedModeBanner: false,
+          translations: AppTranslations(),
+          locale: localeService.locale,
+          fallbackLocale: const Locale('en', 'US'),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: LocaleService.supportedLocales,
+          theme: themeService.lightTheme,
+          darkTheme: themeService.darkTheme,
+          themeMode: themeService.themeMode,
           home: FutureBuilder<bool>(
             future: OnboardingChecker.shouldShowOnboarding(),
             builder: (context, snapshot) {
@@ -86,11 +82,11 @@ class MyApp extends StatelessWidget {
               return snapshot.data == true ? const OnboardingPage() : const MainPage();
             },
           ),
-      getPages: [
-        GetPage(name: '/todo/add', page: () => const AddTodoPage()),
-        GetPage(name: '/goal/add', page: () => const AddGoalPage()),
-        GetPage(name: '/project/add', page: () => const AddProjectPage()),
-        GetPage(name: '/ai/chat', page: () => const AiInteractionPage()),
+          getPages: [
+            GetPage(name: '/todo/add', page: () => const AddTodoPage()),
+            GetPage(name: '/goal/add', page: () => const AddGoalPage()),
+            GetPage(name: '/project/add', page: () => const AddProjectPage()),
+            GetPage(name: '/ai/chat', page: () => const AiInteractionPage()),
             GetPage(
                 name: '/project/detail/:id',
                 page: () {
@@ -99,8 +95,8 @@ class MyApp extends StatelessWidget {
                 }),
             GetPage(name: '/focus', page: () => const FocusPage()),
             GetPage(name: '/notifications', page: () => const NotificationsPage()),
-      ],
-    ));
+          ],
+        ));
   }
 }
 
@@ -110,7 +106,7 @@ class ErrorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Praxis - 错误",
+      title: 'Praxis - 错误',
       home: Scaffold(
         body: Center(
           child: Padding(
