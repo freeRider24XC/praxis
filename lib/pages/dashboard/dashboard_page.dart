@@ -77,31 +77,33 @@ class _DashboardPageState extends State<DashboardPage> {
     final levelMax = XpService.xpNeededWithinCurrentLevel(profile.totalXp);
 
     return Scaffold(
-      backgroundColor: isDark
-          ? DesignTokens.backgroundDark
-          : DesignTokens.backgroundLight,
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            DesignTokens.spacing6,
-            DesignTokens.spacing6,
-            DesignTokens.spacing6,
-            DesignTokens.spacing10,
+      backgroundColor:
+          isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight,
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: _loadData,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.spacing6,
+              DesignTokens.spacing6,
+              DesignTokens.spacing6,
+              DesignTokens.spacing10,
+            ),
+            children: [
+              _buildLevelCard(isDark, profile, levelProgress, levelMax),
+              const SizedBox(height: DesignTokens.spacing5),
+              _buildFocusedDomainCard(isDark),
+              const SizedBox(height: DesignTokens.spacing5),
+              _buildSuggestionCard(isDark),
+              const SizedBox(height: DesignTokens.spacing5),
+              _buildTodayTodoSection(isDark),
+              const SizedBox(height: DesignTokens.spacing5),
+              _buildXpFeedSection(isDark),
+              const SizedBox(height: DesignTokens.spacing5),
+              _buildReviewEntry(isDark),
+            ],
           ),
-          children: [
-            _buildLevelCard(isDark, profile, levelProgress, levelMax),
-            const SizedBox(height: DesignTokens.spacing5),
-            _buildFocusedDomainCard(isDark),
-            const SizedBox(height: DesignTokens.spacing5),
-            _buildSuggestionCard(isDark),
-            const SizedBox(height: DesignTokens.spacing5),
-            _buildTodayTodoSection(isDark),
-            const SizedBox(height: DesignTokens.spacing5),
-            _buildXpFeedSection(isDark),
-            const SizedBox(height: DesignTokens.spacing5),
-            _buildReviewEntry(isDark),
-          ],
         ),
       ),
     );
@@ -113,7 +115,8 @@ class _DashboardPageState extends State<DashboardPage> {
     int levelProgress,
     int levelMax,
   ) {
-    final progress = levelMax == 0 ? 0.0 : (levelProgress / levelMax).clamp(0.0, 1.0);
+    final progress =
+        levelMax == 0 ? 0.0 : (levelProgress / levelMax).clamp(0.0, 1.0);
     return Container(
       padding: const EdgeInsets.all(DesignTokens.spacing6),
       decoration: BoxDecoration(
@@ -154,7 +157,8 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundColor: isDark
                   ? DesignTokens.surfaceDarkSecondary
                   : DesignTokens.surfaceLightSecondary,
-              valueColor: const AlwaysStoppedAnimation<Color>(DesignTokens.primaryColor),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                  DesignTokens.primaryColor),
             ),
           ),
           const SizedBox(height: DesignTokens.spacing2),

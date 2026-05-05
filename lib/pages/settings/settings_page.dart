@@ -45,470 +45,468 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final themeService = Get.find<ThemeService>();
-    
+
     return Scaffold(
-      backgroundColor: isDark
-          ? DesignTokens.backgroundDark
-          : DesignTokens.backgroundLight,
-      body: Column(
-        children: [
-          // 顶部栏
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DesignTokens.spacing6,
-              vertical: DesignTokens.spacing4,
-            ),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? DesignTokens.backgroundDark
-                  : Colors.white,
-              border: Border(
-                bottom: BorderSide(
-                  color: isDark
-                      ? DesignTokens.borderDark
-                      : DesignTokens.borderLight,
-                  width: 0.5,
+      backgroundColor:
+          isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // 顶部栏
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: DesignTokens.spacing6,
+                vertical: DesignTokens.spacing4,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? DesignTokens.backgroundDark : Colors.white,
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark
+                        ? DesignTokens.borderDark
+                        : DesignTokens.borderLight,
+                    width: 0.5,
+                  ),
                 ),
               ),
-            ),
-            child: Row(
+              child: Row(
                 children: [
-                GestureDetector(
-                  onTap: () => Get.back(),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? DesignTokens.surfaceDarkSecondary
+                            : DesignTokens.surfaceLightSecondary,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? DesignTokens.borderDark
+                              : DesignTokens.borderLight,
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.arrow_back,
+                        size: 20,
+                        color: isDark
+                            ? DesignTokens.textSecondaryDark
+                            : DesignTokens.textSecondaryLight,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '设置',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeTitleLarge,
+                      fontWeight: DesignTokens.fontWeightBold,
                       color: isDark
-                          ? DesignTokens.surfaceDarkSecondary
-                          : DesignTokens.surfaceLightSecondary,
-                      shape: BoxShape.circle,
+                          ? DesignTokens.onSurfaceDark
+                          : DesignTokens.onSurfaceLight,
+                    ),
+                  ),
+                  const Spacer(),
+                  const SizedBox(width: 40),
+                ],
+              ),
+            ),
+
+            // 内容区域
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(DesignTokens.spacing6),
+                children: [
+                  // 账号卡片
+                  Container(
+                    padding: const EdgeInsets.all(DesignTokens.spacing4),
+                    decoration: BoxDecoration(
+                      color: isDark ? DesignTokens.surfaceDark : Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusXLarge),
                       border: Border.all(
                         color: isDark
                             ? DesignTokens.borderDark
                             : DesignTokens.borderLight,
-                        width: 1,
+                        width: 0.5,
                       ),
+                      boxShadow: DesignTokens.shadowIOS,
                     ),
-                    child: Icon(
-                      Icons.arrow_back,
-                      size: 20,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? DesignTokens.surfaceDarkSecondary
+                                : DesignTokens.surfaceLightSecondary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: DesignTokens.spacing4),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Alex Chen',
+                                style: DesignTokens.textStyle(
+                                  fontSize: DesignTokens.fontSizeTitleLarge,
+                                  fontWeight: DesignTokens.fontWeightBold,
+                                  color: isDark
+                                      ? DesignTokens.onSurfaceDark
+                                      : DesignTokens.onSurfaceLight,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'alex.chen@example.com',
+                                style: DesignTokens.textStyle(
+                                  fontSize: DesignTokens.fontSizeBodySmall,
+                                  color: isDark
+                                      ? DesignTokens.textSecondaryDark
+                                      : DesignTokens.textSecondaryLight,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: DesignTokens.spacing4,
+                            vertical: DesignTokens.spacing2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? DesignTokens.surfaceDarkSecondary
+                                : DesignTokens.surfaceLightSecondary,
+                            borderRadius: BorderRadius.circular(
+                                DesignTokens.radiusXLarge),
+                            border: Border.all(
+                              color: isDark
+                                  ? DesignTokens.borderDark
+                                  : DesignTokens.borderLight,
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            '编辑',
+                            style: DesignTokens.textStyle(
+                              fontSize: DesignTokens.fontSizeLabelSmall,
+                              fontWeight: DesignTokens.fontWeightBold,
+                              color: isDark
+                                  ? DesignTokens.onSurfaceDark
+                                  : DesignTokens.onSurfaceLight,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: DesignTokens.spacing6),
+
+                  // 通用设置
+                  Text(
+                    '通用',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      fontWeight: DesignTokens.fontWeightBold,
                       color: isDark
                           ? DesignTokens.textSecondaryDark
                           : DesignTokens.textSecondaryLight,
                     ),
                   ),
-                      ),
-                      const Spacer(),
-                Text(
-                  '设置',
-                  style: DesignTokens.textStyle(
-                    fontSize: DesignTokens.fontSizeTitleLarge,
-                    fontWeight: DesignTokens.fontWeightBold,
-                    color: isDark
-                        ? DesignTokens.onSurfaceDark
-                        : DesignTokens.onSurfaceLight,
-                  ),
-                ),
-                const Spacer(),
-                const SizedBox(width: 40),
-              ],
-            ),
-          ),
 
-          // 内容区域
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(DesignTokens.spacing6),
-              children: [
-                // 账号卡片
-                Container(
-                  padding: const EdgeInsets.all(DesignTokens.spacing4),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? DesignTokens.surfaceDark
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-                    border: Border.all(
-                      color: isDark
-                          ? DesignTokens.borderDark
-                          : DesignTokens.borderLight,
-                      width: 0.5,
+                  const SizedBox(height: DesignTokens.spacing3),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? DesignTokens.surfaceDark : Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusXLarge),
+                      border: Border.all(
+                        color: isDark
+                            ? DesignTokens.borderDark
+                            : DesignTokens.borderLight,
+                        width: 0.5,
+                      ),
+                      boxShadow: DesignTokens.shadowIOS,
                     ),
-                    boxShadow: DesignTokens.shadowIOS,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? DesignTokens.surfaceDarkSecondary
-                              : DesignTokens.surfaceLightSecondary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 28,
-                        ),
-                  ),
-                      const SizedBox(width: DesignTokens.spacing4),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Alex Chen',
-                              style: DesignTokens.textStyle(
-                                fontSize: DesignTokens.fontSizeTitleLarge,
-                                fontWeight: DesignTokens.fontWeightBold,
+                    child: Column(
+                      children: [
+                        _buildSettingItem(
+                          icon: Icons.dark_mode,
+                          iconColor: DesignTokens.primaryColor,
+                          title: '深色模式',
+                          subtitle: '跟随系统',
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Obx(() {
+                                final mode = themeService.themeMode;
+                                String modeText = '跟随系统';
+                                if (mode == ThemeMode.light) {
+                                  modeText = '浅色';
+                                } else if (mode == ThemeMode.dark) {
+                                  modeText = '深色';
+                                }
+                                return Text(
+                                  modeText,
+                                  style: DesignTokens.textStyle(
+                                    fontSize: DesignTokens.fontSizeLabelSmall,
+                                    fontWeight: DesignTokens.fontWeightBold,
+                                    color: isDark
+                                        ? DesignTokens.textSecondaryDark
+                                        : DesignTokens.textSecondaryLight,
+                                  ),
+                                );
+                              }),
+                              const SizedBox(width: DesignTokens.spacing2),
+                              Icon(
+                                Icons.chevron_right,
+                                size: 14,
                                 color: isDark
-                                    ? DesignTokens.onSurfaceDark
-                                    : DesignTokens.onSurfaceLight,
+                                    ? DesignTokens.textTertiaryDark
+                                    : DesignTokens.textTertiaryLight,
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'alex.chen@example.com',
-                              style: DesignTokens.textStyle(
-                                fontSize: DesignTokens.fontSizeBodySmall,
-                                color: isDark
-                                    ? DesignTokens.textSecondaryDark
-                                    : DesignTokens.textSecondaryLight,
-                              ),
-                      ),
-                          ],
+                            ],
+                          ),
+                          onTap: () {
+                            _showThemeSelector(themeService, isDark);
+                          },
+                          isDark: isDark,
                         ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                        horizontal: DesignTokens.spacing4,
-                          vertical: DesignTokens.spacing2,
-                      ),
-                        decoration: BoxDecoration(
+                        Divider(
+                          height: 1,
                           color: isDark
-                              ? DesignTokens.surfaceDarkSecondary
-                              : DesignTokens.surfaceLightSecondary,
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-                          border: Border.all(
+                              ? DesignTokens.borderDark
+                              : DesignTokens.borderLight,
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.language,
+                          iconColor: DesignTokens.primaryColor,
+                          title: '语言',
+                          subtitle: '简体中文',
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            size: 14,
                             color: isDark
-                                ? DesignTokens.borderDark
-                                : DesignTokens.borderLight,
+                                ? DesignTokens.textTertiaryDark
+                                : DesignTokens.textTertiaryLight,
+                          ),
+                          onTap: () {
+                            // 语言选择
+                          },
+                          isDark: isDark,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: DesignTokens.spacing6),
+
+                  Text(
+                    'AI',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+
+                  const SizedBox(height: DesignTokens.spacing3),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? DesignTokens.surfaceDark : Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusXLarge),
+                      border: Border.all(
+                        color: isDark
+                            ? DesignTokens.borderDark
+                            : DesignTokens.borderLight,
+                        width: 0.5,
+                      ),
+                      boxShadow: DesignTokens.shadowIOS,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildSettingItem(
+                          icon: Icons.auto_awesome,
+                          iconColor: DesignTokens.secondaryPurple,
+                          title: 'AI 规划模式',
+                          subtitle: _aiConfigured
+                              ? 'Live · $_aiProviderLabel · $_aiModel'
+                              : 'Mock fallback · 未配置 API',
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            size: 14,
+                            color: isDark
+                                ? DesignTokens.textTertiaryDark
+                                : DesignTokens.textTertiaryLight,
+                          ),
+                          onTap: _showAiConfigSheet,
+                          isDark: isDark,
+                        ),
+                        Divider(
+                          height: 1,
+                          color: isDark
+                              ? DesignTokens.borderDark
+                              : DesignTokens.borderLight,
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.key_outlined,
+                          iconColor: DesignTokens.secondaryOrange,
+                          title: 'API 密钥',
+                          subtitle: _maskedApiKey ?? '未设置',
+                          trailing: Text(
+                            _aiConfigured ? '已启用' : '未启用',
+                            style: DesignTokens.textStyle(
+                              fontSize: DesignTokens.fontSizeLabelSmall,
+                              fontWeight: DesignTokens.fontWeightBold,
+                              color: _aiConfigured
+                                  ? DesignTokens.secondaryEmerald
+                                  : (isDark
+                                      ? DesignTokens.textSecondaryDark
+                                      : DesignTokens.textSecondaryLight),
+                            ),
+                          ),
+                          onTap: _showAiConfigSheet,
+                          isDark: isDark,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: DesignTokens.spacing6),
+
+                  // 数据与安全
+                  Text(
+                    '数据与安全',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+
+                  const SizedBox(height: DesignTokens.spacing3),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? DesignTokens.surfaceDark : Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusXLarge),
+                      border: Border.all(
+                        color: isDark
+                            ? DesignTokens.borderDark
+                            : DesignTokens.borderLight,
+                        width: 0.5,
+                      ),
+                      boxShadow: DesignTokens.shadowIOS,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildSettingItem(
+                          icon: Icons.calendar_today,
+                          iconColor: DesignTokens.secondaryEmerald,
+                          title: '日历同步',
+                          subtitle: '同步任务到系统日历',
+                          trailing: Switch(
+                            value: _calendarSyncEnabled,
+                            onChanged: (value) async {
+                              setState(() {
+                                _calendarSyncEnabled = value;
+                              });
+                              await CalendarSyncService.setEnabled(value);
+                            },
+                            activeColor: DesignTokens.primaryColor,
+                          ),
+                          isDark: isDark,
+                        ),
+                        Divider(
+                          height: 1,
+                          color: isDark
+                              ? DesignTokens.borderDark
+                              : DesignTokens.borderLight,
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.shield,
+                          iconColor: isDark
+                              ? DesignTokens.textSecondaryDark
+                              : DesignTokens.textSecondaryLight,
+                          title: '隐私政策',
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            size: 14,
+                            color: isDark
+                                ? DesignTokens.textTertiaryDark
+                                : DesignTokens.textTertiaryLight,
+                          ),
+                          onTap: () {
+                            // 打开隐私政策
+                          },
+                          isDark: isDark,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: DesignTokens.spacing8),
+
+                  // 退出登录按钮
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // 退出登录
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: DesignTokens.spacing4,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusXLarge),
+                          side: BorderSide(
+                            color: Colors.red.withOpacity(0.3),
                             width: 1,
                           ),
                         ),
-                        child: Text(
-                          '编辑',
-                          style: DesignTokens.textStyle(
-                            fontSize: DesignTokens.fontSizeLabelSmall,
-                            fontWeight: DesignTokens.fontWeightBold,
-                            color: isDark
-                                ? DesignTokens.onSurfaceDark
-                                : DesignTokens.onSurfaceLight,
-                          ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        '退出登录',
+                        style: DesignTokens.textStyle(
+                          fontSize: DesignTokens.fontSizeBodySmall,
+                          fontWeight: DesignTokens.fontWeightBold,
+                          color: Colors.red,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: DesignTokens.spacing6),
-                
-                // 通用设置
-                Text(
-                  '通用',
-                  style: DesignTokens.textStyle(
-                    fontSize: DesignTokens.fontSizeLabelSmall,
-                    fontWeight: DesignTokens.fontWeightBold,
-                    color: isDark
-                        ? DesignTokens.textSecondaryDark
-                        : DesignTokens.textSecondaryLight,
-                  ),
-                  ),
-                
-                const SizedBox(height: DesignTokens.spacing3),
-                
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? DesignTokens.surfaceDark
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-                    border: Border.all(
-                      color: isDark
-                          ? DesignTokens.borderDark
-                          : DesignTokens.borderLight,
-                      width: 0.5,
-                    ),
-                    boxShadow: DesignTokens.shadowIOS,
-                  ),
-                  child: Column(
-                    children: [
-                      _buildSettingItem(
-                        icon: Icons.dark_mode,
-                        iconColor: DesignTokens.primaryColor,
-                        title: '深色模式',
-                        subtitle: '跟随系统',
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Obx(() {
-                              final mode = themeService.themeMode;
-                              String modeText = '跟随系统';
-                              if (mode == ThemeMode.light) {
-                                modeText = '浅色';
-                              } else if (mode == ThemeMode.dark) {
-                                modeText = '深色';
-                              }
-                              return Text(
-                                modeText,
-                                style: DesignTokens.textStyle(
-                                  fontSize: DesignTokens.fontSizeLabelSmall,
-                                  fontWeight: DesignTokens.fontWeightBold,
-                                  color: isDark
-                                      ? DesignTokens.textSecondaryDark
-                                      : DesignTokens.textSecondaryLight,
-                        ),
-                              );
-                            }),
-                      const SizedBox(width: DesignTokens.spacing2),
-                            Icon(
-                              Icons.chevron_right,
-                              size: 14,
-                              color: isDark
-                                  ? DesignTokens.textTertiaryDark
-                                  : DesignTokens.textTertiaryLight,
-                            ),
-                          ],
-                        ),
-                        onTap: () {
-                          _showThemeSelector(themeService, isDark);
-                        },
-                        isDark: isDark,
-                      ),
-                      Divider(
-                        height: 1,
-                        color: isDark
-                            ? DesignTokens.borderDark
-                            : DesignTokens.borderLight,
-                      ),
-                      _buildSettingItem(
-                        icon: Icons.language,
-                        iconColor: DesignTokens.primaryColor,
-                        title: '语言',
-                        subtitle: '简体中文',
-                        trailing: Icon(
-                          Icons.chevron_right,
-                          size: 14,
-                          color: isDark
-                              ? DesignTokens.textTertiaryDark
-                              : DesignTokens.textTertiaryLight,
-                        ),
-                        onTap: () {
-                          // 语言选择
-                        },
-                        isDark: isDark,
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: DesignTokens.spacing6),
-
-                Text(
-                  'AI',
-                  style: DesignTokens.textStyle(
-                    fontSize: DesignTokens.fontSizeLabelSmall,
-                    fontWeight: DesignTokens.fontWeightBold,
-                    color: isDark
-                        ? DesignTokens.textSecondaryDark
-                        : DesignTokens.textSecondaryLight,
-                  ),
-                ),
-
-                const SizedBox(height: DesignTokens.spacing3),
-
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? DesignTokens.surfaceDark
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-                    border: Border.all(
-                      color: isDark
-                          ? DesignTokens.borderDark
-                          : DesignTokens.borderLight,
-                      width: 0.5,
-                    ),
-                    boxShadow: DesignTokens.shadowIOS,
-                  ),
-                  child: Column(
-                    children: [
-                      _buildSettingItem(
-                        icon: Icons.auto_awesome,
-                        iconColor: DesignTokens.secondaryPurple,
-                        title: 'AI 规划模式',
-                        subtitle: _aiConfigured
-                            ? 'Live · $_aiProviderLabel · $_aiModel'
-                            : 'Mock fallback · 未配置 API',
-                        trailing: Icon(
-                          Icons.chevron_right,
-                          size: 14,
-                          color: isDark
-                              ? DesignTokens.textTertiaryDark
-                              : DesignTokens.textTertiaryLight,
-                        ),
-                        onTap: _showAiConfigSheet,
-                        isDark: isDark,
-                      ),
-                      Divider(
-                        height: 1,
-                        color: isDark
-                            ? DesignTokens.borderDark
-                            : DesignTokens.borderLight,
-                      ),
-                      _buildSettingItem(
-                        icon: Icons.key_outlined,
-                        iconColor: DesignTokens.secondaryOrange,
-                        title: 'API 密钥',
-                        subtitle: _maskedApiKey ?? '未设置',
-                        trailing: Text(
-                          _aiConfigured ? '已启用' : '未启用',
-                          style: DesignTokens.textStyle(
-                            fontSize: DesignTokens.fontSizeLabelSmall,
-                            fontWeight: DesignTokens.fontWeightBold,
-                            color: _aiConfigured
-                                ? DesignTokens.secondaryEmerald
-                                : (isDark
-                                    ? DesignTokens.textSecondaryDark
-                                    : DesignTokens.textSecondaryLight),
-                          ),
-                        ),
-                        onTap: _showAiConfigSheet,
-                        isDark: isDark,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: DesignTokens.spacing6),
-                
-                // 数据与安全
-                  Text(
-                  '数据与安全',
-                  style: DesignTokens.textStyle(
-                    fontSize: DesignTokens.fontSizeLabelSmall,
-                    fontWeight: DesignTokens.fontWeightBold,
-                    color: isDark
-                        ? DesignTokens.textSecondaryDark
-                        : DesignTokens.textSecondaryLight,
                     ),
                   ),
-                
-                const SizedBox(height: DesignTokens.spacing3),
-                
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? DesignTokens.surfaceDark
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-                    border: Border.all(
-                      color: isDark
-                          ? DesignTokens.borderDark
-                          : DesignTokens.borderLight,
-                      width: 0.5,
-                    ),
-                    boxShadow: DesignTokens.shadowIOS,
-                  ),
-                  child: Column(
-                    children: [
-                      _buildSettingItem(
-                        icon: Icons.calendar_today,
-                        iconColor: DesignTokens.secondaryEmerald,
-                        title: '日历同步',
-                        subtitle: '同步任务到系统日历',
-                        trailing: Switch(
-                          value: _calendarSyncEnabled,
-                          onChanged: (value) async {
-                            setState(() {
-                              _calendarSyncEnabled = value;
-                            });
-                            await CalendarSyncService.setEnabled(value);
-                          },
-                          activeColor: DesignTokens.primaryColor,
-                        ),
-                        isDark: isDark,
-                      ),
-                      Divider(
-                        height: 1,
-                        color: isDark
-                            ? DesignTokens.borderDark
-                            : DesignTokens.borderLight,
-                        ),
-                      _buildSettingItem(
-                        icon: Icons.shield,
-                        iconColor: isDark
-                            ? DesignTokens.textSecondaryDark
-                            : DesignTokens.textSecondaryLight,
-                        title: '隐私政策',
-                        trailing: Icon(
-                          Icons.chevron_right,
-                          size: 14,
-                          color: isDark
-                              ? DesignTokens.textTertiaryDark
-                              : DesignTokens.textTertiaryLight,
-                        ),
-                        onTap: () {
-                          // 打开隐私政策
-                        },
-                        isDark: isDark,
-                  ),
+
+                  SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],
               ),
             ),
-          
-                const SizedBox(height: DesignTokens.spacing8),
-          
-                // 退出登录按钮
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // 退出登录
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: DesignTokens.spacing4,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-                        side: BorderSide(
-                          color: Colors.red.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      '退出登录',
-                      style: DesignTokens.textStyle(
-                        fontSize: DesignTokens.fontSizeBodySmall,
-                        fontWeight: DesignTokens.fontWeightBold,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ),
-                ),
-                
-                SizedBox(height: MediaQuery.of(context).padding.bottom),
-              ],
-                  ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -525,7 +523,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-            padding: const EdgeInsets.all(DesignTokens.spacing4),
+        padding: const EdgeInsets.all(DesignTokens.spacing4),
         child: Row(
           children: [
             Container(
@@ -543,7 +541,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(width: DesignTokens.spacing3),
             Expanded(
-            child: Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -554,7 +552,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       color: isDark
                           ? DesignTokens.onSurfaceDark
                           : DesignTokens.onSurfaceLight,
-                  ),
+                    ),
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
@@ -584,9 +582,7 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: isDark
-              ? DesignTokens.surfaceDark
-              : Colors.white,
+          color: isDark ? DesignTokens.surfaceDark : Colors.white,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(DesignTokens.radiusXLarge),
             topRight: Radius.circular(DesignTokens.radiusXLarge),
@@ -628,11 +624,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       ThemeMode.system,
                       themeService,
                       isDark,
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-        ],
+            ],
           ),
         ),
       ),
@@ -725,7 +721,8 @@ class _SettingsPageState extends State<SettingsPage> {
           builder: (context, setSheetState) {
             void applyPreset(AiProviderKind kind) {
               selectedProvider = kind;
-              baseUrlController.text = AiConfigService.defaultBaseUrlForKind(kind);
+              baseUrlController.text =
+                  AiConfigService.defaultBaseUrlForKind(kind);
               modelController.text = AiConfigService.defaultModelForKind(kind);
               setSheetState(() {});
             }
@@ -767,7 +764,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 left: DesignTokens.spacing6,
                 right: DesignTokens.spacing6,
                 top: DesignTokens.spacing4,
-                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + DesignTokens.spacing6,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom +
+                    DesignTokens.spacing6,
               ),
               child: SafeArea(
                 child: SingleChildScrollView(
@@ -783,7 +781,8 @@ class _SettingsPageState extends State<SettingsPage> {
                             color: isDark
                                 ? DesignTokens.borderDark
                                 : DesignTokens.borderLight,
-                            borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                            borderRadius:
+                                BorderRadius.circular(DesignTokens.radiusRound),
                           ),
                         ),
                       ),
@@ -820,7 +819,8 @@ class _SettingsPageState extends State<SettingsPage> {
                             AiProviderKind.minimax,
                           ])
                             ChoiceChip(
-                              label: Text(AiConfigService.providerLabelForKind(kind)),
+                              label: Text(
+                                  AiConfigService.providerLabelForKind(kind)),
                               selected: selectedProvider == kind,
                               onSelected: (_) => applyPreset(kind),
                             ),
@@ -883,5 +883,4 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
   }
-
 }
