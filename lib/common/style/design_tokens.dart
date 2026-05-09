@@ -279,8 +279,6 @@ class DesignTokens {
       fontSize: fontSize ?? fontSizeBodyMedium,
       fontWeight: fontWeight ?? fontWeightRegular,
       color: color,
-      fontFamily: isChinese ? fontFamilyChinese : fontFamily,
     );
   }
 }
-

@@ -28,9 +28,9 @@ class PraxisButton extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     
     final height = _getHeight();
-    final style = _getTextStyle(context);
     final backgroundColor = _getBackgroundColor(context, isDark);
     final foregroundColor = _getForegroundColor(context, isDark);
+    final style = _getTextStyle(context).copyWith(color: foregroundColor);
     final padding = _getPadding();
 
     Widget button = ElevatedButton(
@@ -190,4 +190,3 @@ enum PraxisButtonSize {
   medium,
   large,
 }
-

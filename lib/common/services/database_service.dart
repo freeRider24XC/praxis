@@ -27,7 +27,7 @@ class DatabaseService {
   // Initialize Hive and register adapters
   static Future<void> init({String? hivePath}) async {
     if (_isInitialized) return;
-    
+
     if (hivePath != null && hivePath.isNotEmpty) {
       Hive.init(hivePath);
     } else {
@@ -40,10 +40,10 @@ class DatabaseService {
     // Open boxes
     await _openBoxes();
     await _seedDefaults();
-    
+
     _isInitialized = true;
   }
-  
+
   // Check if database is initialized
   static bool get isInitialized => _isInitialized;
 
@@ -177,15 +177,11 @@ class DatabaseService {
   }
 
   static List<Todo> getTodosByProject(String projectId) {
-    return todoBox.values
-        .where((todo) => todo.projectId == projectId)
-        .toList();
+    return todoBox.values.where((todo) => todo.projectId == projectId).toList();
   }
 
   static List<Todo> getTodosByGoal(String goalId) {
-    return todoBox.values
-        .where((todo) => todo.goalId == goalId)
-        .toList();
+    return todoBox.values.where((todo) => todo.goalId == goalId).toList();
   }
 
   static List<Todo> getOverdueTodos() {
@@ -217,6 +213,7 @@ class DatabaseService {
 
   // Goal operations
   static Future<void> addGoal(Goal goal) async {
+    goal.domainId ??= getUserProfile().focusedDomainId;
     await goalBox.add(goal);
   }
 
@@ -231,9 +228,7 @@ class DatabaseService {
   }
 
   static List<Goal> getGoalsByType(GoalType type) {
-    return goalBox.values
-        .where((goal) => goal.type == type)
-        .toList();
+    return goalBox.values.where((goal) => goal.type == type).toList();
   }
 
   static Goal? getGoalById(String id) {
@@ -258,15 +253,14 @@ class DatabaseService {
     if (goal == null) return;
 
     double newProgress = goal.progress;
-    final hasValueTarget = (goal.targetValue ?? 0) > 0 && goal.currentValue != null;
+    final hasValueTarget =
+        (goal.targetValue ?? 0) > 0 && goal.currentValue != null;
 
     if (hasValueTarget) {
       newProgress = (goal.currentValue! / goal.targetValue!).clamp(0.0, 1.0);
     } else if (goal.projectIds != null && goal.projectIds!.isNotEmpty) {
-      final linkedProjects = goal.projectIds!
-          .map(getProjectById)
-          .whereType<Project>()
-          .toList();
+      final linkedProjects =
+          goal.projectIds!.map(getProjectById).whereType<Project>().toList();
       if (linkedProjects.isNotEmpty) {
         final total = linkedProjects.fold<double>(
           0,
@@ -285,6 +279,10 @@ class DatabaseService {
 
   // Project operations
   static Future<void> addProject(Project project) async {
+    if ((project.goalIds?.isNotEmpty ?? false) && project.domainId == null) {
+      final primaryGoal = getGoalById(project.goalIds!.first);
+      project.domainId = primaryGoal?.domainId ?? project.domainId;
+    }
     await projectBox.add(project);
   }
 
@@ -319,11 +317,8 @@ class DatabaseService {
     final project = getProjectById(projectId);
     if (project == null) return;
 
-    final todos = project.todoIds
-            ?.map(getTodoById)
-            .whereType<Todo>()
-            .toList() ??
-        [];
+    final todos =
+        project.todoIds?.map(getTodoById).whereType<Todo>().toList() ?? [];
 
     double progress = 0;
     if (todos.isNotEmpty) {
@@ -389,9 +384,8 @@ class DatabaseService {
         final todo = getTodoById(id);
         if (todo != null && todo.projectId == projectId) {
           todo.projectId = null;
-          todo.domainId = todo.goalId != null
-              ? getGoalById(todo.goalId!)?.domainId
-              : null;
+          todo.domainId =
+              todo.goalId != null ? getGoalById(todo.goalId!)?.domainId : null;
           await todo.save();
           if (todo.goalId != null) {
             await recalculateGoalProgress(todo.goalId!);
@@ -410,8 +404,7 @@ class DatabaseService {
         if (oldProject != null) {
           final oldTodoIds = List<String>.from(oldProject.todoIds ?? []);
           if (oldTodoIds.remove(id)) {
-            oldProject.todoIds =
-                oldTodoIds.isEmpty ? null : oldTodoIds;
+            oldProject.todoIds = oldTodoIds.isEmpty ? null : oldTodoIds;
             await oldProject.save();
             affectedProjectIds.add(oldProject.id);
           }
@@ -440,7 +433,7 @@ class DatabaseService {
       return defaultValue;
     }
     try {
-    return settingsBox.get(key, defaultValue: defaultValue);
+      return settingsBox.get(key, defaultValue: defaultValue);
     } catch (e) {
       return defaultValue;
     }
@@ -488,7 +481,8 @@ class DatabaseService {
     return {
       'todos': todoBox.values.map((todo) => _todoToMap(todo)).toList(),
       'goals': goalBox.values.map((goal) => _goalToMap(goal)).toList(),
-      'projects': projectBox.values.map((project) => _projectToMap(project)).toList(),
+      'projects':
+          projectBox.values.map((project) => _projectToMap(project)).toList(),
       'lifeDomains': lifeDomainBox.values
           .map((domain) => {
                 'id': domain.id,
@@ -573,9 +567,14 @@ class DatabaseService {
       tags: map['tags'] != null ? List<String>.from(map['tags']) : null,
       projectId: map['projectId'],
       goalId: map['goalId'],
-      completedAt: map['completedAt'] != null ? DateTime.parse(map['completedAt']) : null,
-      reminderTime: map['reminderTime'] != null ? DateTime.parse(map['reminderTime']) : null,
-      subTasks: map['subTasks'] != null ? List<String>.from(map['subTasks']) : null,
+      completedAt: map['completedAt'] != null
+          ? DateTime.parse(map['completedAt'])
+          : null,
+      reminderTime: map['reminderTime'] != null
+          ? DateTime.parse(map['reminderTime'])
+          : null,
+      subTasks:
+          map['subTasks'] != null ? List<String>.from(map['subTasks']) : null,
       parentId: map['parentId'],
       updatedAt: DateTime.parse(map['updatedAt']),
       domainId: map['domainId'] as String?,
@@ -619,17 +618,25 @@ class DatabaseService {
       status: GoalStatus.values[map['status']],
       progress: map['progress'],
       category: map['category'],
-      milestones: map['milestones'] != null ? List<String>.from(map['milestones']) : null,
+      milestones: map['milestones'] != null
+          ? List<String>.from(map['milestones'])
+          : null,
       parentGoalId: map['parentGoalId'],
-      subGoalIds: map['subGoalIds'] != null ? List<String>.from(map['subGoalIds']) : null,
-      linkedTodoIds: map['linkedTodoIds'] != null ? List<String>.from(map['linkedTodoIds']) : null,
+      subGoalIds: map['subGoalIds'] != null
+          ? List<String>.from(map['subGoalIds'])
+          : null,
+      linkedTodoIds: map['linkedTodoIds'] != null
+          ? List<String>.from(map['linkedTodoIds'])
+          : null,
       createdAt: DateTime.parse(map['createdAt']),
       updatedAt: DateTime.parse(map['updatedAt']),
       notes: map['notes'],
       targetValue: map['targetValue'],
       currentValue: map['currentValue'],
       unit: map['unit'],
-      projectIds: map['projectIds'] != null ? List<String>.from(map['projectIds']) : null,
+      projectIds: map['projectIds'] != null
+          ? List<String>.from(map['projectIds'])
+          : null,
       domainId: map['domainId'] as String?,
     );
   }
@@ -666,14 +673,18 @@ class DatabaseService {
       endDate: map['endDate'] != null ? DateTime.parse(map['endDate']) : null,
       color: map['color'],
       icon: map['icon'],
-      todoIds: map['todoIds'] != null ? List<String>.from(map['todoIds']) : null,
-      goalIds: map['goalIds'] != null ? List<String>.from(map['goalIds']) : null,
+      todoIds:
+          map['todoIds'] != null ? List<String>.from(map['todoIds']) : null,
+      goalIds:
+          map['goalIds'] != null ? List<String>.from(map['goalIds']) : null,
       progress: map['progress'],
       tags: map['tags'] != null ? List<String>.from(map['tags']) : null,
       createdAt: DateTime.parse(map['createdAt']),
       updatedAt: DateTime.parse(map['updatedAt']),
       notes: map['notes'],
-      metadata: map['metadata'] != null ? Map<String, dynamic>.from(map['metadata']) : null,
+      metadata: map['metadata'] != null
+          ? Map<String, dynamic>.from(map['metadata'])
+          : null,
       domainId: map['domainId'] as String?,
     );
   }
@@ -690,10 +701,10 @@ class DatabaseService {
   static List<FocusSession> getFocusSessionsByDate(DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
-    
+
     return focusSessionBox.values.where((session) {
-      return session.startTime.isAfter(startOfDay) && 
-             session.startTime.isBefore(endOfDay);
+      return session.startTime.isAfter(startOfDay) &&
+          session.startTime.isBefore(endOfDay);
     }).toList();
   }
 
@@ -702,7 +713,7 @@ class DatabaseService {
     final totalSeconds = focusSessionBox.values
         .where((session) => session.completed)
         .fold<int>(0, (sum, session) => sum + session.duration);
-    
+
     return (totalSeconds / 3600).round(); // 转换为小时并四舍五入
   }
 
@@ -787,7 +798,9 @@ class DatabaseService {
   }
 
   static List<Project> getProjectsByDomain(String domainId) {
-    return projectBox.values.where((project) => project.domainId == domainId).toList();
+    return projectBox.values
+        .where((project) => project.domainId == domainId)
+        .toList();
   }
 
   static List<Todo> getTopTodosForToday({int limit = 3}) {
@@ -807,7 +820,8 @@ class DatabaseService {
   static int _todoSortScore(Todo todo, DateTime now) {
     if (todo.dueDate == null) return 99;
     final today = DateTime(now.year, now.month, now.day);
-    final due = DateTime(todo.dueDate!.year, todo.dueDate!.month, todo.dueDate!.day);
+    final due =
+        DateTime(todo.dueDate!.year, todo.dueDate!.month, todo.dueDate!.day);
     return due.difference(today).inDays;
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:praxis/common/models/index.dart';
@@ -83,6 +84,9 @@ class _OnboardingPageState extends State<OnboardingPage>
 
   @override
   Widget build(BuildContext context) {
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+    final isKeyboardVisible = keyboardInset > 0;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -101,83 +105,89 @@ class _OnboardingPageState extends State<OnboardingPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: DesignTokens.spacing6),
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.explore,
-                        size: 36,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.spacing8),
-                    Text(
-                      _titleForStep(),
-                      style: DesignTokens.textStyle(
-                        fontSize: 34,
-                        fontWeight: DesignTokens.fontWeightBold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.spacing4),
-                    Text(
-                      _subtitleForStep(),
-                      style: DesignTokens.textStyle(
-                        fontSize: DesignTokens.fontSizeBodyLarge,
-                        color: Colors.white.withOpacity(0.74),
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.spacing8),
                     Expanded(
-                      child: _buildStepContent(),
-                    ),
-                    const SizedBox(height: DesignTokens.spacing6),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _primaryActionEnabled() ? _onPrimaryAction : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: DesignTokens.backgroundDark,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: DesignTokens.spacing4,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
-                          ),
-                        ),
-                        child: Text(
-                          _step == 2 ? '进入 AI 拆解' : '继续',
-                          style: DesignTokens.textStyle(
-                            fontSize: DesignTokens.fontSizeBodyLarge,
-                            fontWeight: DesignTokens.fontWeightBold,
-                            color: DesignTokens.backgroundDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.spacing3),
-                    if (_step > 0)
-                      Center(
-                        child: TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _step -= 1;
-                            });
-                          },
-                          child: Text(
-                            '返回上一步',
-                            style: DesignTokens.textStyle(
-                              color: Colors.white.withOpacity(0.7),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    height:
+                                        _topSpacingForStep(isKeyboardVisible),
+                                  ),
+                                  if (_showHeaderIcon(isKeyboardVisible)) ...[
+                                    Container(
+                                      width: 72,
+                                      height: 72,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.08),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.explore,
+                                        size: 36,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      height: DesignTokens.spacing8,
+                                    ),
+                                  ],
+                                  Text(
+                                    _titleForStep(),
+                                    style: DesignTokens.textStyle(
+                                      fontSize: _titleFontSizeForStep(
+                                        isKeyboardVisible,
+                                      ),
+                                      fontWeight: DesignTokens.fontWeightBold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: DesignTokens.spacing4,
+                                  ),
+                                  Text(
+                                    _subtitleForStep(),
+                                    style: DesignTokens.textStyle(
+                                      fontSize: DesignTokens.fontSizeBodyLarge,
+                                      color: Colors.white.withOpacity(0.74),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: _contentSpacingForStep(
+                                      isKeyboardVisible,
+                                    ),
+                                  ),
+                                  _buildStepContent(),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
+                    ),
+                    SizedBox(
+                      height: isKeyboardVisible
+                          ? DesignTokens.spacing3
+                          : DesignTokens.spacing5,
+                    ),
+                    AnimatedPadding(
+                      duration: DesignTokens.durationFast,
+                      curve: Curves.easeOut,
+                      padding: EdgeInsets.only(
+                        bottom: isKeyboardVisible
+                            ? keyboardInset + DesignTokens.spacing2
+                            : DesignTokens.spacing2,
+                      ),
+                      child: _buildBottomActions(),
+                    ),
                   ],
                 ),
               ),
@@ -193,10 +203,10 @@ class _OnboardingPageState extends State<OnboardingPage>
       case 0:
         return '先选一个\n当前重点方向';
       case 1:
-        return '写下你想推进的\n一个目标';
+        return '先写下这一阶段\n最重要的目标';
       case 2:
       default:
-        return '给自己一个\n现实节奏';
+        return '再给这周一个\n现实节奏';
     }
   }
 
@@ -205,60 +215,171 @@ class _OnboardingPageState extends State<OnboardingPage>
       case 0:
         return '先只盯住一个领域，别把第一周做复杂。';
       case 1:
-        return '一句话就够，AI 会帮你把它拆成这一周的行动。';
+        return '先定结果，再把它拆成项目和事项。';
       case 2:
       default:
-        return '选择你这周大概能投入的时间，让计划更贴近现实。';
+        return '选择你这周大概能投入的时间，让拆解更贴近现实。';
     }
+  }
+
+  bool _showHeaderIcon(bool isKeyboardVisible) {
+    if (isKeyboardVisible) return false;
+    return _step != 1;
+  }
+
+  double _topSpacingForStep(bool isKeyboardVisible) {
+    if (isKeyboardVisible) return DesignTokens.spacing3;
+    return _step == 1 ? DesignTokens.spacing2 : DesignTokens.spacing6;
+  }
+
+  double _contentSpacingForStep(bool isKeyboardVisible) {
+    if (_step == 1) {
+      return isKeyboardVisible ? DesignTokens.spacing3 : DesignTokens.spacing4;
+    }
+    return isKeyboardVisible ? DesignTokens.spacing4 : DesignTokens.spacing6;
+  }
+
+  double _titleFontSizeForStep(bool isKeyboardVisible) {
+    if (_step == 1) {
+      return isKeyboardVisible ? 28 : 30;
+    }
+    return isKeyboardVisible ? 30 : 34;
   }
 
   Widget _buildStepContent() {
     switch (_step) {
       case 0:
         final domains = DomainService.getDomains();
-        return Wrap(
-          spacing: DesignTokens.spacing3,
-          runSpacing: DesignTokens.spacing3,
-          children: domains.map((LifeDomain domain) {
-            final selected = domain.id == _focusedDomainId;
-            return ChoiceChip(
-              label: Text('${domain.icon} ${domain.name}'),
-              selected: selected,
-              backgroundColor: Colors.white.withOpacity(0.08),
-              selectedColor: Colors.white,
-              labelStyle: TextStyle(
-                color: selected ? DesignTokens.backgroundDark : Colors.white,
-                fontWeight: FontWeight.w600,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth =
+                (constraints.maxWidth - DesignTokens.spacing3) / 2;
+            return SingleChildScrollView(
+              child: Wrap(
+                spacing: DesignTokens.spacing3,
+                runSpacing: DesignTokens.spacing3,
+                children: domains.map((LifeDomain domain) {
+                  final selected = domain.id == _focusedDomainId;
+                  return _DomainOptionCard(
+                    domain: domain,
+                    selected: selected,
+                    width: cardWidth,
+                    onTap: () {
+                      setState(() {
+                        _focusedDomainId = domain.id;
+                      });
+                    },
+                  );
+                }).toList(),
               ),
-              onSelected: (_) {
-                setState(() {
-                  _focusedDomainId = domain.id;
-                });
-              },
             );
-          }).toList(),
+          },
         );
       case 1:
-        return TextField(
-          controller: _goalController,
-          onChanged: (_) => setState(() {}),
-          style: const TextStyle(color: Colors.white),
-          maxLines: 4,
-          decoration: InputDecoration(
-            hintText: '例如：三个月内建立稳定健身习惯',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.45)),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+        final characterCount = _goalController.text.trim().characters.length;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(DesignTokens.spacing4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.12),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '这一阶段，你最想推进什么？',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeBodyLarge,
+                      fontWeight: DesignTokens.fontWeightSemiBold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
+                  TextField(
+                    controller: _goalController,
+                    onChanged: (_) => setState(() {}),
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(80),
+                    ],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      height: DesignTokens.lineHeightNormal,
+                    ),
+                    cursorColor: Colors.white,
+                    maxLines: 4,
+                    minLines: 3,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      hintText: '例如：把副业跑通到第一个稳定成交闭环',
+                      hintStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.45),
+                        height: DesignTokens.lineHeightNormal,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.03),
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          DesignTokens.radiusLarge,
+                        ),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          DesignTokens.radiusLarge,
+                        ),
+                        borderSide: BorderSide(
+                          color: Colors.white.withOpacity(0.08),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          DesignTokens.radiusLarge,
+                        ),
+                        borderSide: BorderSide(
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.all(
+                        DesignTokens.spacing4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '先写一句结果导向的话，后面再拆成目标下的项目和事项。',
+                          style: DesignTokens.textStyle(
+                            fontSize: DesignTokens.fontSizeBodySmall,
+                            color: Colors.white.withOpacity(0.52),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: DesignTokens.spacing3),
+                      Text(
+                        '$characterCount/80',
+                        style: DesignTokens.textStyle(
+                          fontSize: DesignTokens.fontSizeBodySmall,
+                          color: Colors.white.withOpacity(0.45),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.18)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
-              borderSide: const BorderSide(color: Colors.white),
-            ),
-          ),
+          ],
         );
       case 2:
       default:
@@ -293,6 +414,63 @@ class _OnboardingPageState extends State<OnboardingPage>
     }
   }
 
+  Widget _buildBottomActions() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _primaryActionEnabled() ? _onPrimaryAction : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: DesignTokens.backgroundDark,
+              disabledBackgroundColor: Colors.white.withOpacity(0.2),
+              disabledForegroundColor: Colors.white.withOpacity(0.72),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(
+                vertical: DesignTokens.spacing4,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                  DesignTokens.radiusXLarge,
+                ),
+              ),
+            ),
+            child: Text(
+              _step == 2 ? '进入 AI 拆解' : '继续',
+              style: DesignTokens.textStyle(
+                fontSize: DesignTokens.fontSizeBodyLarge,
+                fontWeight: DesignTokens.fontWeightBold,
+                color: _primaryActionEnabled()
+                    ? DesignTokens.backgroundDark
+                    : Colors.white.withOpacity(0.72),
+              ),
+            ),
+          ),
+        ),
+        if (_step > 0) ...[
+          const SizedBox(height: DesignTokens.spacing2),
+          Center(
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _step -= 1;
+                });
+              },
+              child: Text(
+                '返回上一步',
+                style: DesignTokens.textStyle(
+                  color: Colors.white.withOpacity(0.7),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   bool _primaryActionEnabled() {
     if (_step == 0) return _focusedDomainId != null;
     if (_step == 1) return _goalController.text.trim().isNotEmpty;
@@ -307,6 +485,133 @@ class _OnboardingPageState extends State<OnboardingPage>
     } else {
       _goToPlanning();
     }
+  }
+}
+
+class _DomainOptionCard extends StatelessWidget {
+  const _DomainOptionCard({
+    required this.domain,
+    required this.selected,
+    required this.width,
+    required this.onTap,
+  });
+
+  final LifeDomain domain;
+  final bool selected;
+  final double width;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _parseDomainColor(domain.color);
+    final foregroundColor = selected
+        ? DesignTokens.onBackgroundDark
+        : Colors.white.withOpacity(0.92);
+
+    return SizedBox(
+      width: width,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+          child: AnimatedContainer(
+            duration: DesignTokens.durationFast,
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.spacing4,
+              vertical: DesignTokens.spacing3,
+            ),
+            constraints: const BoxConstraints(
+              minHeight: 96,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+              color: selected
+                  ? accent.withOpacity(0.28)
+                  : Colors.white.withOpacity(0.06),
+              border: Border.all(
+                color: selected
+                    ? accent.withOpacity(0.9)
+                    : Colors.white.withOpacity(0.12),
+              ),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: accent.withOpacity(0.18),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
+                        spreadRadius: -10,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: selected
+                            ? Colors.white.withOpacity(0.16)
+                            : accent.withOpacity(0.18),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        domain.icon,
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    const Spacer(),
+                    AnimatedContainer(
+                      duration: DesignTokens.durationFast,
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: selected ? accent : Colors.transparent,
+                        border: Border.all(
+                          color: selected
+                              ? accent
+                              : Colors.white.withOpacity(0.28),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: selected
+                          ? const Icon(
+                              Icons.check,
+                              size: 12,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: DesignTokens.spacing3),
+                Text(
+                  domain.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DesignTokens.textStyle(
+                    fontSize: DesignTokens.fontSizeBodyLarge,
+                    fontWeight: DesignTokens.fontWeightBold,
+                    color: foregroundColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _parseDomainColor(String hex) {
+    final normalized = hex.replaceFirst('#', '');
+    return Color(int.parse('FF$normalized', radix: 16));
   }
 }
 

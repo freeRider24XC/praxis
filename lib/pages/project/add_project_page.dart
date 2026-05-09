@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/domain_service.dart';
@@ -12,10 +13,12 @@ import 'package:praxis/common/style/design_tokens.dart';
 
 class AddProjectPage extends StatefulWidget {
   final String? initialDomainId;
+  final String? initialGoalId;
 
   const AddProjectPage({
     super.key,
     this.initialDomainId,
+    this.initialGoalId,
   });
 
   @override
@@ -31,6 +34,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
   String _color = '#2196F3';
   bool _isLoading = false;
   String? _selectedDomainId;
+  String? _selectedGoalId;
+  List<Goal> _goals = [];
 
   final List<Color> _colorOptions = [
     DesignTokens.primaryColor,
@@ -46,7 +51,10 @@ class _AddProjectPageState extends State<AddProjectPage> {
   @override
   void initState() {
     super.initState();
-    _selectedDomainId = widget.initialDomainId;
+    _goals = DatabaseService.getAllGoals();
+    _selectedGoalId = widget.initialGoalId;
+    _selectedDomainId =
+        widget.initialDomainId ?? _goalDomainId(widget.initialGoalId);
   }
 
   @override
@@ -74,8 +82,122 @@ class _AddProjectPageState extends State<AddProjectPage> {
     return '#${color.toARGB32().toRadixString(16).substring(2, 8).toUpperCase()}';
   }
 
+  String? _goalDomainId(String? goalId) {
+    if (goalId == null) return null;
+    return DatabaseService.getGoalById(goalId)?.domainId;
+  }
+
+  Future<void> _selectGoal() async {
+    if (_goals.isEmpty) {
+      ErrorService.showWarning('请先创建目标');
+      return;
+    }
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? DesignTokens.surfaceDark : Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(DesignTokens.radiusXLarge),
+              topRight: Radius.circular(DesignTokens.radiusXLarge),
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: DesignTokens.spacing3),
+                  width: 48,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? DesignTokens.borderDark
+                        : DesignTokens.borderLight,
+                    borderRadius: BorderRadius.circular(
+                      DesignTokens.radiusRound,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(DesignTokens.spacing6),
+                  child: Column(
+                    children: [
+                      Text(
+                        '归属目标',
+                        style: DesignTokens.textStyle(
+                          fontSize: DesignTokens.fontSizeHeadlineSmall,
+                          fontWeight: DesignTokens.fontWeightBold,
+                          color: isDark
+                              ? DesignTokens.onSurfaceDark
+                              : DesignTokens.onSurfaceLight,
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spacing4),
+                      ..._goals.map((goal) {
+                        final isSelected = _selectedGoalId == goal.id;
+                        return ListTile(
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: DesignTokens.primaryColor
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(
+                                DesignTokens.radiusLarge,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.flag,
+                              color: DesignTokens.primaryColor,
+                              size: 20,
+                            ),
+                          ),
+                          title: Text(goal.title),
+                          subtitle: goal.description?.isNotEmpty == true
+                              ? Text(
+                                  goal.description!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : null,
+                          trailing: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: DesignTokens.primaryColor,
+                                )
+                              : null,
+                          onTap: () => Get.back(result: goal.id),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() {
+        _selectedGoalId = selected;
+        _selectedDomainId = _goalDomainId(selected) ?? _selectedDomainId;
+      });
+    }
+  }
+
   Future<void> _saveProject() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedGoalId == null) {
+      ErrorService.showWarning('项目必须归属一个目标');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -90,11 +212,13 @@ class _AddProjectPageState extends State<AddProjectPage> {
         status: _status,
         color: _color,
         endDate: _endDate,
+        goalIds: [_selectedGoalId!],
         domainId: _selectedDomainId,
       );
 
       await DatabaseService.addProject(project);
-      
+      await DatabaseService.setGoalProjectLinks(_selectedGoalId!, [project.id]);
+
       if (mounted) {
         Get.back(result: true);
         ErrorService.showSuccess('项目已创建');
@@ -116,6 +240,9 @@ class _AddProjectPageState extends State<AddProjectPage> {
   @override
   Widget build(BuildContext context) {
     final domains = DomainService.getDomains();
+    final selectedGoal = _selectedGoalId == null
+        ? null
+        : DatabaseService.getGoalById(_selectedGoalId!);
     return Scaffold(
       appBar: AppBar(
         title: const Text('新建项目'),
@@ -156,7 +283,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
                     decoration: InputDecoration(
                       labelText: '状态',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusLarge),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: DesignTokens.spacing4,
@@ -178,12 +306,47 @@ class _AddProjectPageState extends State<AddProjectPage> {
                     },
                   ),
                   const SizedBox(height: DesignTokens.spacing4),
+                  InkWell(
+                    onTap: _selectGoal,
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: '归属目标',
+                        border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusLarge),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: DesignTokens.spacing4,
+                          vertical: DesignTokens.spacing4,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedGoal?.title ?? '请选择一个目标',
+                              style: TextStyle(
+                                color: selectedGoal == null
+                                    ? Theme.of(context).hintColor
+                                    : null,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
                   DropdownButtonFormField<String?>(
                     value: _selectedDomainId,
                     decoration: InputDecoration(
                       labelText: '所属领域',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusLarge),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: DesignTokens.spacing4,
@@ -191,10 +354,6 @@ class _AddProjectPageState extends State<AddProjectPage> {
                       ),
                     ),
                     items: [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text('暂不指定'),
-                      ),
                       ...domains.map((domain) {
                         return DropdownMenuItem<String?>(
                           value: domain.id,
@@ -202,11 +361,13 @@ class _AddProjectPageState extends State<AddProjectPage> {
                         );
                       }),
                     ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedDomainId = value;
-                      });
-                    },
+                    onChanged: selectedGoal != null
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _selectedDomainId = value;
+                            });
+                          },
                   ),
                 ],
               ),
@@ -220,8 +381,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
                   Text(
                     '项目颜色',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: DesignTokens.fontWeightMedium,
-                    ),
+                          fontWeight: DesignTokens.fontWeightMedium,
+                        ),
                   ),
                   const SizedBox(height: DesignTokens.spacing3),
                   Row(
@@ -241,7 +402,9 @@ class _AddProjectPageState extends State<AddProjectPage> {
                             color: color,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isSelected ? Colors.black87 : Colors.grey.shade300,
+                              color: isSelected
+                                  ? Colors.black87
+                                  : Colors.grey.shade300,
                               width: isSelected ? 3 : 2,
                             ),
                             boxShadow: isSelected
@@ -255,7 +418,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                 : null,
                           ),
                           child: isSelected
-                              ? const Icon(Icons.check, color: Colors.white, size: 20)
+                              ? const Icon(Icons.check,
+                                  color: Colors.white, size: 20)
                               : null,
                         ),
                       );
@@ -273,7 +437,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
                   decoration: InputDecoration(
                     labelText: '结束日期（可选）',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusLarge),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: DesignTokens.spacing4,

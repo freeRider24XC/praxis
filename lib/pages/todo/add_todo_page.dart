@@ -15,10 +15,12 @@ import 'package:praxis/common/style/design_tokens.dart';
 
 class AddTodoPage extends StatefulWidget {
   final String? initialDomainId;
+  final String? initialProjectId;
 
   const AddTodoPage({
     super.key,
     this.initialDomainId,
+    this.initialProjectId,
   });
 
   @override
@@ -45,6 +47,15 @@ class _AddTodoPageState extends State<AddTodoPage> {
     super.initState();
     _selectedDomainId = widget.initialDomainId;
     _loadProjectsAndGoals();
+    _selectedProjectId = widget.initialProjectId;
+    if (_selectedProjectId != null) {
+      final project = DatabaseService.getProjectById(_selectedProjectId!);
+      if (project != null) {
+        _selectedGoalId =
+            project.goalIds?.isNotEmpty == true ? project.goalIds!.first : null;
+        _selectedDomainId = project.domainId ?? _selectedDomainId;
+      }
+    }
   }
 
   void _loadProjectsAndGoals() {
@@ -105,9 +116,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
           decoration: BoxDecoration(
-            color: isDark
-                ? DesignTokens.surfaceDark
-                : Colors.white,
+            color: isDark ? DesignTokens.surfaceDark : Colors.white,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(DesignTokens.radiusXLarge),
               topRight: Radius.circular(DesignTokens.radiusXLarge),
@@ -125,7 +134,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                     color: isDark
                         ? DesignTokens.borderDark
                         : DesignTokens.borderLight,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusRound),
                   ),
                 ),
                 Padding(
@@ -150,8 +160,10 @@ class _AddTodoPageState extends State<AddTodoPage> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: _parseColor(project.color).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                              color: _parseColor(project.color)
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusLarge),
                             ),
                             child: Icon(
                               Icons.folder,
@@ -192,6 +204,15 @@ class _AddTodoPageState extends State<AddTodoPage> {
     if (selected != null) {
       setState(() {
         _selectedProjectId = selected.isEmpty ? null : selected;
+        if (_selectedProjectId != null) {
+          final project = DatabaseService.getProjectById(_selectedProjectId!);
+          _selectedGoalId = project?.goalIds?.isNotEmpty == true
+              ? project!.goalIds!.first
+              : null;
+          _selectedDomainId = project?.domainId ?? _selectedDomainId;
+        } else {
+          _selectedGoalId = null;
+        }
       });
     }
   }
@@ -209,9 +230,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
           decoration: BoxDecoration(
-            color: isDark
-                ? DesignTokens.surfaceDark
-                : Colors.white,
+            color: isDark ? DesignTokens.surfaceDark : Colors.white,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(DesignTokens.radiusXLarge),
               topRight: Radius.circular(DesignTokens.radiusXLarge),
@@ -229,7 +248,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                     color: isDark
                         ? DesignTokens.borderDark
                         : DesignTokens.borderLight,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusRound),
                   ),
                 ),
                 Padding(
@@ -254,8 +274,10 @@ class _AddTodoPageState extends State<AddTodoPage> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: DesignTokens.primaryColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                              color: DesignTokens.primaryColor
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusLarge),
                             ),
                             child: Icon(
                               Icons.flag,
@@ -264,7 +286,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                             ),
                           ),
                           title: Text(goal.title),
-                          subtitle: Text('${(goal.progress * 100).toStringAsFixed(0)}% 完成'),
+                          subtitle: Text(
+                              '${(goal.progress * 100).toStringAsFixed(0)}% 完成'),
                           trailing: isSelected
                               ? Icon(
                                   Icons.check,
@@ -310,6 +333,10 @@ class _AddTodoPageState extends State<AddTodoPage> {
 
   Future<void> _saveTodo() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedProjectId == null) {
+      ErrorService.showWarning('事项必须挂在一个项目下');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -330,12 +357,20 @@ class _AddTodoPageState extends State<AddTodoPage> {
       );
 
       await DatabaseService.addTodo(todo);
-      
+      final project = DatabaseService.getProjectById(_selectedProjectId!);
+      if (project != null) {
+        final todoIds = List<String>.from(project.todoIds ?? []);
+        if (!todoIds.contains(todo.id)) {
+          todoIds.add(todo.id);
+        }
+        await DatabaseService.setProjectTodoLinks(project.id, todoIds);
+      }
+
       // 同步到日历（如果启用）
       if (todo.dueDate != null) {
         await CalendarSyncService.syncTodo(todo);
       }
-      
+
       if (mounted) {
         Get.back(result: true);
         ErrorService.showSuccess('待办事项已创建');
@@ -358,16 +393,19 @@ class _AddTodoPageState extends State<AddTodoPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final domains = DomainService.getDomains();
-    
+    final selectedProject = _selectedProjectId == null
+        ? null
+        : DatabaseService.getProjectById(_selectedProjectId!);
+    final selectedGoal = _selectedGoalId == null
+        ? null
+        : DatabaseService.getGoalById(_selectedGoalId!);
+
     return Scaffold(
-      backgroundColor: isDark
-          ? DesignTokens.backgroundDark
-          : DesignTokens.backgroundLight,
+      backgroundColor:
+          isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight,
       appBar: AppBar(
         title: const Text('添加待办事项'),
-        backgroundColor: isDark
-            ? DesignTokens.backgroundDark
-            : Colors.white,
+        backgroundColor: isDark ? DesignTokens.backgroundDark : Colors.white,
       ),
       body: Form(
         key: _formKey,
@@ -405,7 +443,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                     decoration: InputDecoration(
                       labelText: '优先级',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusLarge),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: DesignTokens.spacing4,
@@ -432,7 +471,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                     decoration: InputDecoration(
                       labelText: '所属领域',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusLarge),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: DesignTokens.spacing4,
@@ -440,10 +480,6 @@ class _AddTodoPageState extends State<AddTodoPage> {
                       ),
                     ),
                     items: [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text('暂不指定'),
-                      ),
                       ...domains.map((domain) {
                         return DropdownMenuItem<String?>(
                           value: domain.id,
@@ -451,11 +487,13 @@ class _AddTodoPageState extends State<AddTodoPage> {
                         );
                       }),
                     ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedDomainId = value;
-                      });
-                    },
+                    onChanged: selectedProject != null
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _selectedDomainId = value;
+                            });
+                          },
                   ),
                   const SizedBox(height: DesignTokens.spacing4),
                   InkWell(
@@ -464,7 +502,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                       decoration: InputDecoration(
                         labelText: '截止日期（可选）',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusLarge),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: DesignTokens.spacing4,
@@ -487,9 +526,9 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: DesignTokens.spacing6),
-            
+
             // 标签管理
             PraxisCard(
               padding: const EdgeInsets.all(DesignTokens.spacing5),
@@ -515,7 +554,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                           decoration: InputDecoration(
                             hintText: '输入标签并按回车',
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusLarge),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: DesignTokens.spacing4,
@@ -538,7 +578,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                       spacing: DesignTokens.spacing2,
                       runSpacing: DesignTokens.spacing2,
                       children: _tags.map((tag) {
-                        final isDark = Theme.of(context).brightness == Brightness.dark;
+                        final isDark =
+                            Theme.of(context).brightness == Brightness.dark;
                         return GestureDetector(
                           onTap: () => _removeTag(tag),
                           child: Container(
@@ -550,7 +591,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                               color: isDark
                                   ? DesignTokens.surfaceDarkSecondary
                                   : DesignTokens.surfaceLightSecondary,
-                              borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusRound),
                               border: Border.all(
                                 color: isDark
                                     ? DesignTokens.borderDark
@@ -589,9 +631,9 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: DesignTokens.spacing6),
-            
+
             // 关联项目
             PraxisCard(
               padding: const EdgeInsets.all(DesignTokens.spacing5),
@@ -599,7 +641,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '关联项目',
+                    '归属项目',
                     style: DesignTokens.textStyle(
                       fontSize: DesignTokens.fontSizeBodyMedium,
                       fontWeight: DesignTokens.fontWeightBold,
@@ -619,7 +661,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                               ? DesignTokens.borderDark
                               : DesignTokens.borderLight,
                         ),
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusLarge),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -629,7 +672,10 @@ class _AddTodoPageState extends State<AddTodoPage> {
                               Icon(
                                 Icons.folder,
                                 color: _selectedProjectId != null
-                                    ? _parseColor(_projects.firstWhere((p) => p.id == _selectedProjectId).color)
+                                    ? _parseColor(_projects
+                                        .firstWhere(
+                                            (p) => p.id == _selectedProjectId)
+                                        .color)
                                     : (isDark
                                         ? DesignTokens.textSecondaryDark
                                         : DesignTokens.textSecondaryLight),
@@ -637,8 +683,11 @@ class _AddTodoPageState extends State<AddTodoPage> {
                               const SizedBox(width: DesignTokens.spacing3),
                               Text(
                                 _selectedProjectId != null
-                                    ? _projects.firstWhere((p) => p.id == _selectedProjectId).name
-                                    : '选择项目（可选）',
+                                    ? _projects
+                                        .firstWhere(
+                                            (p) => p.id == _selectedProjectId)
+                                        .name
+                                    : '必须选择一个项目',
                                 style: DesignTokens.textStyle(
                                   fontSize: DesignTokens.fontSizeBodySmall,
                                   color: _selectedProjectId != null
@@ -665,9 +714,9 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: DesignTokens.spacing6),
-            
+
             // 关联目标
             PraxisCard(
               padding: const EdgeInsets.all(DesignTokens.spacing5),
@@ -686,7 +735,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                   ),
                   const SizedBox(height: DesignTokens.spacing3),
                   InkWell(
-                    onTap: _selectGoal,
+                    onTap: selectedProject == null ? _selectGoal : null,
                     child: Container(
                       padding: const EdgeInsets.all(DesignTokens.spacing4),
                       decoration: BoxDecoration(
@@ -695,7 +744,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
                               ? DesignTokens.borderDark
                               : DesignTokens.borderLight,
                         ),
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusLarge),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -712,12 +762,13 @@ class _AddTodoPageState extends State<AddTodoPage> {
                               ),
                               const SizedBox(width: DesignTokens.spacing3),
                               Text(
-                                _selectedGoalId != null
-                                    ? _goals.firstWhere((g) => g.id == _selectedGoalId).title
-                                    : '选择目标（可选）',
+                                selectedGoal?.title ??
+                                    (selectedProject == null
+                                        ? '选择目标（可选）'
+                                        : '将随项目自动关联'),
                                 style: DesignTokens.textStyle(
                                   fontSize: DesignTokens.fontSizeBodySmall,
-                                  color: _selectedGoalId != null
+                                  color: selectedGoal != null
                                       ? (isDark
                                           ? DesignTokens.onSurfaceDark
                                           : DesignTokens.onSurfaceLight)
@@ -728,12 +779,13 @@ class _AddTodoPageState extends State<AddTodoPage> {
                               ),
                             ],
                           ),
-                          Icon(
-                            Icons.chevron_right,
-                            color: isDark
-                                ? DesignTokens.textTertiaryDark
-                                : DesignTokens.textTertiaryLight,
-                          ),
+                          if (selectedProject == null)
+                            Icon(
+                              Icons.chevron_right,
+                              color: isDark
+                                  ? DesignTokens.textTertiaryDark
+                                  : DesignTokens.textTertiaryLight,
+                            ),
                         ],
                       ),
                     ),
@@ -741,9 +793,9 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: DesignTokens.spacing8),
-            
+
             PraxisButton(
               text: '保存待办事项',
               onPressed: _isLoading ? null : _saveTodo,

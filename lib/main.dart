@@ -33,19 +33,50 @@ void main() async {
     await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
     await CalendarSyncService.init();
 
-    // Set preferred orientations
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    // Lock orientation only on native mobile platforms.
+    if (!kIsWeb) {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+    }
 
-    runApp(const MyApp());
+    _launchPraxisApp(const MyApp());
   } catch (e, stackTrace) {
     // Log error and show error screen
     debugPrint('初始化失败: $e');
     debugPrint('堆栈跟踪: $stackTrace');
-    runApp(const ErrorApp());
+    _launchPraxisApp(const ErrorApp());
   }
+}
+
+void _launchPraxisApp(Widget app) {
+  if (!kIsWeb) {
+    debugPrint('Launching native app with runApp');
+    runApp(app);
+    return;
+  }
+
+  final dispatcher = WidgetsBinding.instance.platformDispatcher;
+  debugPrint(
+    'Launching web app: implicitView=${dispatcher.implicitView}, viewCount=${dispatcher.views.length}',
+  );
+  final flutterView = dispatcher.implicitView ??
+      (dispatcher.views.isNotEmpty ? dispatcher.views.first : null);
+
+  if (flutterView == null) {
+    debugPrint('No explicit FlutterView available, falling back to runApp');
+    runApp(app);
+    return;
+  }
+
+  debugPrint('Launching web app with explicit View: ${flutterView.viewId}');
+  runWidget(
+    View(
+      view: flutterView,
+      child: app,
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -83,6 +114,8 @@ class MyApp extends StatelessWidget {
             },
           ),
           getPages: [
+            GetPage(name: '/MainPage', page: () => const MainPage()),
+            GetPage(name: '/OnboardingPage', page: () => const OnboardingPage()),
             GetPage(name: '/todo/add', page: () => const AddTodoPage()),
             GetPage(name: '/goal/add', page: () => const AddGoalPage()),
             GetPage(name: '/project/add', page: () => const AddProjectPage()),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:praxis/common/services/logger_service.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 
@@ -41,15 +40,14 @@ class ThemeService extends GetxService {
       LoggerService.error('保存主题模式失败', 'ThemeService', e);
     }
   }
+
+  TextTheme _buildTextTheme(TextTheme baseTheme) {
+    return baseTheme;
+  }
   
   ThemeData get lightTheme => ThemeData(
         useMaterial3: true,
-        fontFamily: DesignTokens.fontFamilyDefault,
-        textTheme: GoogleFonts.interTextTheme().copyWith(
-          bodyLarge: GoogleFonts.notoSansSc(),
-          bodyMedium: GoogleFonts.notoSansSc(),
-          bodySmall: GoogleFonts.notoSansSc(),
-        ),
+        textTheme: _buildTextTheme(ThemeData.light().textTheme),
     colorScheme: ColorScheme.fromSeed(
           seedColor: DesignTokens.primaryColor,
       brightness: Brightness.light,
@@ -100,12 +98,7 @@ class ThemeService extends GetxService {
   
   ThemeData get darkTheme => ThemeData(
         useMaterial3: true,
-        fontFamily: DesignTokens.fontFamilyDefault,
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
-          bodyLarge: GoogleFonts.notoSansSc(),
-          bodyMedium: GoogleFonts.notoSansSc(),
-          bodySmall: GoogleFonts.notoSansSc(),
-        ),
+        textTheme: _buildTextTheme(ThemeData.dark().textTheme),
     colorScheme: ColorScheme.fromSeed(
           seedColor: DesignTokens.primaryColor,
       brightness: Brightness.dark,

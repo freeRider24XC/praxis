@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/common/widgets/glass_nav_bar.dart';
 import 'package:praxis/pages/dashboard/dashboard_page.dart';
-import 'package:praxis/pages/life_domains/domains_page.dart';
 import 'package:praxis/pages/goal/goal_page.dart';
+import 'package:praxis/pages/project/project_page.dart';
 import 'package:praxis/pages/profile/profile_page.dart';
 
 class MainPage extends StatefulWidget {
@@ -19,8 +19,8 @@ class _MainPageState extends State<MainPage> {
 
   final List<Widget> _pages = const [
     DashboardPage(),
-    DomainsPage(),
     GoalPage(),
+    ProjectPage(),
     ProfilePage(),
   ];
 
@@ -31,14 +31,14 @@ class _MainPageState extends State<MainPage> {
       label: '首页',
     ),
     NavBarItem(
-      icon: Icons.grid_view_outlined,
-      selectedIcon: Icons.grid_view,
-      label: '领域',
-    ),
-    NavBarItem(
       icon: Icons.flag_outlined,
       selectedIcon: Icons.flag,
       label: '目标',
+    ),
+    NavBarItem(
+      icon: Icons.folder_outlined,
+      selectedIcon: Icons.folder,
+      label: '项目',
     ),
     NavBarItem(
       icon: Icons.person_outline,
