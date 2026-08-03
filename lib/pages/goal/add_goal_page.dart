@@ -179,10 +179,19 @@ class _AddGoalPageState extends State<AddGoalPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    '先定义你这一阶段真正想达成什么。项目和事项会在后续继续把它拆小。',
+                    style: DesignTokens.textStyle(
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
                   PraxisTextField(
                     controller: _titleController,
                     label: '目标标题',
-                    hint: '请输入目标标题',
+                    hint: '写下这一阶段最想拉起来的结果',
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return '请输入目标标题';
@@ -195,7 +204,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
                   PraxisTextField(
                     controller: _descriptionController,
                     label: '描述（可选）',
-                    hint: '请输入目标描述',
+                    hint: '补充你为什么要达成它，或者完成后的状态',
                     maxLines: 3,
                     textCapitalization: TextCapitalization.sentences,
                   ),
@@ -297,7 +306,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '关键结果 (Key Results)',
+                    '完成信号',
                     style: DesignTokens.textStyle(
                       fontSize: DesignTokens.fontSizeBodyMedium,
                       fontWeight: DesignTokens.fontWeightBold,
@@ -307,10 +316,20 @@ class _AddGoalPageState extends State<AddGoalPage> {
                     ),
                   ),
                   const SizedBox(height: DesignTokens.spacing3),
+                  Text(
+                    '如果这个目标更适合用数字或结果判断，可以先写几条完成信号。',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
                   PraxisTextField(
                     controller: _krTitleController,
-                    label: '关键结果标题',
-                    hint: '例如：完成10个功能模块',
+                    label: '完成信号标题',
+                    hint: '例如：连续 12 周每周运动 3 次',
                   ),
                   const SizedBox(height: DesignTokens.spacing3),
                   Row(
@@ -335,7 +354,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
                   ),
                   const SizedBox(height: DesignTokens.spacing3),
                   PraxisButton(
-                    text: '添加关键结果',
+                    text: '添加完成信号',
                     onPressed: _addKeyResult,
                     type: PraxisButtonType.outline,
                     size: PraxisButtonSize.medium,
@@ -398,7 +417,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ],
               ),
@@ -413,7 +432,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '里程碑',
+                    '阶段里程碑',
                     style: DesignTokens.textStyle(
                       fontSize: DesignTokens.fontSizeBodyMedium,
                       fontWeight: DesignTokens.fontWeightBold,
@@ -423,13 +442,23 @@ class _AddGoalPageState extends State<AddGoalPage> {
                     ),
                   ),
                   const SizedBox(height: DesignTokens.spacing3),
+                  Text(
+                    '这些里程碑会帮助后续把目标压成更具体的推进项目。',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
                   Row(
                     children: [
                       Expanded(
                         child: TextField(
                           controller: _milestoneController,
                           decoration: InputDecoration(
-                            hintText: '输入里程碑并按回车',
+                            hintText: '输入一个阶段节点并按回车',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
                             ),
@@ -508,7 +537,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
             const SizedBox(height: DesignTokens.spacing8),
             
             PraxisButton(
-              text: '保存目标',
+              text: '确认这个目标',
               onPressed: _isLoading ? null : _saveGoal,
               type: PraxisButtonType.primary,
               size: PraxisButtonSize.large,

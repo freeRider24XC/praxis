@@ -1,5 +1,15 @@
 # praxis
 
+> Historical note: 当前产品基线已切换到 `docs/PRODUCT_BLUEPRINT_V1.md` 和 `docs/LAUNCH_SPEC_V1.md`。本 README 中的旧版通用管理应用描述只保留作历史记录，不再作为当前实现依据。
+
+## 当前推荐入口
+
+- 产品愿景基线：[docs/PRODUCT_BLUEPRINT_V1.md](/Users/tankangping/Documents/project/praxis/docs/PRODUCT_BLUEPRINT_V1.md)
+- 首发版本范围：[docs/LAUNCH_SPEC_V1.md](/Users/tankangping/Documents/project/praxis/docs/LAUNCH_SPEC_V1.md)
+- 后端接入：[docs/BACKEND_SETUP.md](/Users/tankangping/Documents/project/praxis/docs/BACKEND_SETUP.md)
+- AI 托管接口：[docs/AI_API_CONTRACT.md](/Users/tankangping/Documents/project/praxis/docs/AI_API_CONTRACT.md)
+- 部署资产：[deploy/README.md](/Users/tankangping/Documents/project/praxis/deploy/README.md)
+
 A new Flutter project.
 
 ## Getting Started

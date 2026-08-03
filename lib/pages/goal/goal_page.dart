@@ -7,7 +7,6 @@ import 'package:praxis/common/widgets/empty_state.dart';
 import 'package:praxis/common/widgets/praxis_card.dart';
 import 'package:praxis/pages/goal/add_goal_page.dart';
 import 'package:praxis/pages/goal/goal_detail_page.dart';
-import 'package:praxis/pages/life_domains/domain_detail_page.dart';
 
 class GoalPage extends StatefulWidget {
   const GoalPage({super.key});
@@ -18,7 +17,7 @@ class GoalPage extends StatefulWidget {
 
 class _GoalPageState extends State<GoalPage> {
   LifeDomain? _focusedDomain;
-  List<Goal> _focusedDomainGoals = const [];
+  Goal? _primaryGoal;
   List<Goal> _activeGoals = const [];
   List<Goal> _completedGoals = const [];
 
@@ -47,15 +46,20 @@ class _GoalPageState extends State<GoalPage> {
         .toList()
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
-    final focusedDomainGoals = focusedDomain == null
-        ? <Goal>[]
-        : DatabaseService.getGoalsByDomain(focusedDomain.id).toList()
-          ..sort((a, b) => a.targetDate.compareTo(b.targetDate));
+    Goal? primaryGoal;
+    final inProgressGoals = activeGoals
+        .where((goal) => goal.status == GoalStatus.inProgress)
+        .toList();
+    if (inProgressGoals.isNotEmpty) {
+      primaryGoal = inProgressGoals.first;
+    } else if (activeGoals.isNotEmpty) {
+      primaryGoal = activeGoals.first;
+    }
 
     if (!mounted) return;
     setState(() {
       _focusedDomain = focusedDomain;
-      _focusedDomainGoals = focusedDomainGoals;
+      _primaryGoal = primaryGoal;
       _activeGoals = activeGoals;
       _completedGoals = completedGoals;
     });
@@ -103,8 +107,8 @@ class _GoalPageState extends State<GoalPage> {
 
   Widget _buildHeader(bool isDark) {
     final focusedLabel = _focusedDomain == null
-        ? '还没有设置当前重点领域'
-        : '围绕 ${_focusedDomain!.icon} ${_focusedDomain!.name} 推进';
+        ? '围绕你当前最重要的阶段结果推进'
+        : '当前观察视角：${_focusedDomain!.icon} ${_focusedDomain!.name}';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -146,12 +150,7 @@ class _GoalPageState extends State<GoalPage> {
 
   Widget _buildFocusedGoalSection(bool isDark) {
     final focusedDomain = _focusedDomain;
-    final highlightedGoal = _focusedDomainGoals.isEmpty
-        ? null
-        : _focusedDomainGoals.firstWhere(
-            (goal) => goal.status == GoalStatus.inProgress,
-            orElse: () => _focusedDomainGoals.first,
-          );
+    final highlightedGoal = _primaryGoal;
 
     return Container(
       padding: const EdgeInsets.all(DesignTokens.spacing5),
@@ -163,26 +162,18 @@ class _GoalPageState extends State<GoalPage> {
       child: highlightedGoal == null
           ? EmptyState(
               icon: Icons.flag_outlined,
-              title: focusedDomain == null ? '还没有重点领域' : '重点领域还没有目标',
-              description: focusedDomain == null
-                  ? '先去选择一个当前重点方向，再围绕它建立目标。'
-                  : '先为这个领域创建一个正在推进的目标。',
-              actionLabel: focusedDomain == null ? '查看领域' : '创建目标',
+              title: '还没有当前主目标',
+              description: '先定义一个这阶段最想推进的结果，再围绕它拆项目和事项。',
+              actionLabel: '创建目标',
               onAction: () async {
-                if (focusedDomain == null) {
-                  return;
-                }
-                await Get.to(
-                  () => DomainDetailPage(domainId: focusedDomain.id),
-                );
-                _load();
+                await _createGoal();
               },
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '当前最该盯住的目标',
+                  '当前主目标',
                   style: DesignTokens.textStyle(
                     fontSize: DesignTokens.fontSizeTitleLarge,
                     fontWeight: DesignTokens.fontWeightBold,
@@ -194,8 +185,8 @@ class _GoalPageState extends State<GoalPage> {
                 const SizedBox(height: DesignTokens.spacing2),
                 Text(
                   focusedDomain == null
-                      ? '把最重要的一个方向推进到底。'
-                      : '来自 ${focusedDomain.icon} ${focusedDomain.name}',
+                      ? '把这一阶段最重要的结果推进到底。'
+                      : '主领域视角：${focusedDomain.icon} ${focusedDomain.name}',
                   style: DesignTokens.textStyle(
                     color: isDark
                         ? DesignTokens.textSecondaryDark

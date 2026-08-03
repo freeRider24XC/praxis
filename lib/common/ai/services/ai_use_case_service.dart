@@ -5,6 +5,7 @@ import 'package:praxis/common/ai/services/ai_config_service.dart';
 import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/domain_service.dart';
+import 'package:praxis/common/services/managed_ai_service.dart';
 
 class AiGoalPlanDraft {
   final String domainId;
@@ -50,9 +51,11 @@ class AiSuggestionResult {
 
 class AiUseCaseService {
   AiUseCaseService({OpenAIProvider? provider})
-      : _provider = provider ?? OpenAIProvider();
+      : _provider = provider ?? OpenAIProvider(),
+        _managedAiService = const ManagedAiService();
 
   final OpenAIProvider _provider;
+  final ManagedAiService _managedAiService;
 
   Future<AiGoalPlanDraft> planGoal({
     required String goalText,
@@ -64,6 +67,18 @@ class AiUseCaseService {
       focusedDomainId: focusedDomainId,
       weeklyCapacityHours: weeklyCapacityHours,
     );
+
+    if (_managedAiService.isConfigured) {
+      try {
+        return await _managedAiService.planGoal(
+          goalText: goalText,
+          focusedDomainId: focusedDomainId,
+          weeklyCapacityHours: weeklyCapacityHours,
+        );
+      } catch (_) {
+        // Fall through to local provider and mock fallback.
+      }
+    }
 
     if (!await _provider.isConfigured()) {
       return fallback;
@@ -131,6 +146,17 @@ class AiUseCaseService {
       todos: todos,
     );
 
+    if (_managedAiService.isConfigured) {
+      try {
+        return await _managedAiService.suggestToday(
+          focusedDomainName: focusedDomain?.name,
+          todos: todos,
+        );
+      } catch (_) {
+        // Fall through to local providers and mock fallback.
+      }
+    }
+
     if (!await _provider.isConfigured()) {
       return fallback;
     }
@@ -177,9 +203,12 @@ class AiUseCaseService {
   }
 
   Future<AiPlanAvailability> getAvailability() async {
-    final configured = await AiConfigService.isConfigured();
+    final configured =
+        _managedAiService.isConfigured || await AiConfigService.isConfigured();
     final provider =
-        configured ? await AiConfigService.getProviderLabel() : null;
+        _managedAiService.isConfigured
+            ? 'Praxis Managed AI'
+            : (configured ? await AiConfigService.getProviderLabel() : null);
     return AiPlanAvailability(
       isConfigured: configured,
       providerLabel: provider,
@@ -208,6 +237,14 @@ class AiUseCaseService {
     required DailyReview review,
   }) async {
     final fallback = _buildMockReview(review);
+
+    if (_managedAiService.isConfigured) {
+      try {
+        return await _managedAiService.reviewDay(review: review);
+      } catch (_) {
+        // Fall through.
+      }
+    }
 
     if (!await _provider.isConfigured()) {
       return fallback;

@@ -32,6 +32,15 @@ class UserProfile extends HiveObject {
   @HiveField(8)
   late DateTime updatedAt;
 
+  @HiveField(9)
+  String? remoteUserId;
+
+  @HiveField(10)
+  String? rewardPreferenceSummary;
+
+  @HiveField(11)
+  DateTime? lastSyncedAt;
+
   UserProfile({
     String? id,
     this.focusedDomainId,
@@ -42,6 +51,9 @@ class UserProfile extends HiveObject {
     this.lastActiveDate,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.remoteUserId,
+    this.rewardPreferenceSummary,
+    this.lastSyncedAt,
   })  : id = id ?? const Uuid().v4(),
         totalXp = totalXp ?? 0,
         level = level ?? 1,
@@ -60,6 +72,9 @@ class UserProfile extends HiveObject {
     DateTime? lastActiveDate,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? remoteUserId,
+    String? rewardPreferenceSummary,
+    DateTime? lastSyncedAt,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -71,6 +86,10 @@ class UserProfile extends HiveObject {
       lastActiveDate: lastActiveDate ?? this.lastActiveDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
+      remoteUserId: remoteUserId ?? this.remoteUserId,
+      rewardPreferenceSummary:
+          rewardPreferenceSummary ?? this.rewardPreferenceSummary,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
     );
   }
 }

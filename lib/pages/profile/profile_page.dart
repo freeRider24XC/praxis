@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
+import 'package:praxis/pages/auth/sign_in_page.dart';
+import 'package:praxis/pages/rewards/reward_center_page.dart';
+import 'package:praxis/pages/rewards/reward_todos_page.dart';
+import 'package:praxis/pages/schedule/schedule_page.dart';
 import 'package:praxis/pages/settings/settings_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -12,6 +16,20 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  Future<void> _openSignIn() async {
+    await Get.to(() => const SignInPage());
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _signOut() async {
+    await AuthService.signOut();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -23,6 +41,13 @@ class _ProfilePageState extends State<ProfilePage> {
     final levelXp = XpService.xpIntoCurrentLevel(profile.totalXp);
     final levelMax = XpService.xpNeededWithinCurrentLevel(profile.totalXp);
     final progress = levelMax == 0 ? 0.0 : (levelXp / levelMax).clamp(0.0, 1.0);
+    final praisePoints = RewardService.getPraisePointsBalance();
+    final pendingRewardTodos = DatabaseService.getPendingRewardTodos().length;
+    final authEnabled = AuthService.isEnabled;
+    final currentUser = AuthService.currentUser;
+    final cloudLabel = !authEnabled
+        ? '本地模式'
+        : (currentUser == null ? '云端已配置，未登录' : '已登录云端账号');
 
     return Scaffold(
       backgroundColor:
@@ -83,7 +108,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Praxis 用户',
+                              currentUser?.email ?? 'Praxis 用户',
                               style: DesignTokens.textStyle(
                                 fontSize: DesignTokens.fontSizeTitleLarge,
                                 fontWeight: DesignTokens.fontWeightBold,
@@ -94,13 +119,26 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             const SizedBox(height: DesignTokens.spacing1),
                             Text(
-                              'Lv.${profile.level} · 连续 ${profile.streakDays} 天',
+                              authEnabled
+                                  ? cloudLabel
+                                  : 'Lv.${profile.level} · 连续 ${profile.streakDays} 天',
                               style: DesignTokens.textStyle(
                                 color: isDark
                                     ? DesignTokens.textSecondaryDark
                                     : DesignTokens.textSecondaryLight,
                               ),
                             ),
+                            if (authEnabled) ...[
+                              const SizedBox(height: DesignTokens.spacing1),
+                              Text(
+                                'Lv.${profile.level} · 连续 ${profile.streakDays} 天',
+                                style: DesignTokens.textStyle(
+                                  color: isDark
+                                      ? DesignTokens.textSecondaryDark
+                                      : DesignTokens.textSecondaryLight,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: DesignTokens.spacing2),
                             Text(
                               '当前重点：${focusedDomain?.icon ?? '🎯'} ${focusedDomain?.name ?? '未设置'}',
@@ -129,6 +167,26 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontWeight: DesignTokens.fontWeightBold,
                       color: DesignTokens.primaryColor,
                     ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '环境：${AppRuntimeService.deploymentStage} · ${SupabaseService.isEnabled ? 'Supabase 已配置' : '本地模式'}',
+                          style: DesignTokens.textStyle(
+                            color: isDark
+                                ? DesignTokens.textSecondaryDark
+                                : DesignTokens.textSecondaryLight,
+                          ),
+                        ),
+                      ),
+                      if (authEnabled)
+                        TextButton(
+                          onPressed: currentUser == null ? _openSignIn : _signOut,
+                          child: Text(currentUser == null ? '登录' : '退出'),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -166,7 +224,45 @@ class _ProfilePageState extends State<ProfilePage> {
                   label: '每周可投入',
                   value: '${profile.weeklyCapacityHours} h',
                 ),
+                _buildStatCard(
+                  isDark: isDark,
+                  icon: Icons.card_giftcard,
+                  label: '犒赏点',
+                  value: praisePoints.toString(),
+                ),
+                _buildStatCard(
+                  isDark: isDark,
+                  icon: Icons.redeem,
+                  label: '奖励待办',
+                  value: pendingRewardTodos.toString(),
+                ),
               ],
+            ),
+            const SizedBox(height: DesignTokens.spacing6),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Get.to(() => const RewardCenterPage()),
+                    child: const Text('奖励中心'),
+                  ),
+                ),
+                const SizedBox(width: DesignTokens.spacing3),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Get.to(() => const RewardTodosPage()),
+                    child: const Text('奖励待办'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.spacing3),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Get.to(() => const SchedulePage()),
+                child: const Text('查看本周编排'),
+              ),
             ),
           ],
         ),

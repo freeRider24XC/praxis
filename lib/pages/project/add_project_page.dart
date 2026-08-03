@@ -217,7 +217,12 @@ class _AddProjectPageState extends State<AddProjectPage> {
       );
 
       await DatabaseService.addProject(project);
-      await DatabaseService.setGoalProjectLinks(_selectedGoalId!, [project.id]);
+      final goal = DatabaseService.getGoalById(_selectedGoalId!);
+      final projectIds = List<String>.from(goal?.projectIds ?? const []);
+      if (!projectIds.contains(project.id)) {
+        projectIds.add(project.id);
+      }
+      await DatabaseService.setGoalProjectLinks(_selectedGoalId!, projectIds);
 
       if (mounted) {
         Get.back(result: true);
@@ -257,10 +262,19 @@ class _AddProjectPageState extends State<AddProjectPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    '项目是承接目标执行的主容器，后续事项都会先挂到这里。',
+                    style: DesignTokens.textStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
                   PraxisTextField(
                     controller: _nameController,
                     label: '项目名称',
-                    hint: '请输入项目名称',
+                    hint: '写下这个目标当前要推进的项目',
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return '请输入项目名称';
@@ -273,7 +287,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
                   PraxisTextField(
                     controller: _descriptionController,
                     label: '描述（可选）',
-                    hint: '请输入项目描述',
+                    hint: '说明这个项目负责推进目标的哪一段',
                     maxLines: 3,
                     textCapitalization: TextCapitalization.sentences,
                   ),
@@ -310,7 +324,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
                     onTap: _selectGoal,
                     child: InputDecorator(
                       decoration: InputDecoration(
-                        labelText: '归属目标',
+                        labelText: '归属主目标',
                         border: OutlineInputBorder(
                           borderRadius:
                               BorderRadius.circular(DesignTokens.radiusLarge),
@@ -369,6 +383,18 @@ class _AddProjectPageState extends State<AddProjectPage> {
                             });
                           },
                   ),
+                  const SizedBox(height: DesignTokens.spacing3),
+                  Text(
+                    selectedGoal == null
+                        ? '先选目标，再让系统自动继承领域。'
+                        : '这个项目会先属于该目标，领域只作为归属视角。',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -410,7 +436,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: color.withOpacity(0.3),
+                                      color: color.withValues(alpha: 0.3),
                                       blurRadius: 8,
                                       spreadRadius: 2,
                                     ),
@@ -461,7 +487,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
             ),
             const SizedBox(height: DesignTokens.spacing8),
             PraxisButton(
-              text: '保存项目',
+              text: '创建推进项目',
               onPressed: _isLoading ? null : _saveProject,
               type: PraxisButtonType.primary,
               size: PraxisButtonSize.large,

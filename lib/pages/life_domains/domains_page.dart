@@ -47,7 +47,7 @@ class _DomainsPageState extends State<DomainsPage> {
           padding: const EdgeInsets.all(DesignTokens.spacing6),
           children: [
             Text(
-              '人生领域',
+              '领域视角',
               style: DesignTokens.textStyle(
                 fontSize: DesignTokens.fontSizeHeadlineSmall,
                 fontWeight: DesignTokens.fontWeightBold,
@@ -58,11 +58,34 @@ class _DomainsPageState extends State<DomainsPage> {
             ),
             const SizedBox(height: DesignTokens.spacing2),
             Text(
-              '先盯住一个当前重点方向，把这一周推进顺。',
+              '领域用来帮助你观察生活的不同面向，不替代目标、项目和事项这条主推进链。',
               style: DesignTokens.textStyle(
                 color: isDark
                     ? DesignTokens.textSecondaryDark
                     : DesignTokens.textSecondaryLight,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spacing3),
+            Container(
+              padding: const EdgeInsets.all(DesignTokens.spacing4),
+              decoration: BoxDecoration(
+                color: isDark ? DesignTokens.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+                border: Border.all(
+                  color: isDark
+                      ? DesignTokens.borderDark
+                      : DesignTokens.borderLight,
+                ),
+              ),
+              child: Text(
+                _focusedDomainId == null
+                    ? '你还没有设置当前重点领域。设定它后，首页和目标页会用这个视角辅助你判断主线。'
+                    : '当前重点领域只代表你现在更常从哪一个视角看问题，不会替代目标和项目本身。',
+                style: DesignTokens.textStyle(
+                  color: isDark
+                      ? DesignTokens.textSecondaryDark
+                      : DesignTokens.textSecondaryLight,
+                ),
               ),
             ),
             const SizedBox(height: DesignTokens.spacing5),
@@ -96,7 +119,7 @@ class _DomainsPageState extends State<DomainsPage> {
                   leading:
                       Text(domain.icon, style: const TextStyle(fontSize: 28)),
                   title: Text(domain.name),
-                  subtitle: Text('$goalCount 个目标 · $todoCount 个任务'),
+                  subtitle: Text('$goalCount 个目标 · $todoCount 个事项'),
                   trailing: isFocused
                       ? const Icon(Icons.check_circle,
                           color: DesignTokens.primaryColor)

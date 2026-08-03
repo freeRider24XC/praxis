@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/style/design_tokens.dart';
@@ -218,6 +219,11 @@ class _SchedulePageState extends State<SchedulePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentProject = DatabaseService.getAllProjects().firstWhereOrNull(
+      (project) =>
+          project.status == ProjectStatus.active ||
+          project.status == ProjectStatus.planning,
+    );
     return Scaffold(
       backgroundColor: isDark ? DesignTokens.backgroundDark : Colors.white,
       body: Column(
@@ -231,7 +237,7 @@ class _SchedulePageState extends State<SchedulePage> {
               color: isDark ? DesignTokens.backgroundDark : Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -273,6 +279,28 @@ class _SchedulePageState extends State<SchedulePage> {
                       ],
                     ),
                   ],
+                ),
+                const SizedBox(height: DesignTokens.spacing2),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(DesignTokens.spacing3),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? DesignTokens.surfaceDarkSecondary
+                        : DesignTokens.surfaceLightSecondary,
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusLarge),
+                  ),
+                  child: Text(
+                    currentProject == null
+                        ? '把本周要推进的项目先定出来，再把事项排进日程。'
+                        : '这里排的是“${currentProject.name}”及相关事项在真实生活里的落点。',
+                    style: DesignTokens.textStyle(
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: DesignTokens.spacing2),
                 _buildViewSwitcher(),
@@ -491,7 +519,7 @@ class _SchedulePageState extends State<SchedulePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          SizedBox(height: _allDaySectionHeight),
+          const SizedBox(height: _allDaySectionHeight),
           ...List.generate(_totalSlots + 1, (index) {
             final minutes = index * _slotMinutes;
             final shouldShow = minutes % 60 == 0 || minutes % 60 == 30;
@@ -525,11 +553,17 @@ class _SchedulePageState extends State<SchedulePage> {
         final isHalf = minutes % 60 == 30;
         Color lineColor;
         if (isHour) {
-          lineColor = isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.08);
+          lineColor = isDark
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.black.withValues(alpha: 0.08);
         } else if (isHalf) {
-          lineColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.04);
+          lineColor = isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.04);
         } else {
-          lineColor = isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.02);
+          lineColor = isDark
+              ? Colors.white.withValues(alpha: 0.04)
+              : Colors.black.withValues(alpha: 0.02);
         }
         return Container(
           height: _slotHeight,
@@ -589,7 +623,9 @@ class _SchedulePageState extends State<SchedulePage> {
             width: 32,
             height: 8,
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.4),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.6)
+                  : Colors.black.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -684,7 +720,7 @@ class _SchedulePageState extends State<SchedulePage> {
                 padding: const EdgeInsets.all(DesignTokens.spacing2),
                 decoration: BoxDecoration(
                   color: date == DateUtils.dateOnly(DateTime.now())
-                      ? DesignTokens.primaryColor.withOpacity(0.08)
+                      ? DesignTokens.primaryColor.withValues(alpha: 0.08)
                       : (isDark ? DesignTokens.surfaceDark : Colors.white),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
                   border: Border.all(

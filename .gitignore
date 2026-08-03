@@ -59,3 +59,5 @@ ios/*.p12
 
 # Local API configuration (sensitive data)
 local_config/
+deploy/staging/.env
+server/managed-ai/.env

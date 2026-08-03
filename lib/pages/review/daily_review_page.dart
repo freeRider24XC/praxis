@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/daily_review.dart';
+import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 
@@ -93,6 +94,14 @@ class _DailyReviewPageState extends State<DailyReviewPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final completedTodos =
+        DatabaseService.getAllTodos().where((todo) => todo.isDone).length;
+    final pendingRewardTodos = DatabaseService.getPendingRewardTodos().length;
+    final currentProject = DatabaseService.getAllProjects().firstWhereOrNull(
+      (project) =>
+          project.status == ProjectStatus.active ||
+          project.status == ProjectStatus.planning,
+    );
     return Scaffold(
       appBar: AppBar(title: const Text('每日复盘')),
       backgroundColor: isDark
@@ -101,25 +110,57 @@ class _DailyReviewPageState extends State<DailyReviewPage> {
       body: ListView(
         padding: const EdgeInsets.all(DesignTokens.spacing6),
         children: [
+          Container(
+            padding: const EdgeInsets.all(DesignTokens.spacing5),
+            decoration: BoxDecoration(
+              color: isDark ? DesignTokens.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '今天的推进事实',
+                  style: DesignTokens.textStyle(
+                    fontSize: DesignTokens.fontSizeBodyLarge,
+                    fontWeight: DesignTokens.fontWeightBold,
+                    color: isDark
+                        ? DesignTokens.onSurfaceDark
+                        : DesignTokens.onSurfaceLight,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.spacing3),
+                Text(
+                  currentProject == null
+                      ? '先确认今天到底推进了哪个项目。'
+                      : '重点回看项目：${currentProject.name}',
+                ),
+                Text('已完成事项：$completedTodos'),
+                Text('待兑现奖励：$pendingRewardTodos'),
+                const Text('本次提交可获得 +20 XP 与 +1 犒赏点'),
+              ],
+            ),
+          ),
+          const SizedBox(height: DesignTokens.spacing4),
           _buildInputCard(
             isDark: isDark,
-            title: '今天完成了什么？',
+            title: currentProject == null ? '今天完成了什么？' : '今天把这个项目推进到了哪里？',
             controller: _doneController,
-            hint: '写下今天最有推进感的事情',
+            hint: currentProject == null ? '写下今天最有推进感的事情' : '写下这个项目今天真正往前走的动作',
           ),
           const SizedBox(height: DesignTokens.spacing4),
           _buildInputCard(
             isDark: isDark,
             title: '今天卡住了什么？',
             controller: _blockersController,
-            hint: '记录一下真正拖住你的地方',
+            hint: currentProject == null ? '记录一下真正拖住你的地方' : '记录这个项目被什么卡住了',
           ),
           const SizedBox(height: DesignTokens.spacing4),
           _buildInputCard(
             isDark: isDark,
             title: '明天最重要的一件事是什么？',
             controller: _tomorrowController,
-            hint: '只写一件最值得先做的事',
+            hint: currentProject == null ? '只写一件最值得先做的事' : '只写一件能继续推进这个项目的动作',
           ),
           const SizedBox(height: DesignTokens.spacing6),
           ElevatedButton(

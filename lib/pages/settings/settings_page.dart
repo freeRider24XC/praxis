@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/services/calendar_sync_service.dart';
 import 'package:praxis/common/style/design_tokens.dart';
+import 'package:praxis/pages/settings/legal_document_page.dart';
 
 /// 设置页面（按设计稿重构）
 class SettingsPage extends StatefulWidget {
@@ -19,6 +20,42 @@ class _SettingsPageState extends State<SettingsPage> {
   String _aiModel = '';
   String? _maskedApiKey;
 
+  static const List<LegalSection> _privacySections = [
+    LegalSection(
+      heading: '1. 收集的信息',
+      body:
+          'Praxis 当前主要处理你主动输入的目标、任务、项目、复盘、奖励偏好等内容。如果启用云端模式，相关数据会同步到你所配置的 Supabase 项目；如果仅使用本地模式，这些数据只保存在当前设备。',
+    ),
+    LegalSection(
+      heading: '2. AI 使用说明',
+      body:
+          '当启用托管 AI 或第三方模型能力时，你输入的目标描述、复盘内容和今日建议上下文会发送给相应 AI 服务，用于生成结构化规划和反馈。请不要在这些内容中输入不必要的敏感信息。',
+    ),
+    LegalSection(
+      heading: '3. 数据控制',
+      body:
+          '你可以随时切回本地模式、清空本地数据或停用云端环境。在正式上线前，建议你明确服务器所在地、模型供应商和数据保存策略，并据此补充正式对外隐私声明。',
+    ),
+  ];
+
+  static const List<LegalSection> _termsSections = [
+    LegalSection(
+      heading: '1. 产品性质',
+      body:
+          'Praxis 是一个帮助用户把模糊目标转化为可执行动作的成长产品。它提供目标规划、任务编排、奖励兑现和复盘支持，但不保证任何具体结果。',
+    ),
+    LegalSection(
+      heading: '2. 使用责任',
+      body:
+          '用户应对自己输入的信息、执行决策和外部结果负责。Praxis 给出的 AI 建议只作为辅助，不应替代专业财务、医疗、法律或安全判断。',
+    ),
+    LegalSection(
+      heading: '3. 服务可用性',
+      body:
+          '在 staging 或早期公开版本中，功能、接口和数据结构可能调整。部署者需要自行维护服务器、模型密钥、域名和访问安全。',
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -26,10 +63,15 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadSettings() async {
-    final provider = await AiConfigService.getProviderLabel();
-    final model = await AiConfigService.getModel();
-    final configured = await AiConfigService.isConfigured();
-    final maskedKey = await AiConfigService.getMaskedApiKey();
+    final managedAi = AppRuntimeService.isManagedAiConfigured;
+    final provider =
+        managedAi ? 'Praxis Managed AI' : await AiConfigService.getProviderLabel();
+    final model =
+        managedAi ? 'server-side' : await AiConfigService.getModel();
+    final configured =
+        managedAi ? true : await AiConfigService.isConfigured();
+    final maskedKey =
+        managedAi ? '平台托管' : await AiConfigService.getMaskedApiKey();
 
     if (!mounted) return;
     setState(() {
@@ -39,6 +81,20 @@ class _SettingsPageState extends State<SettingsPage> {
       _aiModel = model;
       _maskedApiKey = maskedKey;
     });
+  }
+
+  void _openLegalPage(String title, List<LegalSection> sections) {
+    Get.to(() => LegalDocumentPage(title: title, sections: sections));
+  }
+
+  Future<void> _signOut() async {
+    if (!AuthService.isEnabled || !AuthService.isSignedIn) {
+      ErrorService.showInfo('当前没有云端登录会话');
+      return;
+    }
+    await AuthService.signOut();
+    await _loadSettings();
+    ErrorService.showSuccess('已退出登录');
   }
 
   @override
@@ -368,7 +424,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         _buildSettingItem(
                           icon: Icons.key_outlined,
                           iconColor: DesignTokens.secondaryOrange,
-                          title: 'API 密钥',
+                          title: AppRuntimeService.isManagedAiConfigured
+                              ? '托管 AI'
+                              : 'API 密钥',
                           subtitle: _maskedApiKey ?? '未设置',
                           trailing: Text(
                             _aiConfigured ? '已启用' : '未启用',
@@ -457,7 +515,31 @@ class _SettingsPageState extends State<SettingsPage> {
                                 : DesignTokens.textTertiaryLight,
                           ),
                           onTap: () {
-                            // 打开隐私政策
+                            _openLegalPage('隐私政策', _privacySections);
+                          },
+                          isDark: isDark,
+                        ),
+                        Divider(
+                          height: 1,
+                          color: isDark
+                              ? DesignTokens.borderDark
+                              : DesignTokens.borderLight,
+                        ),
+                        _buildSettingItem(
+                          icon: Icons.article_outlined,
+                          iconColor: isDark
+                              ? DesignTokens.textSecondaryDark
+                              : DesignTokens.textSecondaryLight,
+                          title: '用户协议',
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            size: 14,
+                            color: isDark
+                                ? DesignTokens.textTertiaryDark
+                                : DesignTokens.textTertiaryLight,
+                          ),
+                          onTap: () {
+                            _openLegalPage('用户协议', _termsSections);
                           },
                           isDark: isDark,
                         ),
@@ -471,9 +553,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // 退出登录
-                      },
+                      onPressed: _signOut,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         foregroundColor: Colors.red,
@@ -697,6 +777,11 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _showAiConfigSheet() async {
+    if (AppRuntimeService.isManagedAiConfigured) {
+      ErrorService.showInfo('当前环境已启用托管 AI，普通用户不需要再手动配置 API Key。');
+      return;
+    }
+
     final currentApiKey = await AiConfigService.getApiKey() ?? '';
     final currentBaseUrl = await AiConfigService.getApiBaseUrl();
     final currentModel = await AiConfigService.getModel();

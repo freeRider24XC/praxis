@@ -2,6 +2,10 @@
 
 part of 'xp_event.dart';
 
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
 class XpEventAdapter extends TypeAdapter<XpEvent> {
   @override
   final int typeId = 16;

@@ -1,6 +1,9 @@
 {
   "version": "1.0.0",
   "releaseDate": "2024-12-20",
+  "web": {
+    "url": "./app/"
+  },
   "android": {
     "apk": "",
     "aab": ""
@@ -9,4 +12,3 @@
     "ipa": ""
   }
 }
-

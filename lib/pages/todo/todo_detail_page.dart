@@ -5,8 +5,8 @@ import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/pages/project/project_detail_page.dart';
 import 'package:praxis/pages/goal/goal_detail_page.dart';
+import 'package:praxis/pages/project/project_detail_page.dart';
 
 class TodoDetailPage extends StatefulWidget {
   final String todoId;
@@ -48,7 +48,7 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('任务详情'),
+        title: const Text('事项详情'),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
@@ -81,6 +81,8 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeaderCard(todo, isDark),
+                  const SizedBox(height: DesignTokens.spacing6),
+                  _buildOwnershipCard(isDark),
                   const SizedBox(height: DesignTokens.spacing6),
                   _buildAssociationSection(isDark),
                   const SizedBox(height: DesignTokens.spacing6),
@@ -174,6 +176,45 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
     );
   }
 
+  Widget _buildOwnershipCard(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.spacing5),
+      decoration: BoxDecoration(
+        color: isDark ? DesignTokens.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+        boxShadow: DesignTokens.shadowIOS,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '这条事项怎么归属',
+            style: DesignTokens.textStyle(
+              fontSize: DesignTokens.fontSizeTitleLarge,
+              fontWeight: DesignTokens.fontWeightBold,
+              color: isDark
+                  ? DesignTokens.onSurfaceDark
+                  : DesignTokens.onSurfaceLight,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.spacing3),
+          Text(
+            _project == null
+                ? '这条事项还没有挂到项目上。按当前蓝图，事项应该先属于项目，再由项目把进展汇入目标。'
+                : _goal == null
+                    ? '它已经属于项目“${_project!.name}”，但这个项目还没有明确主目标。'
+                    : '它先属于项目“${_project!.name}”，再通过该项目汇入目标“${_goal!.title}”。',
+            style: DesignTokens.textStyle(
+              color: isDark
+                  ? DesignTokens.textSecondaryDark
+                  : DesignTokens.textSecondaryLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAssociationSection(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(DesignTokens.spacing5),
@@ -186,7 +227,7 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '关联信息',
+            '归属关系',
             style: DesignTokens.textStyle(
               fontSize: DesignTokens.fontSizeTitleLarge,
               fontWeight: DesignTokens.fontWeightBold,
@@ -198,7 +239,7 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
           const SizedBox(height: DesignTokens.spacing4),
           _buildAssociationTile(
             title: '所属项目',
-            value: _project?.name ?? '未关联',
+            value: _project?.name ?? '未归属',
             isDark: isDark,
             onTap: _project == null
                 ? null
@@ -211,8 +252,8 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
           ),
           const SizedBox(height: DesignTokens.spacing3),
           _buildAssociationTile(
-            title: '关联目标',
-            value: _goal?.title ?? '未关联',
+            title: '汇入目标',
+            value: _goal?.title ?? '暂未汇入',
             isDark: isDark,
             onTap: _goal == null
                 ? null
@@ -315,7 +356,7 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
       ),
       child: Text(

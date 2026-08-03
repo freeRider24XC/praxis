@@ -17,6 +17,10 @@ import 'package:praxis/pages/todo/add_todo_page.dart';
 import 'package:praxis/pages/goal/add_goal_page.dart';
 import 'package:praxis/pages/project/add_project_page.dart';
 import 'package:praxis/pages/ai_chat/ai_interaction_page.dart';
+import 'package:praxis/pages/auth/sign_in_page.dart';
+import 'package:praxis/pages/rewards/reward_center_page.dart';
+import 'package:praxis/pages/rewards/reward_todos_page.dart';
+import 'package:praxis/pages/schedule/schedule_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,9 +28,12 @@ void main() async {
   try {
     // 加载本地API配置
     await loadLocalApiConfig();
+    await SupabaseService.init();
 
     // Initialize database
     await DatabaseService.init();
+    await RewardService.ensureSeededTemplates();
+    await ScheduleService.ensureWeeklySchedule();
 
     // Initialize services
     await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
@@ -128,6 +135,13 @@ class MyApp extends StatelessWidget {
                 }),
             GetPage(name: '/focus', page: () => const FocusPage()),
             GetPage(name: '/notifications', page: () => const NotificationsPage()),
+            GetPage(name: '/sign-in', page: () => const SignInPage()),
+            GetPage(name: '/schedule', page: () => const SchedulePage()),
+            GetPage(name: '/rewards', page: () => const RewardCenterPage()),
+            GetPage(
+              name: '/reward-todos',
+              page: () => const RewardTodosPage(),
+            ),
           ],
         ));
   }

@@ -1,6 +1,7 @@
 import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/profile_service.dart';
+import 'package:praxis/common/services/reward_service.dart';
 
 class XpService {
   static const int todoCompletedXp = 10;
@@ -47,6 +48,7 @@ class XpService {
       description: '完成任务：${todo.title}',
       markActiveAt: todo.completedAt ?? DateTime.now(),
     );
+    await RewardService.awardForTodo(todo);
   }
 
   static Future<void> awardGoalCompleted(Goal goal) async {
@@ -58,6 +60,7 @@ class XpService {
       description: '完成目标：${goal.title}',
       markActiveAt: DateTime.now(),
     );
+    await RewardService.awardForGoal(goal);
   }
 
   static Future<void> awardDailyReview(DailyReview review) async {
@@ -69,6 +72,7 @@ class XpService {
       description: '完成每日复盘',
       markActiveAt: review.date,
     );
+    await RewardService.awardForDailyReview(review);
   }
 
   static Future<void> _awardXp({

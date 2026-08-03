@@ -8,5 +8,7 @@ export 'life_domain.dart';
 export 'user_profile.dart';
 export 'xp_event.dart';
 export 'daily_review.dart';
+export 'todo_schedule_slot.dart';
+export 'reward.dart';
 
 // export './xxxx.dart';

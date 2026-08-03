@@ -1,0 +1,19 @@
+[Unit]
+Description=Praxis Managed AI Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/praxis/server/managed-ai
+Environment=PORT=8787
+Environment=PRAXIS_AI_SHARED_TOKEN=replace-with-shared-token
+Environment=OPENAI_API_KEY=replace-with-real-key
+Environment=OPENAI_BASE_URL=https://api.openai.com/v1
+Environment=OPENAI_MODEL=gpt-4o-mini
+ExecStart=/usr/bin/node /opt/praxis/server/managed-ai/src/index.js
+Restart=always
+RestartSec=5
+User=www-data
+
+[Install]
+WantedBy=multi-user.target

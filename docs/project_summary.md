@@ -1,5 +1,7 @@
 # Praxis 项目开发总结
 
+> Historical note: 这份总结主要描述旧阶段的通用待办/目标管理项目状态，保留作历史记录。当前产品判断请以 `PRODUCT_BLUEPRINT_V1.md` 和 `LAUNCH_SPEC_V1.md` 为准。
+
 ## 📊 项目进度概览
 
 **项目名称：** Praxis - 个人时间管理与规划软件  

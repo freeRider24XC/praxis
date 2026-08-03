@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/models/project.dart';
-import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/domain_service.dart';
 import 'package:praxis/common/services/error_service.dart';
@@ -37,31 +36,26 @@ class _AddTodoPageState extends State<AddTodoPage> {
   bool _isLoading = false;
   final List<String> _tags = [];
   String? _selectedProjectId;
-  String? _selectedGoalId;
   String? _selectedDomainId;
   List<Project> _projects = [];
-  List<Goal> _goals = [];
 
   @override
   void initState() {
     super.initState();
     _selectedDomainId = widget.initialDomainId;
-    _loadProjectsAndGoals();
+    _loadProjects();
     _selectedProjectId = widget.initialProjectId;
     if (_selectedProjectId != null) {
       final project = DatabaseService.getProjectById(_selectedProjectId!);
       if (project != null) {
-        _selectedGoalId =
-            project.goalIds?.isNotEmpty == true ? project.goalIds!.first : null;
         _selectedDomainId = project.domainId ?? _selectedDomainId;
       }
     }
   }
 
-  void _loadProjectsAndGoals() {
+  void _loadProjects() {
     setState(() {
       _projects = DatabaseService.getAllProjects();
-      _goals = DatabaseService.getAllGoals();
     });
   }
 
@@ -173,7 +167,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                           ),
                           title: Text(project.name),
                           trailing: isSelected
-                              ? Icon(
+                              ? const Icon(
                                   Icons.check,
                                   color: DesignTokens.primaryColor,
                                 )
@@ -206,120 +200,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
         _selectedProjectId = selected.isEmpty ? null : selected;
         if (_selectedProjectId != null) {
           final project = DatabaseService.getProjectById(_selectedProjectId!);
-          _selectedGoalId = project?.goalIds?.isNotEmpty == true
-              ? project!.goalIds!.first
-              : null;
           _selectedDomainId = project?.domainId ?? _selectedDomainId;
-        } else {
-          _selectedGoalId = null;
         }
-      });
-    }
-  }
-
-  Future<void> _selectGoal() async {
-    if (_goals.isEmpty) {
-      ErrorService.showWarning('暂无可用目标');
-      return;
-    }
-
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? DesignTokens.surfaceDark : Colors.white,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(DesignTokens.radiusXLarge),
-              topRight: Radius.circular(DesignTokens.radiusXLarge),
-            ),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: DesignTokens.spacing3),
-                  width: 48,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? DesignTokens.borderDark
-                        : DesignTokens.borderLight,
-                    borderRadius:
-                        BorderRadius.circular(DesignTokens.radiusRound),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(DesignTokens.spacing6),
-                  child: Column(
-                    children: [
-                      Text(
-                        '选择目标',
-                        style: DesignTokens.textStyle(
-                          fontSize: DesignTokens.fontSizeHeadlineSmall,
-                          fontWeight: DesignTokens.fontWeightBold,
-                          color: isDark
-                              ? DesignTokens.onSurfaceDark
-                              : DesignTokens.onSurfaceLight,
-                        ),
-                      ),
-                      const SizedBox(height: DesignTokens.spacing4),
-                      ..._goals.map((goal) {
-                        final isSelected = _selectedGoalId == goal.id;
-                        return ListTile(
-                          leading: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: DesignTokens.primaryColor
-                                  .withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(
-                                  DesignTokens.radiusLarge),
-                            ),
-                            child: Icon(
-                              Icons.flag,
-                              color: DesignTokens.primaryColor,
-                              size: 20,
-                            ),
-                          ),
-                          title: Text(goal.title),
-                          subtitle: Text(
-                              '${(goal.progress * 100).toStringAsFixed(0)}% 完成'),
-                          trailing: isSelected
-                              ? Icon(
-                                  Icons.check,
-                                  color: DesignTokens.primaryColor,
-                                )
-                              : null,
-                          onTap: () {
-                            Get.back(result: goal.id);
-                          },
-                        );
-                      }),
-                      if (_selectedGoalId != null)
-                        ListTile(
-                          leading: const Icon(Icons.clear),
-                          title: const Text('清除选择'),
-                          onTap: () {
-                            Get.back(result: '');
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    if (selected != null) {
-      setState(() {
-        _selectedGoalId = selected.isEmpty ? null : selected;
       });
     }
   }
@@ -352,7 +234,6 @@ class _AddTodoPageState extends State<AddTodoPage> {
         dueDate: _dueDate,
         tags: _tags.isEmpty ? null : _tags,
         projectId: _selectedProjectId,
-        goalId: _selectedGoalId,
         domainId: _selectedDomainId,
       );
 
@@ -396,15 +277,15 @@ class _AddTodoPageState extends State<AddTodoPage> {
     final selectedProject = _selectedProjectId == null
         ? null
         : DatabaseService.getProjectById(_selectedProjectId!);
-    final selectedGoal = _selectedGoalId == null
+    final selectedGoal = selectedProject == null
         ? null
-        : DatabaseService.getGoalById(_selectedGoalId!);
+        : DatabaseService.getProjectPrimaryGoal(selectedProject);
 
     return Scaffold(
       backgroundColor:
           isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight,
       appBar: AppBar(
-        title: const Text('添加待办事项'),
+        title: const Text('添加事项'),
         backgroundColor: isDark ? DesignTokens.backgroundDark : Colors.white,
       ),
       body: Form(
@@ -417,10 +298,19 @@ class _AddTodoPageState extends State<AddTodoPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    '事项必须先挂在项目下，再由项目把推进结果汇入目标。',
+                    style: DesignTokens.textStyle(
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing4),
                   PraxisTextField(
                     controller: _titleController,
-                    label: '标题',
-                    hint: '请输入待办事项标题',
+                    label: '事项标题',
+                    hint: '写下这个项目的下一步动作',
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return '请输入标题';
@@ -433,7 +323,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                   PraxisTextField(
                     controller: _descriptionController,
                     label: '描述（可选）',
-                    hint: '请输入详细描述',
+                    hint: '补充这一步为什么重要，或者怎么做',
                     maxLines: 3,
                     textCapitalization: TextCapitalization.sentences,
                   ),
@@ -651,6 +541,16 @@ class _AddTodoPageState extends State<AddTodoPage> {
                     ),
                   ),
                   const SizedBox(height: DesignTokens.spacing3),
+                  Text(
+                    '每条事项都必须属于一个项目。',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.spacing3),
                   InkWell(
                     onTap: _selectProject,
                     child: Container(
@@ -687,7 +587,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                                         .firstWhere(
                                             (p) => p.id == _selectedProjectId)
                                         .name
-                                    : '必须选择一个项目',
+                                    : '必须先选择一个项目',
                                 style: DesignTokens.textStyle(
                                   fontSize: DesignTokens.fontSizeBodySmall,
                                   color: _selectedProjectId != null
@@ -724,7 +624,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '关联目标',
+                    '自动归属目标',
                     style: DesignTokens.textStyle(
                       fontSize: DesignTokens.fontSizeBodyMedium,
                       fontWeight: DesignTokens.fontWeightBold,
@@ -734,60 +634,56 @@ class _AddTodoPageState extends State<AddTodoPage> {
                     ),
                   ),
                   const SizedBox(height: DesignTokens.spacing3),
-                  InkWell(
-                    onTap: selectedProject == null ? _selectGoal : null,
-                    child: Container(
-                      padding: const EdgeInsets.all(DesignTokens.spacing4),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: isDark
-                              ? DesignTokens.borderDark
-                              : DesignTokens.borderLight,
-                        ),
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.radiusLarge),
+                  Container(
+                    padding: const EdgeInsets.all(DesignTokens.spacing4),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: isDark
+                            ? DesignTokens.borderDark
+                            : DesignTokens.borderLight,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.flag,
-                                color: _selectedGoalId != null
-                                    ? DesignTokens.primaryColor
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusLarge),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.flag,
+                              color: selectedGoal != null
+                                  ? DesignTokens.primaryColor
+                                  : (isDark
+                                      ? DesignTokens.textSecondaryDark
+                                      : DesignTokens.textSecondaryLight),
+                            ),
+                            const SizedBox(width: DesignTokens.spacing3),
+                            Text(
+                              selectedGoal?.title ??
+                                  (selectedProject == null
+                                      ? '先选项目，目标会自动继承'
+                                      : '这个项目暂时没有主目标'),
+                              style: DesignTokens.textStyle(
+                                fontSize: DesignTokens.fontSizeBodySmall,
+                                color: selectedGoal != null
+                                    ? (isDark
+                                        ? DesignTokens.onSurfaceDark
+                                        : DesignTokens.onSurfaceLight)
                                     : (isDark
                                         ? DesignTokens.textSecondaryDark
                                         : DesignTokens.textSecondaryLight),
                               ),
-                              const SizedBox(width: DesignTokens.spacing3),
-                              Text(
-                                selectedGoal?.title ??
-                                    (selectedProject == null
-                                        ? '选择目标（可选）'
-                                        : '将随项目自动关联'),
-                                style: DesignTokens.textStyle(
-                                  fontSize: DesignTokens.fontSizeBodySmall,
-                                  color: selectedGoal != null
-                                      ? (isDark
-                                          ? DesignTokens.onSurfaceDark
-                                          : DesignTokens.onSurfaceLight)
-                                      : (isDark
-                                          ? DesignTokens.textSecondaryDark
-                                          : DesignTokens.textSecondaryLight),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (selectedProject == null)
-                            Icon(
-                              Icons.chevron_right,
-                              color: isDark
-                                  ? DesignTokens.textTertiaryDark
-                                  : DesignTokens.textTertiaryLight,
                             ),
-                        ],
-                      ),
+                          ],
+                        ),
+                        Icon(
+                          Icons.lock_outline,
+                          color: isDark
+                              ? DesignTokens.textTertiaryDark
+                              : DesignTokens.textTertiaryLight,
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -797,7 +693,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
             const SizedBox(height: DesignTokens.spacing8),
 
             PraxisButton(
-              text: '保存待办事项',
+              text: '创建项目事项',
               onPressed: _isLoading ? null : _saveTodo,
               type: PraxisButtonType.primary,
               size: PraxisButtonSize.large,

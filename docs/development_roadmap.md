@@ -1,5 +1,7 @@
 # Praxis 开发路线图
 
+> Historical note: 这份路线图对应旧版通用功能扩展方向，已不再代表当前产品基线。当前请以 `PRODUCT_BLUEPRINT_V1.md` 和 `LAUNCH_SPEC_V1.md` 为准。
+
 ## 📋 当前状态
 项目处于初始阶段，已完成基础Flutter项目搭建，实现了简单的待办事项功能。
 

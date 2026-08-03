@@ -118,7 +118,12 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
   }
 
   Future<void> _createTodo() async {
-    await Get.to(() => AddTodoPage(initialDomainId: widget.domainId));
+    await Get.to(
+      () => AddTodoPage(
+        initialDomainId: widget.domainId,
+        initialProjectId: _projects.isNotEmpty ? _projects.first.id : null,
+      ),
+    );
     await _load();
   }
 
@@ -181,7 +186,7 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '领域工作台',
+                '领域视角',
                 style: DesignTokens.textStyle(
                   fontSize: DesignTokens.fontSizeLabelSmall,
                   fontWeight: DesignTokens.fontWeightBold,
@@ -220,7 +225,7 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
               borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
             ),
           ),
-          child: Text(_isFocused ? '当前重点' : '设为重点'),
+          child: Text(_isFocused ? '当前重点视角' : '设为重点'),
         ),
       ],
     );
@@ -265,7 +270,7 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _isFocused ? '当前重点领域' : '可切换为本周重点',
+                      _isFocused ? '当前重点观察视角' : '可切换为本周重点视角',
                       style: DesignTokens.textStyle(
                         fontSize: DesignTokens.fontSizeLabelSmall,
                         fontWeight: DesignTokens.fontWeightBold,
@@ -306,7 +311,9 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
           ),
           const SizedBox(height: DesignTokens.spacing4),
           Text(
-            topGoal == null ? '当前还没有这个领域的目标。' : '当前最值得推进：${topGoal.title}',
+            topGoal == null
+                ? '这个领域下暂时还没有目标，它更像一个归属和观察维度。'
+                : '这个领域下当前最值得关注的目标：${topGoal.title}',
             style: DesignTokens.textStyle(
               color: isDark
                   ? DesignTokens.textSecondaryDark
@@ -319,7 +326,7 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
             child: ElevatedButton.icon(
               onPressed: _openAiPlanning,
               icon: const Icon(Icons.auto_awesome),
-              label: Text(_isFocused ? '从这个领域发起 AI 规划' : '设为重点并发起 AI 规划'),
+              label: Text(_isFocused ? '从这个视角发起 AI 规划' : '设为重点并发起 AI 规划'),
             ),
           ),
         ],
@@ -350,7 +357,7 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
         Expanded(
           child: _buildStatTile(
             isDark: isDark,
-            label: '完成任务',
+            label: '完成事项',
             value: '$completedTodos/${_todos.length}',
           ),
         ),
@@ -370,7 +377,7 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '从这里继续推进',
+            '从这个视角继续观察',
             style: DesignTokens.textStyle(
               fontSize: DesignTokens.fontSizeTitleLarge,
               fontWeight: DesignTokens.fontWeightBold,
@@ -381,7 +388,7 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
           ),
           const SizedBox(height: DesignTokens.spacing2),
           Text(
-            '直接把新目标、项目和任务落到这个领域里。',
+            '领域不是主执行容器。目标、项目、事项都可以带着这个归属创建，但真正推进仍然围绕项目发生。',
             style: DesignTokens.textStyle(
               color: isDark
                   ? DesignTokens.textSecondaryDark
@@ -413,7 +420,7 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
                 child: _buildQuickActionButton(
                   isDark: isDark,
                   icon: Icons.check_circle_outline,
-                  label: '新任务',
+                  label: '新事项',
                   onTap: _createTodo,
                 ),
               ),
@@ -543,12 +550,12 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
   Widget _buildProjectsSection(bool isDark) {
     return _buildSectionCard(
       isDark: isDark,
-      title: '相关项目',
+      title: '这个领域下的项目',
       actionLabel: '${_projects.length} 个',
       child: _projects.isEmpty
           ? _buildEmptyHint(
               isDark,
-              '这个领域还没有项目，先生成一个可执行计划。',
+              '这个领域还没有项目，先为某个目标补一个推进容器。',
             )
           : Column(
               children: _projects.take(3).map((project) {
@@ -575,12 +582,12 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
         : _todos.where((todo) => !todo.isDone).take(5).toList();
     return _buildSectionCard(
       isDark: isDark,
-      title: _todayTodos.isNotEmpty ? '今天在这个领域推进什么' : '下一步任务',
+      title: _todayTodos.isNotEmpty ? '今天在这个视角下看哪些事项' : '下一步事项',
       actionLabel: '${taskList.length} 条',
       child: taskList.isEmpty
           ? _buildEmptyHint(
               isDark,
-              '这个领域还没有待办任务，先创建第一周动作。',
+              '这个领域下还没有事项，先进入项目补第一步动作。',
             )
           : Column(
               children: taskList.map((todo) {

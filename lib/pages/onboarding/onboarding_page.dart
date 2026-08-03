@@ -26,6 +26,7 @@ class _OnboardingPageState extends State<OnboardingPage>
   int _step = 0;
   String? _focusedDomainId;
   int _weeklyCapacityHours = 5;
+  bool _domainWasAutoInferred = false;
 
   @override
   void initState() {
@@ -80,6 +81,14 @@ class _OnboardingPageState extends State<OnboardingPage>
     if (result == true) {
       await _completeOnboarding();
     }
+  }
+
+  void _inferDomainFromIntent() {
+    final goalText = _goalController.text.trim();
+    if (goalText.isEmpty) return;
+    final inferred = DomainService.inferDomainFromIntent(goalText);
+    _focusedDomainId = inferred.id;
+    _domainWasAutoInferred = true;
   }
 
   @override
@@ -201,9 +210,9 @@ class _OnboardingPageState extends State<OnboardingPage>
   String _titleForStep() {
     switch (_step) {
       case 0:
-        return '先选一个\n当前重点方向';
+        return '先说一句\n最近最想拉起来什么';
       case 1:
-        return '先写下这一阶段\n最重要的目标';
+        return '系统先猜一个方向\n你来确认对不对';
       case 2:
       default:
         return '再给这周一个\n现实节奏';
@@ -213,9 +222,9 @@ class _OnboardingPageState extends State<OnboardingPage>
   String _subtitleForStep() {
     switch (_step) {
       case 0:
-        return '先只盯住一个领域，别把第一周做复杂。';
+        return '不用一开始就把系统填满，先抓住当前主线。';
       case 1:
-        return '先定结果，再把它拆成项目和事项。';
+        return '先用你的主线推断领域，再由你确认，后面的拆解会更贴近这件事。';
       case 2:
       default:
         return '选择你这周大概能投入的时间，让拆解更贴近现实。';
@@ -249,33 +258,6 @@ class _OnboardingPageState extends State<OnboardingPage>
   Widget _buildStepContent() {
     switch (_step) {
       case 0:
-        final domains = DomainService.getDomains();
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final cardWidth =
-                (constraints.maxWidth - DesignTokens.spacing3) / 2;
-            return SingleChildScrollView(
-              child: Wrap(
-                spacing: DesignTokens.spacing3,
-                runSpacing: DesignTokens.spacing3,
-                children: domains.map((LifeDomain domain) {
-                  final selected = domain.id == _focusedDomainId;
-                  return _DomainOptionCard(
-                    domain: domain,
-                    selected: selected,
-                    width: cardWidth,
-                    onTap: () {
-                      setState(() {
-                        _focusedDomainId = domain.id;
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-            );
-          },
-        );
-      case 1:
         final characterCount = _goalController.text.trim().characters.length;
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -373,13 +355,71 @@ class _OnboardingPageState extends State<OnboardingPage>
                           fontSize: DesignTokens.fontSizeBodySmall,
                           color: Colors.white.withOpacity(0.45),
                         ),
-                      ),
+                          ),
                     ],
                   ),
                 ],
               ),
             ),
           ],
+        );
+      case 1:
+        final domains = DomainService.getDomains();
+        final inferredDomain = DomainService.getDomainById(_focusedDomainId);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth =
+                (constraints.maxWidth - DesignTokens.spacing3) / 2;
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (inferredDomain != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(DesignTokens.spacing4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusXLarge),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                      child: Text(
+                        _domainWasAutoInferred
+                            ? '系统推断这更像 ${inferredDomain.icon} ${inferredDomain.name}，你可以直接确认，也可以改成别的领域。'
+                            : '请选择这件事当前最主要归属的领域。',
+                        style: DesignTokens.textStyle(
+                          fontSize: DesignTokens.fontSizeBodySmall,
+                          color: Colors.white.withOpacity(0.78),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: DesignTokens.spacing4),
+                  ],
+                  Wrap(
+                    spacing: DesignTokens.spacing3,
+                    runSpacing: DesignTokens.spacing3,
+                    children: domains.map((LifeDomain domain) {
+                      final selected = domain.id == _focusedDomainId;
+                      return _DomainOptionCard(
+                        domain: domain,
+                        selected: selected,
+                        width: cardWidth,
+                        onTap: () {
+                          setState(() {
+                            _focusedDomainId = domain.id;
+                            _domainWasAutoInferred = false;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       case 2:
       default:
@@ -472,14 +512,17 @@ class _OnboardingPageState extends State<OnboardingPage>
   }
 
   bool _primaryActionEnabled() {
-    if (_step == 0) return _focusedDomainId != null;
-    if (_step == 1) return _goalController.text.trim().isNotEmpty;
+    if (_step == 0) return _goalController.text.trim().isNotEmpty;
+    if (_step == 1) return _focusedDomainId != null;
     return true;
   }
 
   void _onPrimaryAction() {
     if (_step < 2) {
       setState(() {
+        if (_step == 0) {
+          _inferDomainFromIntent();
+        }
         _step += 1;
       });
     } else {
