@@ -138,4 +138,34 @@ class RewardService {
     }
     return byStatus;
   }
+
+  /// 把所有 dueDate &lt; now 的 pending RewardTodo 标为 expired，
+  /// 同步把关联的 Redemption 也标 expired。completed/cancelled 不动。
+  /// 用于启动时 + AppLifecycleState.resumed 时扫描。
+  /// 返回本次扫描变更为 expired 的 todo 数量。
+  static Future<int> scanExpiredTodos() async {
+    final now = DateTime.now();
+    int changed = 0;
+    for (final todo in DatabaseService.rewardTodoBox.values) {
+      if (todo.status != RewardTodoStatus.pending) continue;
+      final due = todo.dueDate;
+      if (due == null || !now.isAfter(due)) continue;
+
+      todo.status = RewardTodoStatus.expired;
+      todo.updatedAt = now;
+      await todo.save();
+      changed += 1;
+
+      for (final redemption in DatabaseService.rewardRedemptionBox.values) {
+        if (redemption.rewardTodoId == todo.id &&
+            redemption.status == RewardRedemptionStatus.redeemed) {
+          redemption.status = RewardRedemptionStatus.expired;
+          redemption.updatedAt = now;
+          await redemption.save();
+          break;
+        }
+      }
+    }
+    return changed;
+  }
 }

@@ -30,6 +30,7 @@ void main() async {
     // Initialize database
     await DatabaseService.init();
     await RewardService.seedPresetTemplatesIfEmpty();
+    await RewardService.scanExpiredTodos();
 
     // Initialize services
     await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
@@ -82,8 +83,32 @@ void _launchPraxisApp(Widget app) {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      RewardService.scanExpiredTodos();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

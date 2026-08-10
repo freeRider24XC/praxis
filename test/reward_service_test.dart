@@ -181,4 +181,72 @@ void main() {
     expect(saved.status, RewardTodoStatus.cancelled);
     expect(saved.completedAt, isNull);
   });
+
+  test('scanExpiredTodos leaves future-dated pending todos alone', () async {
+    await _initDb(seed: true);
+    await ProfileService.incrementPraisePoints(RewardService.smallPrice);
+    final small = DatabaseService.rewardTemplateBox.values.firstWhere(
+      (t) => t.tier == RewardTier.small,
+    );
+    await RewardService.exchange(small);
+    // Exchange sets dueDate = now + 7d, well in the future.
+
+    final changed = await RewardService.scanExpiredTodos();
+
+    expect(changed, 0);
+    final todo = DatabaseService.rewardTodoBox.values.first;
+    expect(todo.status, RewardTodoStatus.pending);
+  });
+
+  test('scanExpiredTodos marks past-due pending todos + linked redemption',
+      () async {
+    await _initDb(seed: true);
+    await ProfileService.incrementPraisePoints(RewardService.smallPrice);
+    final small = DatabaseService.rewardTemplateBox.values.firstWhere(
+      (t) => t.tier == RewardTier.small,
+    );
+    final redemption = await RewardService.exchange(small);
+    final todo = DatabaseService.rewardTodoBox.values.first;
+    // Force overdue
+    todo.dueDate = DateTime.now().subtract(const Duration(days: 1));
+    await todo.save();
+
+    final changed = await RewardService.scanExpiredTodos();
+
+    expect(changed, 1);
+    final savedTodo = DatabaseService.rewardTodoBox.values.first;
+    expect(savedTodo.status, RewardTodoStatus.expired);
+    final savedRedemption = DatabaseService.rewardRedemptionBox.values
+        .firstWhere((r) => r.id == redemption.id);
+    expect(savedRedemption.status, RewardRedemptionStatus.expired);
+  });
+
+  test('scanExpiredTodos skips already-completed and cancelled', () async {
+    await _initDb(seed: true);
+    final past = DateTime.now().subtract(const Duration(days: 1));
+    final completed = RewardTodo(
+      redemptionId: 'fake',
+      title: 'completed sample',
+      status: RewardTodoStatus.completed,
+      dueDate: past,
+    );
+    final cancelled = RewardTodo(
+      redemptionId: 'fake',
+      title: 'cancelled sample',
+      status: RewardTodoStatus.cancelled,
+      dueDate: past,
+    );
+    await DatabaseService.rewardTodoBox.add(completed);
+    await DatabaseService.rewardTodoBox.add(cancelled);
+
+    final changed = await RewardService.scanExpiredTodos();
+
+    expect(changed, 0);
+    expect(DatabaseService.rewardTodoBox.values
+        .firstWhere((t) => t.title == 'completed sample')
+        .status, RewardTodoStatus.completed);
+    expect(DatabaseService.rewardTodoBox.values
+        .firstWhere((t) => t.title == 'cancelled sample')
+        .status, RewardTodoStatus.cancelled);
+  });
 }
