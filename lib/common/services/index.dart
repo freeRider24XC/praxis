@@ -4,6 +4,7 @@ export 'database_service.dart';
 export 'domain_service.dart';
 export 'praise_points_calculator.dart';
 export 'profile_service.dart';
+export 'reward_service.dart';
 export 'xp_service.dart';
 export 'theme_service.dart';
 export 'locale_service.dart';

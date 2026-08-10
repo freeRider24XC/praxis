@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:praxis/common/i18n/app_strings.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/pages/settings/settings_page.dart';
@@ -167,6 +168,81 @@ class _ProfilePageState extends State<ProfilePage> {
                   value: '${profile.weeklyCapacityHours} h',
                 ),
               ],
+            ),
+            const SizedBox(height: DesignTokens.spacing6),
+            _buildRewardEntry(profile.praisePointsBalance, isDark),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRewardEntry(int balance, bool isDark) {
+    return InkWell(
+      onTap: () => Get.toNamed('/reward/shop'),
+      borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+      child: Container(
+        padding: const EdgeInsets.all(DesignTokens.spacing5),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              DesignTokens.statusCompleted.withOpacity(0.15),
+              DesignTokens.secondaryPurple.withOpacity(0.10),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+          border: Border.all(
+            color: DesignTokens.statusCompleted.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: DesignTokens.statusCompleted.withOpacity(0.18),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.redeem,
+                color: DesignTokens.statusCompleted,
+              ),
+            ),
+            const SizedBox(width: DesignTokens.spacing4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.rewardEntryCta.tr,
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeBodyLarge,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: isDark
+                          ? DesignTokens.onSurfaceDark
+                          : DesignTokens.onSurfaceLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${AppStrings.rewardBalanceLabel.tr} · $balance',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: DesignTokens.textSecondaryLight,
             ),
           ],
         ),

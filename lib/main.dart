@@ -13,6 +13,7 @@ import 'package:praxis/pages/main/main_page.dart';
 import 'package:praxis/pages/notifications/notifications_page.dart';
 import 'package:praxis/pages/onboarding/onboarding_page.dart';
 import 'package:praxis/pages/project/project_detail_page.dart';
+import 'package:praxis/pages/reward/reward_shop_page.dart';
 import 'package:praxis/pages/todo/add_todo_page.dart';
 import 'package:praxis/pages/goal/add_goal_page.dart';
 import 'package:praxis/pages/project/add_project_page.dart';
@@ -27,6 +28,7 @@ void main() async {
 
     // Initialize database
     await DatabaseService.init();
+    await RewardService.seedPresetTemplatesIfEmpty();
 
     // Initialize services
     await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
@@ -128,6 +130,7 @@ class MyApp extends StatelessWidget {
                 }),
             GetPage(name: '/focus', page: () => const FocusPage()),
             GetPage(name: '/notifications', page: () => const NotificationsPage()),
+            GetPage(name: '/reward/shop', page: () => const RewardShopPage()),
           ],
         ));
   }
