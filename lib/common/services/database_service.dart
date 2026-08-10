@@ -634,38 +634,6 @@ class DatabaseService {
     );
   }
 
-  static Map<String, dynamic> _userProfileToMap(UserProfile profile) {
-    return {
-      'id': profile.id,
-      'focusedDomainId': profile.focusedDomainId,
-      'totalXp': profile.totalXp,
-      'level': profile.level,
-      'streakDays': profile.streakDays,
-      'weeklyCapacityHours': profile.weeklyCapacityHours,
-      'lastActiveDate': profile.lastActiveDate?.toIso8601String(),
-      'createdAt': profile.createdAt.toIso8601String(),
-      'updatedAt': profile.updatedAt.toIso8601String(),
-      'praisePointsBalance': profile.praisePointsBalance,
-    };
-  }
-
-  static UserProfile _mapToUserProfile(Map<String, dynamic> map) {
-    return UserProfile(
-      id: map['id'] as String?,
-      focusedDomainId: map['focusedDomainId'] as String?,
-      totalXp: map['totalXp'] as int?,
-      level: map['level'] as int?,
-      streakDays: map['streakDays'] as int?,
-      weeklyCapacityHours: map['weeklyCapacityHours'] as int?,
-      lastActiveDate: map['lastActiveDate'] != null
-          ? DateTime.parse(map['lastActiveDate'] as String)
-          : null,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: DateTime.parse(map['updatedAt'] as String),
-      praisePointsBalance: map['praisePointsBalance'] as int?,
-    );
-  }
-
   static Map<String, dynamic> _goalToMap(Goal goal) {
     return {
       'id': goal.id,
