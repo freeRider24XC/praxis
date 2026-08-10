@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/models/todo.dart';
-import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/pages/project/project_detail_page.dart';
 import 'package:praxis/pages/todo/todo_detail_page.dart';
@@ -144,6 +144,22 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                   ),
                 ),
               ),
+              const SizedBox(width: DesignTokens.spacing2),
+              if (goal.status == GoalStatus.notStarted ||
+                  goal.status == GoalStatus.inProgress ||
+                  goal.status == GoalStatus.paused)
+                TextButton.icon(
+                  onPressed: () => _confirmMarkGoalCompleted(goal),
+                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                  label: const Text('标记完成'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: DesignTokens.statusCompleted,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: DesignTokens.spacing2,
+                    ),
+                  ),
+                ),
               const Spacer(),
               Text(
                 goal.type.displayName,
@@ -583,6 +599,43 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmMarkGoalCompleted(Goal goal) async {
+    if (goal.status == GoalStatus.completed ||
+        goal.status == GoalStatus.cancelled) {
+      return;
+    }
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('标记目标完成'),
+        content: Text(
+          '完成「${goal.title}」后将发放 +${XpService.goalCompletedXp} XP 和 '
+          '+${PraisePointsCalculator.forGoal()} 犒赏点，且不能撤销。确认继续？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            style: TextButton.styleFrom(
+              foregroundColor: DesignTokens.statusCompleted,
+            ),
+            child: const Text('确认完成'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    goal.status = GoalStatus.completed;
+    goal.progress = 1.0;
+    goal.updatedAt = DateTime.now();
+    await DatabaseService.updateGoal(goal);
+    await XpService.awardGoalCompleted(goal);
+    await _loadData();
   }
 
   void _showUpdateGoalValue(Goal goal) {

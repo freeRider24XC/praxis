@@ -5,6 +5,7 @@ import 'package:praxis/common/services/profile_service.dart';
 
 class XpService {
   static const int todoCompletedXp = 10;
+  static const int projectCompletedXp = 50;
   static const int goalCompletedXp = 100;
   static const int dailyReviewXp = 20;
 
@@ -59,6 +60,13 @@ class XpService {
   }
 
   static Future<void> awardGoalCompleted(Goal goal) async {
+    if (DatabaseService.findXpEvent(
+          source: 'goal_completed',
+          sourceId: goal.id,
+        ) !=
+        null) {
+      return;
+    }
     await _awardXp(
       xp: goalCompletedXp,
       source: 'goal_completed',
@@ -66,6 +74,30 @@ class XpService {
       domainId: goal.domainId,
       description: '完成目标：${goal.title}',
       markActiveAt: DateTime.now(),
+    );
+    await ProfileService.incrementPraisePoints(
+      PraisePointsCalculator.forGoal(),
+    );
+  }
+
+  static Future<void> awardProjectCompleted(Project project) async {
+    if (DatabaseService.findXpEvent(
+          source: 'project_completed',
+          sourceId: project.id,
+        ) !=
+        null) {
+      return;
+    }
+    await _awardXp(
+      xp: projectCompletedXp,
+      source: 'project_completed',
+      sourceId: project.id,
+      domainId: project.domainId,
+      description: '完成项目：${project.name}',
+      markActiveAt: DateTime.now(),
+    );
+    await ProfileService.incrementPraisePoints(
+      PraisePointsCalculator.forProject(),
     );
   }
 

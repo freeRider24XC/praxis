@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/calendar_sync_service.dart';
+import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/constants/task_attributes.dart';
@@ -341,6 +342,44 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     await _refreshData();
   }
 
+  Future<void> _confirmMarkProjectCompleted(Project project) async {
+    if (project.status == ProjectStatus.completed) return;
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('标记项目完成'),
+        content: Text(
+          '完成「${project.name}」后将发放 +${XpService.projectCompletedXp} XP 和 '
+          '+${PraisePointsCalculator.forProject()} 犒赏点，且不能撤销。确认继续？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            style: TextButton.styleFrom(
+              foregroundColor: DesignTokens.statusCompleted,
+            ),
+            child: const Text('确认完成'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    project.status = ProjectStatus.completed;
+    project.updatedAt = DateTime.now();
+    await DatabaseService.updateProject(project);
+    await XpService.awardProjectCompleted(project);
+    if (project.goalIds != null) {
+      for (final goalId in project.goalIds!) {
+        await DatabaseService.recalculateGoalProgress(goalId);
+      }
+    }
+    await _refreshData();
+  }
+
   Future<void> _handleReorder(
     Project project,
     ProjectPhase? phase,
@@ -526,15 +565,49 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                     ),
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: Icon(
-                      Icons.share,
-                      color: isDark
-                          ? DesignTokens.textSecondaryDark
-                          : DesignTokens.textSecondaryLight,
+                  if (project.status == ProjectStatus.completed)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.spacing3,
+                        vertical: DesignTokens.spacing1,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            DesignTokens.statusCompleted.withOpacity(0.12),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusRound),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.check_circle,
+                            size: 14,
+                            color: DesignTokens.statusCompleted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '已完成',
+                            style: DesignTokens.textStyle(
+                              fontSize: DesignTokens.fontSizeLabelSmall,
+                              fontWeight: DesignTokens.fontWeightBold,
+                              color: DesignTokens.statusCompleted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    IconButton(
+                      icon: Icon(
+                        Icons.check_circle_outline,
+                        color: isDark
+                            ? DesignTokens.textSecondaryDark
+                            : DesignTokens.textSecondaryLight,
+                      ),
+                      tooltip: '标记完成',
+                      onPressed: () => _confirmMarkProjectCompleted(project),
                     ),
-                    onPressed: () {},
-                  ),
                 ],
               ),
             ),

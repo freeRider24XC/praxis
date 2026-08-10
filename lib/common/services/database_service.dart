@@ -811,6 +811,17 @@ class DatabaseService {
     await xpEventBox.add(event);
   }
 
+  /// 按 source + sourceId 查找 XP 事件，用于结算动作的幂等校验。
+  static XpEvent? findXpEvent({required String source, required String sourceId}) {
+    try {
+      return xpEventBox.values.firstWhere(
+        (event) => event.source == source && event.sourceId == sourceId,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   static List<DailyReview> getAllDailyReviews() {
     final reviews = dailyReviewBox.values.toList();
     reviews.sort((a, b) => b.date.compareTo(a.date));
