@@ -273,6 +273,19 @@ extension TodoPriorityExtension on TodoPriority {
         return 3;
     }
   }
+
+  double get coefficient {
+    switch (this) {
+      case TodoPriority.low:
+        return 0.9;
+      case TodoPriority.medium:
+        return 1.0;
+      case TodoPriority.high:
+        return 1.2;
+      case TodoPriority.urgent:
+        return 1.4;
+    }
+  }
 }
 
 @HiveType(typeId: 18)

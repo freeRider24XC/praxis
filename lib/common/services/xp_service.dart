@@ -1,5 +1,6 @@
 import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/praise_points_calculator.dart';
 import 'package:praxis/common/services/profile_service.dart';
 
 class XpService {
@@ -47,6 +48,14 @@ class XpService {
       description: '完成任务：${todo.title}',
       markActiveAt: todo.completedAt ?? DateTime.now(),
     );
+
+    // 结算并发放犒赏点：写入 Todo 自身记录 + 累计到 Profile 余额。
+    final praisePoints = PraisePointsCalculator.forTodo(todo);
+    if (praisePoints > 0) {
+      todo.praisePointsEarned = praisePoints;
+      await todo.save();
+      await ProfileService.incrementPraisePoints(praisePoints);
+    }
   }
 
   static Future<void> awardGoalCompleted(Goal goal) async {
