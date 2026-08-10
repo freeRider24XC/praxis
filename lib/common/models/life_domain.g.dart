@@ -2,6 +2,10 @@
 
 part of 'life_domain.dart';
 
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
 class LifeDomainAdapter extends TypeAdapter<LifeDomain> {
   @override
   final int typeId = 14;

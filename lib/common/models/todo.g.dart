@@ -34,13 +34,18 @@ class TodoAdapter extends TypeAdapter<Todo> {
       recurrence: fields[14] as RecurrenceRule?,
       updatedAt: fields[15] as DateTime?,
       domainId: fields[16] as String?,
+      importanceLevel: fields[17] as ImportanceLevel?,
+      difficultyLevel: fields[18] as DifficultyLevel?,
+      isCoreTask: fields[19] as bool?,
+      estimatedMinutes: fields[20] as int?,
+      praisePointsEarned: fields[21] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Todo obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(22)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +79,17 @@ class TodoAdapter extends TypeAdapter<Todo> {
       ..writeByte(15)
       ..write(obj.updatedAt)
       ..writeByte(16)
-      ..write(obj.domainId);
+      ..write(obj.domainId)
+      ..writeByte(17)
+      ..write(obj.importanceLevel)
+      ..writeByte(18)
+      ..write(obj.difficultyLevel)
+      ..writeByte(19)
+      ..write(obj.isCoreTask)
+      ..writeByte(20)
+      ..write(obj.estimatedMinutes)
+      ..writeByte(21)
+      ..write(obj.praisePointsEarned);
   }
 
   @override
@@ -231,6 +246,94 @@ class RecurrenceTypeAdapter extends TypeAdapter<RecurrenceType> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is RecurrenceTypeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class ImportanceLevelAdapter extends TypeAdapter<ImportanceLevel> {
+  @override
+  final int typeId = 18;
+
+  @override
+  ImportanceLevel read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return ImportanceLevel.high;
+      case 1:
+        return ImportanceLevel.medium;
+      case 2:
+        return ImportanceLevel.low;
+      default:
+        return ImportanceLevel.high;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, ImportanceLevel obj) {
+    switch (obj) {
+      case ImportanceLevel.high:
+        writer.writeByte(0);
+        break;
+      case ImportanceLevel.medium:
+        writer.writeByte(1);
+        break;
+      case ImportanceLevel.low:
+        writer.writeByte(2);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ImportanceLevelAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class DifficultyLevelAdapter extends TypeAdapter<DifficultyLevel> {
+  @override
+  final int typeId = 19;
+
+  @override
+  DifficultyLevel read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return DifficultyLevel.low;
+      case 1:
+        return DifficultyLevel.medium;
+      case 2:
+        return DifficultyLevel.high;
+      default:
+        return DifficultyLevel.low;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, DifficultyLevel obj) {
+    switch (obj) {
+      case DifficultyLevel.low:
+        writer.writeByte(0);
+        break;
+      case DifficultyLevel.medium:
+        writer.writeByte(1);
+        break;
+      case DifficultyLevel.high:
+        writer.writeByte(2);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DifficultyLevelAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

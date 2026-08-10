@@ -11,6 +11,9 @@ class DatabaseService {
   static const String userProfileBoxName = 'user_profiles';
   static const String xpEventBoxName = 'xp_events';
   static const String dailyReviewBoxName = 'daily_reviews';
+  static const String rewardTemplateBoxName = 'reward_templates';
+  static const String rewardRedemptionBoxName = 'reward_redemptions';
+  static const String rewardTodoBoxName = 'reward_todos';
 
   static late Box<Todo> todoBox;
   static late Box<Goal> goalBox;
@@ -21,6 +24,9 @@ class DatabaseService {
   static late Box<UserProfile> userProfileBox;
   static late Box<XpEvent> xpEventBox;
   static late Box<DailyReview> dailyReviewBox;
+  static late Box<RewardTemplate> rewardTemplateBox;
+  static late Box<RewardRedemption> rewardRedemptionBox;
+  static late Box<RewardTodo> rewardTodoBox;
 
   static bool _isInitialized = false;
 
@@ -110,6 +116,30 @@ class DatabaseService {
     if (!Hive.isAdapterRegistered(17)) {
       Hive.registerAdapter(DailyReviewAdapter());
     }
+    if (!Hive.isAdapterRegistered(18)) {
+      Hive.registerAdapter(ImportanceLevelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(19)) {
+      Hive.registerAdapter(DifficultyLevelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(20)) {
+      Hive.registerAdapter(RewardTierAdapter());
+    }
+    if (!Hive.isAdapterRegistered(21)) {
+      Hive.registerAdapter(RewardTemplateAdapter());
+    }
+    if (!Hive.isAdapterRegistered(22)) {
+      Hive.registerAdapter(RewardRedemptionStatusAdapter());
+    }
+    if (!Hive.isAdapterRegistered(23)) {
+      Hive.registerAdapter(RewardRedemptionAdapter());
+    }
+    if (!Hive.isAdapterRegistered(24)) {
+      Hive.registerAdapter(RewardTodoStatusAdapter());
+    }
+    if (!Hive.isAdapterRegistered(25)) {
+      Hive.registerAdapter(RewardTodoAdapter());
+    }
   }
 
   static Future<void> _openBoxes() async {
@@ -122,6 +152,9 @@ class DatabaseService {
     userProfileBox = await Hive.openBox<UserProfile>(userProfileBoxName);
     xpEventBox = await Hive.openBox<XpEvent>(xpEventBoxName);
     dailyReviewBox = await Hive.openBox<DailyReview>(dailyReviewBoxName);
+    rewardTemplateBox = await Hive.openBox<RewardTemplate>(rewardTemplateBoxName);
+    rewardRedemptionBox = await Hive.openBox<RewardRedemption>(rewardRedemptionBoxName);
+    rewardTodoBox = await Hive.openBox<RewardTodo>(rewardTodoBoxName);
   }
 
   static Future<void> _seedDefaults() async {
@@ -458,6 +491,9 @@ class DatabaseService {
     await userProfileBox.clear();
     await xpEventBox.clear();
     await dailyReviewBox.clear();
+    await rewardTemplateBox.clear();
+    await rewardRedemptionBox.clear();
+    await rewardTodoBox.clear();
     await _seedDefaults();
   }
 
@@ -472,6 +508,9 @@ class DatabaseService {
     await userProfileBox.close();
     await xpEventBox.close();
     await dailyReviewBox.close();
+    await rewardTemplateBox.close();
+    await rewardRedemptionBox.close();
+    await rewardTodoBox.close();
     await Hive.close();
     _isInitialized = false;
   }
@@ -552,6 +591,11 @@ class DatabaseService {
       'parentId': todo.parentId,
       'updatedAt': todo.updatedAt.toIso8601String(),
       'domainId': todo.domainId,
+      'importanceLevel': todo.importanceLevel?.index,
+      'difficultyLevel': todo.difficultyLevel?.index,
+      'isCoreTask': todo.isCoreTask,
+      'estimatedMinutes': todo.estimatedMinutes,
+      'praisePointsEarned': todo.praisePointsEarned,
     };
   }
 
@@ -578,6 +622,47 @@ class DatabaseService {
       parentId: map['parentId'],
       updatedAt: DateTime.parse(map['updatedAt']),
       domainId: map['domainId'] as String?,
+      importanceLevel: map['importanceLevel'] != null
+          ? ImportanceLevel.values[map['importanceLevel'] as int]
+          : null,
+      difficultyLevel: map['difficultyLevel'] != null
+          ? DifficultyLevel.values[map['difficultyLevel'] as int]
+          : null,
+      isCoreTask: map['isCoreTask'] as bool? ?? false,
+      estimatedMinutes: map['estimatedMinutes'] as int?,
+      praisePointsEarned: map['praisePointsEarned'] as int?,
+    );
+  }
+
+  static Map<String, dynamic> _userProfileToMap(UserProfile profile) {
+    return {
+      'id': profile.id,
+      'focusedDomainId': profile.focusedDomainId,
+      'totalXp': profile.totalXp,
+      'level': profile.level,
+      'streakDays': profile.streakDays,
+      'weeklyCapacityHours': profile.weeklyCapacityHours,
+      'lastActiveDate': profile.lastActiveDate?.toIso8601String(),
+      'createdAt': profile.createdAt.toIso8601String(),
+      'updatedAt': profile.updatedAt.toIso8601String(),
+      'praisePointsBalance': profile.praisePointsBalance,
+    };
+  }
+
+  static UserProfile _mapToUserProfile(Map<String, dynamic> map) {
+    return UserProfile(
+      id: map['id'] as String?,
+      focusedDomainId: map['focusedDomainId'] as String?,
+      totalXp: map['totalXp'] as int?,
+      level: map['level'] as int?,
+      streakDays: map['streakDays'] as int?,
+      weeklyCapacityHours: map['weeklyCapacityHours'] as int?,
+      lastActiveDate: map['lastActiveDate'] != null
+          ? DateTime.parse(map['lastActiveDate'] as String)
+          : null,
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      updatedAt: DateTime.parse(map['updatedAt'] as String),
+      praisePointsBalance: map['praisePointsBalance'] as int?,
     );
   }
 

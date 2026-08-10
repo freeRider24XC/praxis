@@ -2,6 +2,10 @@
 
 part of 'daily_review.dart';
 
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
 class DailyReviewAdapter extends TypeAdapter<DailyReview> {
   @override
   final int typeId = 17;

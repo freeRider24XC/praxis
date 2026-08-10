@@ -2,6 +2,10 @@
 
 part of 'user_profile.dart';
 
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
 class UserProfileAdapter extends TypeAdapter<UserProfile> {
   @override
   final int typeId = 15;
@@ -22,13 +26,14 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       lastActiveDate: fields[6] as DateTime?,
       createdAt: fields[7] as DateTime?,
       updatedAt: fields[8] as DateTime?,
+      praisePointsBalance: fields[9] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfile obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -46,7 +51,9 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       ..writeByte(7)
       ..write(obj.createdAt)
       ..writeByte(8)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(9)
+      ..write(obj.praisePointsBalance);
   }
 
   @override

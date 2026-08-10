@@ -56,6 +56,21 @@ class Todo extends HiveObject {
   @HiveField(16)
   String? domainId;
 
+  @HiveField(17)
+  ImportanceLevel? importanceLevel;
+
+  @HiveField(18)
+  DifficultyLevel? difficultyLevel;
+
+  @HiveField(19)
+  bool isCoreTask;
+
+  @HiveField(20)
+  int? estimatedMinutes;
+
+  @HiveField(21)
+  int? praisePointsEarned;
+
   Todo({
     String? id,
     required this.title,
@@ -74,11 +89,17 @@ class Todo extends HiveObject {
     this.recurrence,
     DateTime? updatedAt,
     this.domainId,
+    this.importanceLevel,
+    this.difficultyLevel,
+    bool? isCoreTask,
+    this.estimatedMinutes,
+    this.praisePointsEarned,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         isDone = isDone ?? false,
         priority = priority ?? TodoPriority.medium,
-        updatedAt = updatedAt ?? DateTime.now();
+        updatedAt = updatedAt ?? DateTime.now(),
+        isCoreTask = isCoreTask ?? false;
 
   Todo copyWith({
     String? id,
@@ -98,6 +119,11 @@ class Todo extends HiveObject {
     RecurrenceRule? recurrence,
     DateTime? updatedAt,
     String? domainId,
+    ImportanceLevel? importanceLevel,
+    DifficultyLevel? difficultyLevel,
+    bool? isCoreTask,
+    int? estimatedMinutes,
+    int? praisePointsEarned,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -117,6 +143,11 @@ class Todo extends HiveObject {
       recurrence: recurrence ?? this.recurrence,
       updatedAt: updatedAt ?? DateTime.now(),
       domainId: domainId ?? this.domainId,
+      importanceLevel: importanceLevel ?? this.importanceLevel,
+      difficultyLevel: difficultyLevel ?? this.difficultyLevel,
+      isCoreTask: isCoreTask ?? this.isCoreTask,
+      estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      praisePointsEarned: praisePointsEarned ?? this.praisePointsEarned,
     );
   }
 
@@ -240,6 +271,74 @@ extension TodoPriorityExtension on TodoPriority {
         return 2;
       case TodoPriority.urgent:
         return 3;
+    }
+  }
+}
+
+@HiveType(typeId: 18)
+enum ImportanceLevel {
+  @HiveField(0)
+  high,
+  @HiveField(1)
+  medium,
+  @HiveField(2)
+  low,
+}
+
+extension ImportanceLevelExtension on ImportanceLevel {
+  String get displayName {
+    switch (this) {
+      case ImportanceLevel.high:
+        return '高';
+      case ImportanceLevel.medium:
+        return '中';
+      case ImportanceLevel.low:
+        return '低';
+    }
+  }
+
+  double get coefficient {
+    switch (this) {
+      case ImportanceLevel.high:
+        return 1.4;
+      case ImportanceLevel.medium:
+        return 1.0;
+      case ImportanceLevel.low:
+        return 0.8;
+    }
+  }
+}
+
+@HiveType(typeId: 19)
+enum DifficultyLevel {
+  @HiveField(0)
+  low,
+  @HiveField(1)
+  medium,
+  @HiveField(2)
+  high,
+}
+
+extension DifficultyLevelExtension on DifficultyLevel {
+  String get displayName {
+    switch (this) {
+      case DifficultyLevel.low:
+        return '低';
+      case DifficultyLevel.medium:
+        return '中';
+      case DifficultyLevel.high:
+        return '高';
+    }
+  }
+
+  double get coefficient {
+    switch (this) {
+      case DifficultyLevel.low:
+        return 0.9;
+      case DifficultyLevel.medium:
+        return 1.0;
+      case DifficultyLevel.high:
+        return 1.2;
     }
   }
 }
