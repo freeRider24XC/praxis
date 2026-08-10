@@ -129,6 +129,7 @@ class _RewardShopPageState extends State<RewardShopPage> {
       ),
       body: Column(
         children: [
+          _buildTodoBanner(isDark),
           _buildTierFilter(isDark),
           Expanded(
             child: templates.isEmpty
@@ -139,6 +140,55 @@ class _RewardShopPageState extends State<RewardShopPage> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTodoBanner(bool isDark) {
+    final pendingCount = DatabaseService.rewardTodoBox.values
+        .where((t) =>
+            t.status == RewardTodoStatus.pending ||
+            t.status == RewardTodoStatus.expired)
+        .length;
+    if (pendingCount == 0) return const SizedBox.shrink();
+    return InkWell(
+      onTap: () => Get.toNamed('/reward/todo'),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(
+          DesignTokens.spacing6,
+          DesignTokens.spacing3,
+          DesignTokens.spacing6,
+          0,
+        ),
+        padding: const EdgeInsets.all(DesignTokens.spacing4),
+        decoration: BoxDecoration(
+          color: DesignTokens.statusActive.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.redeem,
+              color: DesignTokens.statusActive,
+              size: 20,
+            ),
+            const SizedBox(width: DesignTokens.spacing3),
+            Expanded(
+              child: Text(
+                '${AppStrings.rewardShopMyTodosCta.tr} · $pendingCount ${AppStrings.rewardTodoGroupPending.tr}',
+                style: DesignTokens.textStyle(
+                  fontWeight: DesignTokens.fontWeightBold,
+                  color: DesignTokens.statusActive,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: DesignTokens.statusActive,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

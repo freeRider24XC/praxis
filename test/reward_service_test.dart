@@ -120,4 +120,65 @@ void main() {
     final balanceAfter = DatabaseService.getUserProfile().praisePointsBalance;
     expect(balanceAfter, balanceBefore);
   });
+
+  test('completeRewardTodo marks todo + linked redemption as completed',
+      () async {
+    await _initDb(seed: true);
+    await ProfileService.incrementPraisePoints(
+      RewardService.smallPrice + RewardService.mediumPrice,
+    );
+    final small = DatabaseService.rewardTemplateBox.values.firstWhere(
+      (t) => t.tier == RewardTier.small,
+    );
+    final redemption = await RewardService.exchange(small);
+    final todo = DatabaseService.rewardTodoBox.values.first;
+
+    await RewardService.completeRewardTodo(todo);
+
+    final savedTodo = DatabaseService.rewardTodoBox.values.first;
+    expect(savedTodo.status, RewardTodoStatus.completed);
+    expect(savedTodo.completedAt, isNotNull);
+
+    final savedRedemption = DatabaseService.rewardRedemptionBox.values
+        .firstWhere((r) => r.id == redemption.id);
+    expect(savedRedemption.status, RewardRedemptionStatus.completed);
+  });
+
+  test('completeRewardTodo is idempotent for already-completed todo', () async {
+    await _initDb(seed: true);
+    await ProfileService.incrementPraisePoints(RewardService.smallPrice);
+    final small = DatabaseService.rewardTemplateBox.values.firstWhere(
+      (t) => t.tier == RewardTier.small,
+    );
+    await RewardService.exchange(small);
+    final todo = DatabaseService.rewardTodoBox.values.first;
+
+    await RewardService.completeRewardTodo(todo);
+    final firstCompletedAt = DatabaseService.rewardTodoBox.values.first.completedAt;
+
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+    await RewardService.completeRewardTodo(todo);
+
+    final savedTodo = DatabaseService.rewardTodoBox.values.first;
+    expect(savedTodo.status, RewardTodoStatus.completed);
+    expect(savedTodo.completedAt, firstCompletedAt);
+  });
+
+  test('completeRewardTodo ignores cancelled todo', () async {
+    await _initDb(seed: true);
+    final todo = RewardTodo(
+      redemptionId: 'fake',
+      title: 'cancelled sample',
+      status: RewardTodoStatus.cancelled,
+    );
+    await DatabaseService.rewardTodoBox.add(todo);
+
+    await RewardService.completeRewardTodo(
+      DatabaseService.rewardTodoBox.values.first,
+    );
+
+    final saved = DatabaseService.rewardTodoBox.values.first;
+    expect(saved.status, RewardTodoStatus.cancelled);
+    expect(saved.completedAt, isNull);
+  });
 }

@@ -110,6 +110,18 @@ class AppTranslations extends Translations {
           'rewardInsufficientPoints': 'Not enough praise points',
           'rewardEntryCta': 'Reward Shop',
           'rewardBalanceLabel': 'Praise points balance',
+
+          'rewardTodoTitle': 'Reward Todos',
+          'rewardEntryTodoCta': 'Reward Todos',
+          'rewardShopMyTodosCta': 'My Reward Todos',
+          'rewardTodoEmptyHint': 'No reward todos yet. Redeem one from the shop.',
+          'rewardTodoCompleteAction': 'Mark done',
+          'rewardTodoCompleteSuccess': 'Fulfilled! Enjoy your reward.',
+          'rewardTodoDueLabel': 'Due @date',
+          'rewardTodoGroupPending': 'Pending',
+          'rewardTodoGroupCompleted': 'Fulfilled',
+          'rewardTodoGroupExpired': 'Expired',
+          'rewardTodoCount': '@done / @total done',
     },
     'zh_CN': {
       'title': '知行合一',
@@ -218,6 +230,18 @@ class AppTranslations extends Translations {
           'rewardInsufficientPoints': '犒赏点不足',
           'rewardEntryCta': '奖励商店',
           'rewardBalanceLabel': '犒赏点余额',
+
+          'rewardTodoTitle': '奖励待办',
+          'rewardEntryTodoCta': '奖励待办',
+          'rewardShopMyTodosCta': '我的奖励待办',
+          'rewardTodoEmptyHint': '还没有奖励待办，去商店兑换一个吧。',
+          'rewardTodoCompleteAction': '完成',
+          'rewardTodoCompleteSuccess': '已兑现，好好享受吧！',
+          'rewardTodoDueLabel': '截止 @date',
+          'rewardTodoGroupPending': '待兑现',
+          'rewardTodoGroupCompleted': '已兑现',
+          'rewardTodoGroupExpired': '已过期',
+          'rewardTodoCount': '已完成 @done / @total',
     },
   };
 }

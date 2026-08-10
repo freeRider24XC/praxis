@@ -14,6 +14,7 @@ import 'package:praxis/pages/notifications/notifications_page.dart';
 import 'package:praxis/pages/onboarding/onboarding_page.dart';
 import 'package:praxis/pages/project/project_detail_page.dart';
 import 'package:praxis/pages/reward/reward_shop_page.dart';
+import 'package:praxis/pages/reward/reward_todo_page.dart';
 import 'package:praxis/pages/todo/add_todo_page.dart';
 import 'package:praxis/pages/goal/add_goal_page.dart';
 import 'package:praxis/pages/project/add_project_page.dart';
@@ -131,6 +132,7 @@ class MyApp extends StatelessWidget {
             GetPage(name: '/focus', page: () => const FocusPage()),
             GetPage(name: '/notifications', page: () => const NotificationsPage()),
             GetPage(name: '/reward/shop', page: () => const RewardShopPage()),
+            GetPage(name: '/reward/todo', page: () => const RewardTodoPage()),
           ],
         ));
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/i18n/app_strings.dart';
+import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/pages/settings/settings_page.dart';
@@ -171,6 +172,81 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: DesignTokens.spacing6),
             _buildRewardEntry(profile.praisePointsBalance, isDark),
+            const SizedBox(height: DesignTokens.spacing3),
+            _buildRewardTodoEntry(isDark),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRewardTodoEntry(bool isDark) {
+    final pendingCount = DatabaseService.rewardTodoBox.values
+        .where((t) =>
+            t.status == RewardTodoStatus.pending ||
+            t.status == RewardTodoStatus.expired)
+        .length;
+    return InkWell(
+      onTap: () => Get.toNamed('/reward/todo'),
+      borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+      child: Container(
+        padding: const EdgeInsets.all(DesignTokens.spacing5),
+        decoration: BoxDecoration(
+          color: isDark ? DesignTokens.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+          border: Border.all(
+            color: isDark ? DesignTokens.borderDark : DesignTokens.borderLight,
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: DesignTokens.statusActive.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.redeem,
+                color: DesignTokens.statusActive,
+              ),
+            ),
+            const SizedBox(width: DesignTokens.spacing4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.rewardEntryTodoCta.tr,
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeBodyLarge,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: isDark
+                          ? DesignTokens.onSurfaceDark
+                          : DesignTokens.onSurfaceLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    pendingCount > 0
+                        ? '$pendingCount ${AppStrings.rewardTodoGroupPending.tr}'
+                        : AppStrings.rewardTodoEmptyHint.tr,
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: DesignTokens.textSecondaryLight,
+            ),
           ],
         ),
       ),

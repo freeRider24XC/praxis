@@ -104,4 +104,38 @@ class RewardService {
 
     return redemption;
   }
+
+  /// 标记 RewardTodo 为已兑现。同步把关联的 Redemption 状态也推进。
+  /// pending / expired 允许完成；completed / cancelled 时幂等。
+  static Future<void> completeRewardTodo(RewardTodo todo) async {
+    if (todo.status == RewardTodoStatus.completed ||
+        todo.status == RewardTodoStatus.cancelled) {
+      return;
+    }
+    final now = DateTime.now();
+    todo.status = RewardTodoStatus.completed;
+    todo.completedAt = now;
+    todo.updatedAt = now;
+    await todo.save();
+
+    for (final redemption in DatabaseService.rewardRedemptionBox.values) {
+      if (redemption.rewardTodoId == todo.id) {
+        redemption.status = RewardRedemptionStatus.completed;
+        redemption.updatedAt = now;
+        await redemption.save();
+        break;
+      }
+    }
+  }
+
+  /// 当前所有 RewardTodo（按状态分组、按创建时间倒序）。
+  static Map<RewardTodoStatus, List<RewardTodo>> getTodosByStatus() {
+    final all = DatabaseService.rewardTodoBox.values.toList();
+    all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final byStatus = <RewardTodoStatus, List<RewardTodo>>{};
+    for (final todo in all) {
+      byStatus.putIfAbsent(todo.status, () => []).add(todo);
+    }
+    return byStatus;
+  }
 }

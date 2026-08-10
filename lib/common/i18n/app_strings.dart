@@ -131,6 +131,19 @@ class AppStrings {
   static const String rewardInsufficientPoints = 'rewardInsufficientPoints';
   static const String rewardEntryCta = 'rewardEntryCta';
   static const String rewardBalanceLabel = 'rewardBalanceLabel';
+
+  // ==================== 奖励待办 ====================
+  static const String rewardTodoTitle = 'rewardTodoTitle';
+  static const String rewardEntryTodoCta = 'rewardEntryTodoCta';
+  static const String rewardShopMyTodosCta = 'rewardShopMyTodosCta';
+  static const String rewardTodoEmptyHint = 'rewardTodoEmptyHint';
+  static const String rewardTodoCompleteAction = 'rewardTodoCompleteAction';
+  static const String rewardTodoCompleteSuccess = 'rewardTodoCompleteSuccess';
+  static const String rewardTodoDueLabel = 'rewardTodoDueLabel';
+  static const String rewardTodoGroupPending = 'rewardTodoGroupPending';
+  static const String rewardTodoGroupCompleted = 'rewardTodoGroupCompleted';
+  static const String rewardTodoGroupExpired = 'rewardTodoGroupExpired';
+  static const String rewardTodoCount = 'rewardTodoCount';
 }
 
 /// 扩展方法：为字符串添加带命名参数的翻译方法
