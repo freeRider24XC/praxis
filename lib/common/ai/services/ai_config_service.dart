@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:praxis/common/services/secure_storage_service.dart';
 
 enum AiProviderKind {
   openai,
@@ -14,32 +15,45 @@ class AiConfigService {
   static const String _keyApiBaseUrl = 'ai_api_base_url';
   static const String _keyModel = 'ai_model';
 
+  static final _secure = SecureStorageService();
+
+  /// Test override — set this in setUp to control what getApiKey returns.
+  /// Accessible within the ai library for testing only.
+  static SecureStorageService? testSecureOverride;
+
   // 默认值
   static const String defaultBaseUrl = 'https://api.openai.com/v1';
   static const String defaultDeepSeekUrl = 'https://api.deepseek.com/v1';
-  static const String defaultTongyiUrl = 'https://dashscope.aliyuncs.com/api/v1';
-  static const String defaultGeminiUrl = 'https://generativelanguage.googleapis.com/v1beta';
+  static const String defaultTongyiUrl =
+      'https://dashscope.aliyuncs.com/api/v1';
+  static const String defaultGeminiUrl =
+      'https://generativelanguage.googleapis.com/v1beta';
   static const String defaultMiniMaxUrl = 'https://api.minimax.chat/v1';
   static const String defaultModel = 'gpt-3.5-turbo';
 
-  // 获取API密钥
+  // 获取API密钥（兼容接口；区分未配置与存储失败请用 readKey）
   static Future<String?> getApiKey() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_keyApiKey);
-    } catch (e) {
-      return null;
-    }
+    final storage = testSecureOverride ?? _secure;
+    final result = await storage.read(_keyApiKey);
+    if (result is SecureReadOk<String?>) return result.value;
+    return null; // storage error or unconfigured
   }
 
-  // 设置API密钥
+  // 设置API密钥（安全存储）
+  static Future<SecureStorageResult<void>> setApiKeySecure(String apiKey) async {
+    return _secure.write(_keyApiKey, apiKey);
+  }
+
+  // 兼容旧接口：迁移期同时写两份
   static Future<bool> setApiKey(String apiKey) async {
+    final result = await setApiKeySecure(apiKey);
+    if (result is! SecureWriteOk) return false;
+    // 同时写 SharedPreferences 保持向后兼容
     try {
       final prefs = await SharedPreferences.getInstance();
-      return await prefs.setString(_keyApiKey, apiKey);
-    } catch (e) {
-      return false;
-    }
+      await prefs.setString(_keyApiKey, apiKey);
+    } catch (_) { /* 忽略 SharedPreferences 写入失败 */ }
+    return true;
   }
 
   // 获取API基础URL
@@ -179,6 +193,7 @@ class AiConfigService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_keyApiKey);
+      await _secure.delete(_keyApiKey);
       await prefs.remove(_keyApiBaseUrl);
       await prefs.remove(_keyModel);
       return true;
@@ -188,35 +203,40 @@ class AiConfigService {
   }
 
   // 设置使用OpenAI
-  static Future<void> setOpenAI({required String apiKey, String model = 'gpt-3.5-turbo'}) async {
+  static Future<void> setOpenAI(
+      {required String apiKey, String model = 'gpt-3.5-turbo'}) async {
     await setApiKey(apiKey);
     await setApiBaseUrl(defaultBaseUrl);
     await setModel(model);
   }
 
   // 设置使用DeepSeek
-  static Future<void> setDeepSeek({required String apiKey, String model = 'deepseek-chat'}) async {
+  static Future<void> setDeepSeek(
+      {required String apiKey, String model = 'deepseek-chat'}) async {
     await setApiKey(apiKey);
     await setApiBaseUrl(defaultDeepSeekUrl);
     await setModel(model);
   }
 
   // 设置使用通义千问（Tongyi Qianwen）- 免费额度
-  static Future<void> setTongyi({required String apiKey, String model = 'qwen-turbo'}) async {
+  static Future<void> setTongyi(
+      {required String apiKey, String model = 'qwen-turbo'}) async {
     await setApiKey(apiKey);
     await setApiBaseUrl(defaultTongyiUrl);
     await setModel(model);
   }
 
   // 设置使用Gemini（Google）
-  static Future<void> setGemini({required String apiKey, String model = 'gemini-pro'}) async {
+  static Future<void> setGemini(
+      {required String apiKey, String model = 'gemini-pro'}) async {
     await setApiKey(apiKey);
     await setApiBaseUrl(defaultGeminiUrl);
     await setModel(model);
   }
 
   // 设置使用MiniMax
-  static Future<void> setMiniMax({required String apiKey, String model = 'abab6.5s-chat'}) async {
+  static Future<void> setMiniMax(
+      {required String apiKey, String model = 'abab6.5s-chat'}) async {
     await setApiKey(apiKey);
     await setApiBaseUrl(defaultMiniMaxUrl);
     await setModel(model);

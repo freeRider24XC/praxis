@@ -160,6 +160,7 @@ class _AiChatPageState extends State<AiChatPage> {
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => setState(() => _errorMessage = null),
+                    tooltip: '关闭',
                   ),
                 ],
               ),
@@ -599,6 +600,7 @@ class _AiChatPageState extends State<AiChatPage> {
                 : const Icon(Icons.send),
             onPressed: _isLoading ? null : _sendMessage,
             color: Theme.of(context).primaryColor,
+            tooltip: '发送消息',
           ),
         ],
       ),

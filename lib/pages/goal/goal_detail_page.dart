@@ -29,8 +29,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
   }
 
   Future<void> _loadData() async {
-    await DatabaseService.recalculateGoalProgress(widget.goalId);
-    final goal = DatabaseService.getGoalById(widget.goalId);
+    await GoalRepository.recalculateProgress(widget.goalId);
+    final goal = GoalRepository.getById(widget.goalId);
     if (goal == null) {
       setState(() {
         _goal = null;
@@ -40,11 +40,11 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
       return;
     }
 
-    final projects = DatabaseService.getAllProjects()
+    final projects = ProjectRepository.getAll()
         .where((project) => project.goalIds?.contains(goal.id) ?? false)
         .toList();
 
-    final todos = DatabaseService.getTodosByGoal(goal.id);
+    final todos = TodoRepository.getByGoal(goal.id);
 
     setState(() {
       _goal = goal;
@@ -73,6 +73,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                       await _loadData();
                     }
                   },
+            tooltip: '编辑目标',
           ),
         ],
       ),
@@ -177,8 +178,9 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
             style: DesignTokens.textStyle(
               fontSize: DesignTokens.fontSizeHeadlineSmall,
               fontWeight: DesignTokens.fontWeightBold,
-              color:
-                  isDark ? DesignTokens.onSurfaceDark : DesignTokens.onSurfaceLight,
+              color: isDark
+                  ? DesignTokens.onSurfaceDark
+                  : DesignTokens.onSurfaceLight,
             ),
           ),
           if (goal.description?.isNotEmpty ?? false) ...[
@@ -482,7 +484,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                 trailing: IconButton(
                   icon: const Icon(Icons.chevron_right),
                   onPressed: () async {
-                    await Get.to(() => ProjectDetailPage(projectId: project.id));
+                    await Get.to(
+                        () => ProjectDetailPage(projectId: project.id));
                     await _loadData();
                   },
                 ),
@@ -633,7 +636,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
     goal.status = GoalStatus.completed;
     goal.progress = 1.0;
     goal.updatedAt = DateTime.now();
-    await DatabaseService.updateGoal(goal);
+    await GoalRepository.update(goal);
     await XpService.awardGoalCompleted(goal);
     await _loadData();
   }
@@ -717,8 +720,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                           goal.currentValue = currentValue;
                         }
 
-                        await DatabaseService.updateGoal(goal);
-                        await DatabaseService.recalculateGoalProgress(goal.id);
+                        await GoalRepository.update(goal);
+                        await GoalRepository.recalculateProgress(goal.id);
                         Get.back();
                         await _loadData();
                       },
@@ -757,14 +760,12 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final maxHeight = MediaQuery.of(context).size.height * 0.7;
-        final projects = DatabaseService.getAllProjects();
+        final projects = ProjectRepository.getAll();
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return Container(
               decoration: BoxDecoration(
-                color: isDark
-                    ? DesignTokens.surfaceDark
-                    : Colors.white,
+                color: isDark ? DesignTokens.surfaceDark : Colors.white,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(DesignTokens.radiusXLarge),
                   topRight: Radius.circular(DesignTokens.radiusXLarge),
@@ -782,7 +783,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                         color: isDark
                             ? DesignTokens.borderDark
                             : DesignTokens.borderLight,
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusRound),
                       ),
                     ),
                     Padding(
@@ -805,8 +807,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                             _buildEmptyHint('暂无项目可关联', isDark)
                           else
                             ConstrainedBox(
-                              constraints:
-                                  BoxConstraints(maxHeight: maxHeight),
+                              constraints: BoxConstraints(maxHeight: maxHeight),
                               child: ListView(
                                 shrinkWrap: true,
                                 children: projects.map((project) {
@@ -833,7 +834,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () async {
-                                await DatabaseService.setGoalProjectLinks(
+                                await GoalRepository.setProjectLinks(
                                   goal.id,
                                   selectedIds.toList(),
                                 );
@@ -847,8 +848,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                                   vertical: DesignTokens.spacing3,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(DesignTokens.radiusXLarge),
+                                  borderRadius: BorderRadius.circular(
+                                      DesignTokens.radiusXLarge),
                                 ),
                               ),
                               child: const Text('完成'),
@@ -913,4 +914,3 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }
-

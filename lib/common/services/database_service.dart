@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:praxis/common/models/index.dart';
+import 'package:praxis/common/services/data_change_notifier.dart';
 
 class DatabaseService {
   static const String todoBoxName = 'todos';
@@ -46,6 +47,7 @@ class DatabaseService {
 
     // Open boxes
     await _openBoxes();
+    await _runMigrations();
     await _seedDefaults();
 
     _isInitialized = true;
@@ -82,6 +84,41 @@ class DatabaseService {
     final preferences = await SharedPreferences.getInstance();
     await preferences.clear();
     _isInitialized = false;
+  }
+
+  static const _schemaVersionKey = 'praxis_schema_version';
+  static const _currentSchemaVersion = 1;
+
+  /// Performs additive, idempotent migrations only. Existing legacy relation
+  /// fields are retained for read compatibility and are never destructively cleared.
+  static Future<void> _runMigrations() async {
+    final version = settingsBox.get(_schemaVersionKey, defaultValue: 0) as int;
+    if (version >= _currentSchemaVersion) return;
+
+    for (final goal in goalBox.values) {
+      for (final projectId in goal.projectIds ?? const <String>[]) {
+        final project = getProjectById(projectId);
+        if (project == null) continue;
+        final goalIds = <String>{...?project.goalIds, goal.id}.toList();
+        if (goalIds.length != project.goalIds?.length) {
+          project.goalIds = goalIds;
+          await project.save();
+        }
+      }
+    }
+
+    for (final project in projectBox.values) {
+      for (final todoId in project.todoIds ?? const <String>[]) {
+        final todo = getTodoById(todoId);
+        if (todo != null && todo.projectId == null) {
+          todo.projectId = project.id;
+          todo.domainId ??= project.domainId;
+          await todo.save();
+        }
+      }
+    }
+
+    await settingsBox.put(_schemaVersionKey, _currentSchemaVersion);
   }
 
   static void _registerAdapters() {
@@ -217,14 +254,22 @@ class DatabaseService {
   static Future<void> addTodo(Todo todo) async {
     todo.domainId ??= resolveDomainIdForTodo(todo);
     await todoBox.add(todo);
+    await _recalculateTodoRelations(todo);
+    DataChangeNotifier.notifyChange();
   }
 
   // 批量添加待办事项
   static Future<void> addTodos(List<Todo> todos) async {
+    final affectedProjectIds = <String>{};
+    final affectedGoalIds = <String>{};
     for (final todo in todos) {
       todo.domainId ??= resolveDomainIdForTodo(todo);
       await todoBox.add(todo);
+      if (todo.projectId != null) affectedProjectIds.add(todo.projectId!);
+      if (todo.goalId != null) affectedGoalIds.add(todo.goalId!);
     }
+    await _recalculateRelations(affectedProjectIds, affectedGoalIds);
+    DataChangeNotifier.notifyChange();
   }
 
   static List<Todo> getAllTodos() {
@@ -265,22 +310,26 @@ class DatabaseService {
   static Future<void> updateTodo(Todo todo) async {
     todo.domainId ??= resolveDomainIdForTodo(todo);
     await todo.save();
-    if (todo.projectId != null) {
-      await recalculateProjectProgress(todo.projectId!);
-    }
-    if (todo.goalId != null) {
-      await recalculateGoalProgress(todo.goalId!);
-    }
+    await _recalculateTodoRelations(todo);
+    DataChangeNotifier.notifyChange();
   }
 
   static Future<void> deleteTodo(Todo todo) async {
+    final projectId = todo.projectId;
+    final goalId = todo.goalId;
     await todo.delete();
+    await _recalculateRelations(
+      projectId == null ? const {} : {projectId},
+      goalId == null ? const {} : {goalId},
+    );
+    DataChangeNotifier.notifyChange();
   }
 
   // Goal operations
   static Future<void> addGoal(Goal goal) async {
     goal.domainId ??= getUserProfile().focusedDomainId;
     await goalBox.add(goal);
+    DataChangeNotifier.notifyChange();
   }
 
   static List<Goal> getAllGoals() {
@@ -307,10 +356,12 @@ class DatabaseService {
 
   static Future<void> updateGoal(Goal goal) async {
     await goal.save();
+    DataChangeNotifier.notifyChange();
   }
 
   static Future<void> deleteGoal(Goal goal) async {
     await goal.delete();
+    DataChangeNotifier.notifyChange();
   }
 
   /// 重新计算目标进度（优先使用数值，其次关联项目平均值）
@@ -324,9 +375,8 @@ class DatabaseService {
 
     if (hasValueTarget) {
       newProgress = (goal.currentValue! / goal.targetValue!).clamp(0.0, 1.0);
-    } else if (goal.projectIds != null && goal.projectIds!.isNotEmpty) {
-      final linkedProjects =
-          goal.projectIds!.map(getProjectById).whereType<Project>().toList();
+    } else {
+      final linkedProjects = _getProjectsForGoal(goalId);
       if (linkedProjects.isNotEmpty) {
         final total = linkedProjects.fold<double>(
           0,
@@ -350,6 +400,10 @@ class DatabaseService {
       project.domainId = primaryGoal?.domainId ?? project.domainId;
     }
     await projectBox.add(project);
+    for (final goalId in project.goalIds ?? const <String>[]) {
+      await recalculateGoalProgress(goalId);
+    }
+    DataChangeNotifier.notifyChange();
   }
 
   static List<Project> getAllProjects() {
@@ -372,10 +426,19 @@ class DatabaseService {
 
   static Future<void> updateProject(Project project) async {
     await project.save();
+    for (final goalId in project.goalIds ?? const <String>[]) {
+      await recalculateGoalProgress(goalId);
+    }
+    DataChangeNotifier.notifyChange();
   }
 
   static Future<void> deleteProject(Project project) async {
+    final goalIds = List<String>.from(project.goalIds ?? const <String>[]);
     await project.delete();
+    for (final goalId in goalIds) {
+      await recalculateGoalProgress(goalId);
+    }
+    DataChangeNotifier.notifyChange();
   }
 
   /// 根据关联任务完成度重新计算项目进度
@@ -383,8 +446,7 @@ class DatabaseService {
     final project = getProjectById(projectId);
     if (project == null) return;
 
-    final todos =
-        project.todoIds?.map(getTodoById).whereType<Todo>().toList() ?? [];
+    final todos = getTodosByProject(projectId);
 
     double progress = 0;
     if (todos.isNotEmpty) {
@@ -403,6 +465,33 @@ class DatabaseService {
     }
   }
 
+  static List<Project> _getProjectsForGoal(String goalId) {
+    return projectBox.values
+        .where((project) =>
+            (project.goalIds?.contains(goalId) ?? false) ||
+            (getGoalById(goalId)?.projectIds?.contains(project.id) ?? false))
+        .toList();
+  }
+
+  static Future<void> _recalculateTodoRelations(Todo todo) {
+    return _recalculateRelations(
+      todo.projectId == null ? const {} : {todo.projectId!},
+      todo.goalId == null ? const {} : {todo.goalId!},
+    );
+  }
+
+  static Future<void> _recalculateRelations(
+    Set<String> projectIds,
+    Set<String> goalIds,
+  ) async {
+    for (final projectId in projectIds) {
+      await recalculateProjectProgress(projectId);
+    }
+    for (final goalId in goalIds) {
+      await recalculateGoalProgress(goalId);
+    }
+  }
+
   /// 链接或解绑目标与项目（批量覆盖）
   static Future<void> setGoalProjectLinks(
     String goalId,
@@ -411,9 +500,8 @@ class DatabaseService {
     final goal = getGoalById(goalId);
     if (goal == null) return;
 
-    goal.projectIds = projectIds.isEmpty ? null : projectIds;
-    await goal.save();
-
+    // Project.goalIds is the canonical owner. Goal.projectIds remains read-only
+    // legacy data until a separately approved destructive cleanup.
     for (final project in projectBox.values) {
       final goalIds = List<String>.from(project.goalIds ?? []);
       final shouldContain = projectIds.contains(project.id);
@@ -431,6 +519,7 @@ class DatabaseService {
     }
 
     await recalculateGoalProgress(goalId);
+    DataChangeNotifier.notifyChange();
   }
 
   /// 将任务分配给项目（或取消）
@@ -441,7 +530,8 @@ class DatabaseService {
     final project = getProjectById(projectId);
     if (project == null) return;
 
-    final previousIds = List<String>.from(project.todoIds ?? []);
+    final previousIds =
+        getTodosByProject(projectId).map((todo) => todo.id).toList();
     final affectedProjectIds = <String>{projectId};
 
     // 需要移除的任务
@@ -466,15 +556,7 @@ class DatabaseService {
       if (todo == null) continue;
 
       if (todo.projectId != null && todo.projectId != projectId) {
-        final oldProject = getProjectById(todo.projectId!);
-        if (oldProject != null) {
-          final oldTodoIds = List<String>.from(oldProject.todoIds ?? []);
-          if (oldTodoIds.remove(id)) {
-            oldProject.todoIds = oldTodoIds.isEmpty ? null : oldTodoIds;
-            await oldProject.save();
-            affectedProjectIds.add(oldProject.id);
-          }
-        }
+        affectedProjectIds.add(todo.projectId!);
       }
 
       todo.projectId = projectId;
@@ -484,9 +566,6 @@ class DatabaseService {
         await recalculateGoalProgress(todo.goalId!);
       }
     }
-
-    project.todoIds = todoIds.isEmpty ? null : todoIds;
-    await project.save();
 
     for (final id in affectedProjectIds) {
       await recalculateProjectProgress(id);

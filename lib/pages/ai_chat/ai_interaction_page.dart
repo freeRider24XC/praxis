@@ -493,12 +493,12 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
         final isLastAiMessage = index == messages.length - 1 && 
                                  message.role == 'assistant' &&
                                  _pendingExtraction != null;
-        return _buildChatMessageItem(message, isDark, showExtraction: isLastAiMessage);
+        return _buildChatMessageItem(context, message, isDark, showExtraction: isLastAiMessage);
       },
     );
   }
 
-  Widget _buildChatMessageItem(ChatMessage message, bool isDark, {bool showExtraction = false}) {
+  Widget _buildChatMessageItem(BuildContext c, ChatMessage message, bool isDark, {bool showExtraction = false}) {
     final isUser = message.role == 'user';
     
     return Padding(
@@ -534,7 +534,7 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
               children: [
                 Container(
                   constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.75,
+                    maxWidth: _bubbleMaxWidth(c),
                   ),
                   padding: const EdgeInsets.all(DesignTokens.spacing4),
                   decoration: BoxDecoration(
@@ -571,7 +571,7 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
                 // 如果是AI消息且显示提取结果，添加确认卡片
                 if (showExtraction && _pendingExtraction != null) ...[
                   const SizedBox(height: DesignTokens.spacing3),
-                  _buildExtractionCard(isDark),
+                  _buildExtractionCard(c, isDark),
                 ],
               ],
             ),
@@ -597,12 +597,20 @@ class _AiInteractionPageState extends State<AiInteractionPage> {
     );
   }
 
-  Widget _buildExtractionCard(bool isDark) {
+    /// Returns the max width for a chat bubble based on screen size.
+  double _bubbleMaxWidth(BuildContext c) {
+    final screenWidth = MediaQuery.of(c).size.width;
+    if (screenWidth < 600) return screenWidth * 0.75; // mobile
+    if (screenWidth < 840) return 400; // tablet
+    return 500; // desktop+
+  }
+
+  Widget _buildExtractionCard(BuildContext c, bool isDark) {
     if (_pendingExtraction == null) return const SizedBox.shrink();
     
     return Container(
       constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.75,
+        maxWidth: _bubbleMaxWidth(c),
       ),
       padding: const EdgeInsets.all(DesignTokens.spacing4),
       decoration: BoxDecoration(

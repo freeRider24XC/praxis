@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:praxis/common/style/design_tokens.dart';
-import 'package:praxis/common/services/database_service.dart';
 import 'package:praxis/common/services/calendar_sync_service.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/models/todo.dart';
@@ -26,7 +25,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
   @override
   void initState() {
     super.initState();
-    DatabaseService.recalculateProjectProgress(widget.projectId);
+    ProjectRepository.recalculateProgress(widget.projectId);
   }
 
   Widget _buildRoadmapEmptyHint(bool isDark) {
@@ -140,10 +139,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
   Widget _buildRouteTaskCard(Todo todo, bool isDark) {
     final project = todo.projectId != null
-        ? DatabaseService.getProjectById(todo.projectId!)
+        ? ProjectRepository.getById(todo.projectId!)
         : null;
     final goal =
-        todo.goalId != null ? DatabaseService.getGoalById(todo.goalId!) : null;
+        todo.goalId != null ? GoalRepository.getById(todo.goalId!) : null;
     final attribute = TaskAttributes.extractAttributeFromTags(todo.tags);
 
     return Container(
@@ -326,18 +325,18 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
   }
 
   Future<void> _handleTaskToggle(Todo todo) async {
-    final original = DatabaseService.getTodoById(todo.id);
+    final original = TodoRepository.getById(todo.id);
     if (original == null) return;
     original.isDone = !original.isDone;
     original.completedAt = original.isDone ? DateTime.now() : null;
     original.updatedAt = DateTime.now();
-    await DatabaseService.updateTodo(original);
+    await TodoRepository.update(original);
     await CalendarSyncService.updateTodo(original);
     if (original.projectId != null) {
-      await DatabaseService.recalculateProjectProgress(original.projectId!);
+      await ProjectRepository.recalculateProgress(original.projectId!);
     }
     if (original.goalId != null) {
-      await DatabaseService.recalculateGoalProgress(original.goalId!);
+      await GoalRepository.recalculateProgress(original.goalId!);
     }
     await _refreshData();
   }
@@ -370,11 +369,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
     project.status = ProjectStatus.completed;
     project.updatedAt = DateTime.now();
-    await DatabaseService.updateProject(project);
+    await ProjectRepository.update(project);
     await XpService.awardProjectCompleted(project);
     if (project.goalIds != null) {
       for (final goalId in project.goalIds!) {
-        await DatabaseService.recalculateGoalProgress(goalId);
+        await GoalRepository.recalculateProgress(goalId);
       }
     }
     await _refreshData();
@@ -394,7 +393,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     todos.insert(newIndex, movedTodo);
     final reorderedIds = todos.map((todo) => todo.id).toList();
 
-    final latestProject = DatabaseService.getProjectById(project.id);
+    final latestProject = ProjectRepository.getById(project.id);
     if (latestProject == null) return;
 
     if (phase != null) {
@@ -421,8 +420,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     }
 
     latestProject.updatedAt = DateTime.now();
-    await DatabaseService.updateProject(latestProject);
-    await DatabaseService.recalculateProjectProgress(latestProject.id);
+    await ProjectRepository.update(latestProject);
+    await ProjectRepository.recalculateProgress(latestProject.id);
     await _refreshData();
   }
 
@@ -467,7 +466,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final project = DatabaseService.getProjectById(widget.projectId);
+    final project = ProjectRepository.getById(widget.projectId);
     if (project == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('项目不存在')),
@@ -479,7 +478,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     final todos = project.todoIds != null
         ? project.todoIds!
             .map((id) {
-              final todo = DatabaseService.getTodoById(id);
+              final todo = TodoRepository.getById(id);
               return todo;
             })
             .whereType<Todo>()
@@ -496,10 +495,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     final remainingTodoIds = (project.todoIds ?? [])
         .where((id) => !phaseTodoIds.contains(id))
         .toList();
-    final remainingTodos = remainingTodoIds
-        .map(DatabaseService.getTodoById)
-        .whereType<Todo>()
-        .toList();
+    final remainingTodos =
+        remainingTodoIds.map(TodoRepository.getById).whereType<Todo>().toList();
 
     return Scaffold(
       backgroundColor:
@@ -572,8 +569,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                         vertical: DesignTokens.spacing1,
                       ),
                       decoration: BoxDecoration(
-                        color:
-                            DesignTokens.statusCompleted.withOpacity(0.12),
+                        color: DesignTokens.statusCompleted.withOpacity(0.12),
                         borderRadius:
                             BorderRadius.circular(DesignTokens.radiusRound),
                       ),
@@ -824,7 +820,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                         final phase = entry.value;
                         final phaseTodos = phase.todoIds != null
                             ? phase.todoIds!
-                                .map((id) => DatabaseService.getTodoById(id))
+                                .map((id) => TodoRepository.getById(id))
                                 .whereType<Todo>()
                                 .toList()
                             : <Todo>[];
@@ -1116,7 +1112,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
 
   void _showManageTasks(Project project) {
     final selectedIds = <String>{...?project.todoIds};
-    final allTodos = DatabaseService.getAllTodos();
+    final allTodos = TodoRepository.getAll();
 
     showModalBottomSheet(
       context: context,
@@ -1212,7 +1208,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () async {
-                            await DatabaseService.setProjectTodoLinks(
+                            await ProjectRepository.setTodoLinks(
                               project.id,
                               selectedIds.toList(),
                             );

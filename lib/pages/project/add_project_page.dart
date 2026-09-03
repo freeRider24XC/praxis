@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/models/project.dart';
-import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/repositories/index.dart';
 import 'package:praxis/common/services/domain_service.dart';
 import 'package:praxis/common/services/error_service.dart';
 import 'package:praxis/common/services/logger_service.dart';
@@ -51,7 +51,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
   @override
   void initState() {
     super.initState();
-    _goals = DatabaseService.getAllGoals();
+    _goals = GoalRepository.getAll();
     _selectedGoalId = widget.initialGoalId;
     _selectedDomainId =
         widget.initialDomainId ?? _goalDomainId(widget.initialGoalId);
@@ -84,7 +84,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
 
   String? _goalDomainId(String? goalId) {
     if (goalId == null) return null;
-    return DatabaseService.getGoalById(goalId)?.domainId;
+    return GoalRepository.getById(goalId)?.domainId;
   }
 
   Future<void> _selectGoal() async {
@@ -216,8 +216,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
         domainId: _selectedDomainId,
       );
 
-      await DatabaseService.addProject(project);
-      await DatabaseService.setGoalProjectLinks(_selectedGoalId!, [project.id]);
+      await ProjectRepository.add(project);
+      await GoalRepository.setProjectLinks(_selectedGoalId!, [project.id]);
 
       if (mounted) {
         Get.back(result: true);
@@ -242,7 +242,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
     final domains = DomainService.getDomains();
     final selectedGoal = _selectedGoalId == null
         ? null
-        : DatabaseService.getGoalById(_selectedGoalId!);
+        : GoalRepository.getById(_selectedGoalId!);
     return Scaffold(
       appBar: AppBar(
         title: const Text('新建项目'),

@@ -258,9 +258,11 @@ class _SchedulePageState extends State<SchedulePage> {
                             Icons.chevron_left,
                             color: isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight,
                           ),
+                          tooltip: '前一天',
                         ),
                         IconButton(
                           onPressed: _onForward,
+                          tooltip: '后一天',
                           icon: Icon(
                             Icons.chevron_right,
                             color: isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight,

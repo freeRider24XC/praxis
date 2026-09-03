@@ -50,6 +50,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 IconButton(
                   icon: const Icon(Icons.settings_outlined),
                   onPressed: () => Get.to(() => const SettingsPage()),
+                  tooltip: '设置',
                 ),
               ],
             ),

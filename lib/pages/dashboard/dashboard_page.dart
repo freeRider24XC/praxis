@@ -29,19 +29,20 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    DataChangeNotifier.revision.addListener(_loadData);
     _loadData();
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadData();
+  void dispose() {
+    DataChangeNotifier.revision.removeListener(_loadData);
+    super.dispose();
   }
 
   Future<void> _loadData() async {
     final profile = ProfileService.getProfile();
-    final goals = DatabaseService.getAllGoals();
-    final projects = DatabaseService.getAllProjects();
+    final goals = GoalRepository.getAll();
+    final projects = ProjectRepository.getAll();
     final xpEvents = DatabaseService.getAllXpEvents().take(4).toList();
     final review = DatabaseService.getDailyReviewByDate(DateTime.now());
 
@@ -83,10 +84,10 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     final todayTodos = currentProject != null
-        ? DatabaseService.getTodosByProject(currentProject.id)
+        ? TodoRepository.getByProject(currentProject.id)
             .where((todo) => !todo.isDone)
             .toList()
-        : DatabaseService.getTopTodosForToday(limit: 5);
+        : TodoRepository.getTopForToday(limit: 5);
 
     todayTodos.sort((a, b) {
       final priorityCompare = b.priority.value.compareTo(a.priority.value);
@@ -111,7 +112,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _toggleTodo(Todo todo) async {
     final wasDone = todo.isDone;
     todo.toggleDone();
-    await DatabaseService.updateTodo(todo);
+    await TodoRepository.update(todo);
     if (!wasDone && todo.isDone) {
       await XpService.awardTodoCompleted(todo);
     }
@@ -249,7 +250,10 @@ class _DashboardPageState extends State<DashboardPage> {
             : '给当前项目补一个事项';
 
     final action = !hasGoal
-        ? null
+        ? () async {
+            await Get.to(() => const GoalPage());
+            await _loadData();
+          }
         : (!hasProject ? _createProjectForGoal : _createTodoForProject);
 
     final actionLabel = !hasGoal ? '去目标页' : (!hasProject ? '新建项目' : '新建事项');
@@ -306,11 +310,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           const SizedBox(width: DesignTokens.spacing3),
           TextButton(
-            onPressed: action ??
-                () async {
-                  await Get.to(() => const GoalPage());
-                  await _loadData();
-                },
+            onPressed: action,
             child: Text(actionLabel),
           ),
         ],
@@ -628,7 +628,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildTodoRow(bool isDark, Todo todo) {
     final project = todo.projectId == null
         ? null
-        : DatabaseService.getProjectById(todo.projectId!);
+        : ProjectRepository.getById(todo.projectId!);
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.spacing3),
       child: InkWell(
@@ -942,7 +942,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   int _countOpenTodos(Project project) {
-    return DatabaseService.getTodosByProject(project.id)
+    return TodoRepository.getByProject(project.id)
         .where((todo) => !todo.isDone)
         .length;
   }

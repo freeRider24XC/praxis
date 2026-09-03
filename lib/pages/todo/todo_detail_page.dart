@@ -29,15 +29,14 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
   }
 
   void _loadTodo() {
-    final todo = DatabaseService.getTodoById(widget.todoId);
+    final todo = TodoRepository.getById(widget.todoId);
     setState(() {
       _todo = todo;
       _project = (todo?.projectId != null)
-          ? DatabaseService.getProjectById(todo!.projectId!)
+          ? ProjectRepository.getById(todo!.projectId!)
           : null;
-      _goal = (todo?.goalId != null)
-          ? DatabaseService.getGoalById(todo!.goalId!)
-          : null;
+      _goal =
+          (todo?.goalId != null) ? GoalRepository.getById(todo!.goalId!) : null;
     });
   }
 
@@ -61,6 +60,7 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
                       _loadTodo();
                     }
                   },
+            tooltip: '编辑待办',
           ),
         ],
       ),
@@ -110,9 +110,8 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
                 onChanged: (value) async {
                   final wasDone = todo.isDone;
                   todo.isDone = value ?? false;
-                  todo.completedAt =
-                      todo.isDone ? DateTime.now() : null;
-                  await DatabaseService.updateTodo(todo);
+                  todo.completedAt = todo.isDone ? DateTime.now() : null;
+                  await TodoRepository.update(todo);
                   if (!wasDone && todo.isDone) {
                     await XpService.awardTodoCompleted(todo);
                   }

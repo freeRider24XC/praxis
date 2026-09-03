@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/models/goal.dart';
-import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/repositories/index.dart';
 import 'package:praxis/common/services/domain_service.dart';
 import 'package:praxis/common/services/error_service.dart';
 import 'package:praxis/common/services/logger_service.dart';
@@ -49,7 +49,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
     _loadProjectsAndGoals();
     _selectedProjectId = widget.initialProjectId;
     if (_selectedProjectId != null) {
-      final project = DatabaseService.getProjectById(_selectedProjectId!);
+      final project = ProjectRepository.getById(_selectedProjectId!);
       if (project != null) {
         _selectedGoalId =
             project.goalIds?.isNotEmpty == true ? project.goalIds!.first : null;
@@ -60,8 +60,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
 
   void _loadProjectsAndGoals() {
     setState(() {
-      _projects = DatabaseService.getAllProjects();
-      _goals = DatabaseService.getAllGoals();
+      _projects = ProjectRepository.getAll();
+      _goals = GoalRepository.getAll();
     });
   }
 
@@ -205,7 +205,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
       setState(() {
         _selectedProjectId = selected.isEmpty ? null : selected;
         if (_selectedProjectId != null) {
-          final project = DatabaseService.getProjectById(_selectedProjectId!);
+          final project = ProjectRepository.getById(_selectedProjectId!);
           _selectedGoalId = project?.goalIds?.isNotEmpty == true
               ? project!.goalIds!.first
               : null;
@@ -356,14 +356,14 @@ class _AddTodoPageState extends State<AddTodoPage> {
         domainId: _selectedDomainId,
       );
 
-      await DatabaseService.addTodo(todo);
-      final project = DatabaseService.getProjectById(_selectedProjectId!);
+      await TodoRepository.add(todo);
+      final project = ProjectRepository.getById(_selectedProjectId!);
       if (project != null) {
         final todoIds = List<String>.from(project.todoIds ?? []);
         if (!todoIds.contains(todo.id)) {
           todoIds.add(todo.id);
         }
-        await DatabaseService.setProjectTodoLinks(project.id, todoIds);
+        await ProjectRepository.setTodoLinks(project.id, todoIds);
       }
 
       // 同步到日历（如果启用）
@@ -395,10 +395,10 @@ class _AddTodoPageState extends State<AddTodoPage> {
     final domains = DomainService.getDomains();
     final selectedProject = _selectedProjectId == null
         ? null
-        : DatabaseService.getProjectById(_selectedProjectId!);
+        : ProjectRepository.getById(_selectedProjectId!);
     final selectedGoal = _selectedGoalId == null
         ? null
-        : DatabaseService.getGoalById(_selectedGoalId!);
+        : GoalRepository.getById(_selectedGoalId!);
 
     return Scaffold(
       backgroundColor:
@@ -569,6 +569,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: _addTag,
+                        tooltip: '添加标签',
                       ),
                     ],
                   ),
