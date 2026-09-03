@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:praxis/common/models/index.dart';
 
 class DatabaseService {
@@ -52,6 +53,36 @@ class DatabaseService {
 
   // Check if database is initialized
   static bool get isInitialized => _isInitialized;
+
+  /// Deletes all locally stored Praxis data after an explicit user confirmation.
+  /// Callers must never invoke this automatically during bootstrap recovery.
+  static Future<void> resetLocalData() async {
+    const boxNames = [
+      todoBoxName,
+      goalBoxName,
+      projectBoxName,
+      settingsBoxName,
+      focusSessionBoxName,
+      lifeDomainBoxName,
+      userProfileBoxName,
+      xpEventBoxName,
+      dailyReviewBoxName,
+      rewardTemplateBoxName,
+      rewardRedemptionBoxName,
+      rewardTodoBoxName,
+    ];
+
+    for (final boxName in boxNames) {
+      if (Hive.isBoxOpen(boxName)) {
+        await Hive.box(boxName).close();
+      }
+      await Hive.deleteBoxFromDisk(boxName);
+    }
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.clear();
+    _isInitialized = false;
+  }
 
   static void _registerAdapters() {
     // Todo adapters
@@ -152,8 +183,10 @@ class DatabaseService {
     userProfileBox = await Hive.openBox<UserProfile>(userProfileBoxName);
     xpEventBox = await Hive.openBox<XpEvent>(xpEventBoxName);
     dailyReviewBox = await Hive.openBox<DailyReview>(dailyReviewBoxName);
-    rewardTemplateBox = await Hive.openBox<RewardTemplate>(rewardTemplateBoxName);
-    rewardRedemptionBox = await Hive.openBox<RewardRedemption>(rewardRedemptionBoxName);
+    rewardTemplateBox =
+        await Hive.openBox<RewardTemplate>(rewardTemplateBoxName);
+    rewardRedemptionBox =
+        await Hive.openBox<RewardRedemption>(rewardRedemptionBoxName);
     rewardTodoBox = await Hive.openBox<RewardTodo>(rewardTodoBoxName);
   }
 
@@ -812,7 +845,8 @@ class DatabaseService {
   }
 
   /// 按 source + sourceId 查找 XP 事件，用于结算动作的幂等校验。
-  static XpEvent? findXpEvent({required String source, required String sourceId}) {
+  static XpEvent? findXpEvent(
+      {required String source, required String sourceId}) {
     try {
       return xpEventBox.values.firstWhere(
         (event) => event.source == source && event.sourceId == sourceId,
