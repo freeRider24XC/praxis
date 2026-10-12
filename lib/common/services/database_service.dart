@@ -1032,4 +1032,125 @@ class DatabaseService {
     }
     return null;
   }
+
+  // ============= 链接与编排（合并自本地 v1 基础） =============
+
+  static String? getProjectPrimaryGoalId(Project project) {
+    final goalIds = project.goalIds;
+    if (goalIds == null || goalIds.isEmpty) {
+      return null;
+    }
+    return goalIds.first;
+  }
+
+  static Goal? getProjectPrimaryGoal(Project project) {
+    final goalId = getProjectPrimaryGoalId(project);
+    if (goalId == null) return null;
+    return getGoalById(goalId);
+  }
+
+  static List<TodoScheduleSlot> getScheduleSlotsForDate(DateTime date) {
+    return scheduleSlotBox.values.where((slot) {
+      return slot.scheduledDate.year == date.year &&
+          slot.scheduledDate.month == date.month &&
+          slot.scheduledDate.day == date.day;
+    }).toList()
+      ..sort((a, b) {
+        final aStart = a.scheduledStart ?? a.scheduledDate;
+        final bStart = b.scheduledStart ?? b.scheduledDate;
+        return aStart.compareTo(bStart);
+      });
+  }
+
+  static List<TodoScheduleSlot> getScheduleSlotsBetween(
+    DateTime start,
+    DateTime end,
+  ) {
+    return scheduleSlotBox.values.where((slot) {
+      return !slot.scheduledDate.isBefore(start) &&
+          slot.scheduledDate.isBefore(end);
+    }).toList();
+  }
+
+  static Future<void> addOrUpdateScheduleSlot(TodoScheduleSlot slot) async {
+    final existing =
+        scheduleSlotBox.values.where((item) => item.todoId == slot.todoId);
+    if (existing.isEmpty) {
+      await scheduleSlotBox.add(slot);
+      return;
+    }
+    final first = existing.first;
+    first.scheduledDate = slot.scheduledDate;
+    first.scheduledStart = slot.scheduledStart;
+    first.scheduledEnd = slot.scheduledEnd;
+    first.status = slot.status;
+    first.source = slot.source;
+    first.updatedAt = DateTime.now();
+    await first.save();
+  }
+
+  // ============= 奖励系统 =============
+
+  static int getPraisePointBalance() {
+    return getUserProfile().praisePointsBalance;
+  }
+
+  static List<RewardTemplate> getRewardTemplates() {
+    final items = rewardTemplateBox.values.toList();
+    items.sort(
+        (a, b) => a.priceInPraisePoints.compareTo(b.priceInPraisePoints));
+    return items;
+  }
+
+  static Future<void> addRewardTemplate(RewardTemplate template) async {
+    await rewardTemplateBox.add(template);
+  }
+
+  static List<RewardRedemption> getRewardRedemptions() {
+    final items = rewardRedemptionBox.values.toList();
+    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return items;
+  }
+
+  static RewardRedemption? getRewardRedemptionById(String id) {
+    try {
+      return rewardRedemptionBox.values.firstWhere((item) => item.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> addRewardRedemption(RewardRedemption redemption) async {
+    await rewardRedemptionBox.add(redemption);
+  }
+
+  static Future<void> updateRewardRedemption(RewardRedemption redemption) async {
+    await redemption.save();
+  }
+
+  static List<RewardTodo> getPendingRewardTodos() {
+    final items = rewardTodoBox.values
+        .where((item) => item.status == RewardTodoStatus.pending)
+        .toList();
+    items.sort((a, b) {
+      final aDue = a.dueDate ?? a.createdAt;
+      final bDue = b.dueDate ?? b.createdAt;
+      return aDue.compareTo(bDue);
+    });
+    return items;
+  }
+
+  static List<RewardTodo> getAllRewardTodos() {
+    final items = rewardTodoBox.values.toList();
+    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return items;
+  }
+
+  static Future<void> addRewardTodo(RewardTodo rewardTodo) async {
+    await rewardTodoBox.add(rewardTodo);
+  }
+
+  static Future<void> updateRewardTodo(RewardTodo rewardTodo) async {
+    await rewardTodo.save();
+  }
 }

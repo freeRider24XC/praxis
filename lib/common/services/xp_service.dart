@@ -111,7 +111,6 @@ class XpService {
       description: '完成每日复盘',
       markActiveAt: review.date,
     );
-    await RewardService.awardForDailyReview(review);
   }
 
   static Future<void> _awardXp({

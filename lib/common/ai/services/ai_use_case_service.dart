@@ -52,9 +52,11 @@ class AiSuggestionResult {
 
 class AiUseCaseService {
   AiUseCaseService({AiProvider? provider})
-      : _provider = provider ?? OpenAIProvider();
+      : _provider = provider ?? OpenAIProvider(),
+        _managedAiService = const ManagedAiService();
 
   final AiProvider _provider;
+  final ManagedAiService _managedAiService;
 
   Future<AiGoalPlanDraft> planGoal({
     required String goalText,

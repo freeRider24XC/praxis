@@ -43,7 +43,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final levelXp = XpService.xpIntoCurrentLevel(profile.totalXp);
     final levelMax = XpService.xpNeededWithinCurrentLevel(profile.totalXp);
     final progress = levelMax == 0 ? 0.0 : (levelXp / levelMax).clamp(0.0, 1.0);
-    final praisePoints = RewardService.getPraisePointsBalance();
+    final praisePoints = DatabaseService.getPraisePointBalance();
     final pendingRewardTodos = DatabaseService.getPendingRewardTodos().length;
     final authEnabled = AuthService.isEnabled;
     final currentUser = AuthService.currentUser;

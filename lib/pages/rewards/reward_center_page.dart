@@ -24,13 +24,13 @@ class _RewardCenterPageState extends State<RewardCenterPage> {
   void _load() {
     setState(() {
       _templates = DatabaseService.getRewardTemplates();
-      _balance = RewardService.getPraisePointsBalance();
+      _balance = DatabaseService.getPraisePointBalance();
     });
   }
 
   Future<void> _redeem(RewardTemplate template) async {
     try {
-      await RewardService.redeemReward(template);
+      await RewardService.exchange(template);
       _load();
       if (!mounted) return;
       Get.snackbar('兑换成功', '已生成奖励待办，记得真正去兑现。');

@@ -38,7 +38,9 @@ class _AddTodoPageState extends State<AddTodoPage> {
   final List<String> _tags = [];
   String? _selectedProjectId;
   String? _selectedDomainId;
+  String? _selectedGoalId;
   List<Project> _projects = [];
+  List<Goal> _goals = [];
 
   @override
   void initState() {

@@ -79,9 +79,9 @@ class _RewardTodosPageState extends State<RewardTodosPage> {
                                     : DesignTokens.onSurfaceLight,
                               ),
                             ),
-                            if ((item.description ?? '').isNotEmpty) ...[
+                            if ((item.notes ?? '').isNotEmpty) ...[
                               const SizedBox(height: DesignTokens.spacing2),
-                              Text(item.description!),
+                              Text(item.notes!),
                             ],
                           ],
                         ),

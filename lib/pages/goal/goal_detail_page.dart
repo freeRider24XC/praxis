@@ -656,16 +656,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                       ),
                     ],
                   ),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: () async {
-                    await Get.to(
-                        () => ProjectDetailPage(projectId: project.id));
-                    await _loadData();
-                  },
-                ),
-              ),
+                );
+              },
             ),
         ],
       ),
