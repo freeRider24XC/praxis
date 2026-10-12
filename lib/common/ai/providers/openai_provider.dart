@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:praxis/common/ai/services/ai_config_service.dart';
+import 'ai_provider.dart';
 
 class ChatMessage {
   final String role; // 'user', 'assistant', 'system'
@@ -21,7 +23,37 @@ class ChatMessage {
       );
 }
 
-class OpenAIProvider {
+class OpenAIProvider implements AiProvider {
+  OpenAIProvider({http.Client? client}) : _client = client ?? http.Client();
+
+  final http.Client _client;
+  static const _maxRequestAttempts = 3;
+
+  Future<http.Response> _postWithRetry(
+    Uri url, {
+    required Map<String, String> headers,
+    required String body,
+    required Duration timeout,
+  }) async {
+    for (var attempt = 0; attempt < _maxRequestAttempts; attempt++) {
+      try {
+        final response = await _client
+            .post(url, headers: headers, body: body)
+            .timeout(timeout);
+        final retryable =
+            response.statusCode == 429 || response.statusCode >= 500;
+        if (!retryable || attempt == _maxRequestAttempts - 1) return response;
+        await Future<void>.delayed(
+            Duration(milliseconds: 200 * (1 << attempt)));
+      } on TimeoutException {
+        if (attempt == _maxRequestAttempts - 1) rethrow;
+        await Future<void>.delayed(
+            Duration(milliseconds: 200 * (1 << attempt)));
+      }
+    }
+    throw StateError('AI request attempts exhausted');
+  }
+
   // 系统提示词（基础内容）
   static const String _baseSystemPrompt = '''你是Praxis AI助手，帮助用户拆解目标、制定任务、安排日程。
 
@@ -74,11 +106,13 @@ class OpenAIProvider {
   }
 
   // 检查是否已配置
+  @override
   Future<bool> isConfigured() async {
     return await AiConfigService.isConfigured();
   }
 
   // 发送聊天消息
+  @override
   Future<String> chat(
     String message,
     List<ChatMessage> history, {
@@ -187,18 +221,11 @@ class OpenAIProvider {
     debugPrint('🔵 发送请求到: $url');
 
     try {
-      final response = await http
-          .post(
+      final response = await _postWithRetry(
         url,
         headers: headers,
         body: jsonEncode(requestBody),
-      )
-          .timeout(
-        Duration(seconds: isTongyi ? 60 : 30), // 通义千问可能需要更长时间
-        onTimeout: () {
-          debugPrint('❌ 请求超时 - URL: $url, 超时时间: ${isTongyi ? 60 : 30}秒');
-          throw Exception('请求超时，请检查网络连接。如果使用通义千问，可能需要更长时间');
-        },
+        timeout: Duration(seconds: isTongyi ? 60 : 30),
       );
 
       debugPrint('🔵 响应状态码: ${response.statusCode}');
@@ -284,6 +311,7 @@ class OpenAIProvider {
     }
   }
 
+  @override
   Future<String> structuredPlanningChat(
     String message, {
     List<ChatMessage> history = const [],
@@ -296,6 +324,7 @@ class OpenAIProvider {
   }
 
   // 测试连接
+  @override
   Future<bool> testConnection() async {
     try {
       final apiKey = await AiConfigService.getApiKey();
@@ -357,17 +386,11 @@ class OpenAIProvider {
         };
       }
 
-      final response = await http
-          .post(
+      final response = await _postWithRetry(
         url,
         headers: headers,
         body: jsonEncode(requestBody),
-      )
-          .timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('请求超时，请检查网络连接');
-        },
+        timeout: const Duration(seconds: 10),
       );
 
       if (response.statusCode == 200) {

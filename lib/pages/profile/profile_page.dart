@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:praxis/common/i18n/app_strings.dart';
+import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/pages/auth/sign_in_page.dart';
@@ -73,6 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 IconButton(
                   icon: const Icon(Icons.settings_outlined),
                   onPressed: () => Get.to(() => const SettingsPage()),
+                  tooltip: '设置',
                 ),
               ],
             ),
@@ -239,30 +242,154 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
             const SizedBox(height: DesignTokens.spacing6),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Get.to(() => const RewardCenterPage()),
-                    child: const Text('奖励中心'),
-                  ),
-                ),
-                const SizedBox(width: DesignTokens.spacing3),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Get.to(() => const RewardTodosPage()),
-                    child: const Text('奖励待办'),
-                  ),
-                ),
-              ],
-            ),
+            _buildRewardEntry(profile.praisePointsBalance, isDark),
             const SizedBox(height: DesignTokens.spacing3),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Get.to(() => const SchedulePage()),
-                child: const Text('查看本周编排'),
+            _buildRewardTodoEntry(isDark),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRewardTodoEntry(bool isDark) {
+    final pendingCount = DatabaseService.rewardTodoBox.values
+        .where((t) =>
+            t.status == RewardTodoStatus.pending ||
+            t.status == RewardTodoStatus.expired)
+        .length;
+    return InkWell(
+      onTap: () => Get.toNamed('/reward/todo'),
+      borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+      child: Container(
+        padding: const EdgeInsets.all(DesignTokens.spacing5),
+        decoration: BoxDecoration(
+          color: isDark ? DesignTokens.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+          border: Border.all(
+            color: isDark ? DesignTokens.borderDark : DesignTokens.borderLight,
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: DesignTokens.statusActive.withOpacity(0.15),
+                shape: BoxShape.circle,
               ),
+              child: const Icon(
+                Icons.redeem,
+                color: DesignTokens.statusActive,
+              ),
+            ),
+            const SizedBox(width: DesignTokens.spacing4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.rewardEntryTodoCta.tr,
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeBodyLarge,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: isDark
+                          ? DesignTokens.onSurfaceDark
+                          : DesignTokens.onSurfaceLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    pendingCount > 0
+                        ? '$pendingCount ${AppStrings.rewardTodoGroupPending.tr}'
+                        : AppStrings.rewardTodoEmptyHint.tr,
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: DesignTokens.textSecondaryLight,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRewardEntry(int balance, bool isDark) {
+    return InkWell(
+      onTap: () => Get.toNamed('/reward/shop'),
+      borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+      child: Container(
+        padding: const EdgeInsets.all(DesignTokens.spacing5),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              DesignTokens.statusCompleted.withOpacity(0.15),
+              DesignTokens.secondaryPurple.withOpacity(0.10),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusXLarge),
+          border: Border.all(
+            color: DesignTokens.statusCompleted.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: DesignTokens.statusCompleted.withOpacity(0.18),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.redeem,
+                color: DesignTokens.statusCompleted,
+              ),
+            ),
+            const SizedBox(width: DesignTokens.spacing4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.rewardEntryCta.tr,
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeBodyLarge,
+                      fontWeight: DesignTokens.fontWeightBold,
+                      color: isDark
+                          ? DesignTokens.onSurfaceDark
+                          : DesignTokens.onSurfaceLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${AppStrings.rewardBalanceLabel.tr} · $balance',
+                    style: DesignTokens.textStyle(
+                      fontSize: DesignTokens.fontSizeLabelSmall,
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: DesignTokens.textSecondaryLight,
             ),
           ],
         ),

@@ -36,13 +36,14 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    DataChangeNotifier.revision.addListener(_loadData);
     _loadData();
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadData();
+  void dispose() {
+    DataChangeNotifier.revision.removeListener(_loadData);
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -96,7 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     final todayTodos = currentProject != null
-        ? DatabaseService.getTodosByProject(currentProject.id)
+        ? TodoRepository.getByProject(currentProject.id)
             .where((todo) => !todo.isDone)
             .toList()
         : repository.getRecommendedTodosForToday(limit: 5);
@@ -275,7 +276,10 @@ class _DashboardPageState extends State<DashboardPage> {
             : '给当前项目补一个事项';
 
     final action = !hasGoal
-        ? null
+        ? () async {
+            await Get.to(() => const GoalPage());
+            await _loadData();
+          }
         : (!hasProject ? _createProjectForGoal : _createTodoForProject);
 
     final actionLabel = !hasGoal ? '去目标页' : (!hasProject ? '新建项目' : '新建事项');
@@ -332,11 +336,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           const SizedBox(width: DesignTokens.spacing3),
           TextButton(
-            onPressed: action ??
-                () async {
-                  await Get.to(() => const GoalPage());
-                  await _loadData();
-                },
+            onPressed: action,
             child: Text(actionLabel),
           ),
         ],
@@ -930,6 +930,225 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Widget _buildCurrentGoalCard(bool isDark) {
+    final goal = _currentGoal;
+    return _buildSectionCard(
+      isDark: isDark,
+      title: '当前主目标',
+      actionLabel: goal == null ? null : '查看详情',
+      onActionTap: goal == null
+          ? null
+          : () async {
+              await Get.to(() => GoalDetailPage(goalId: goal.id));
+              await _loadData();
+            },
+      child: goal == null
+          ? _buildEmptyState(
+              isDark: isDark,
+              text: '还没有明确主目标，先去确定这阶段最想推进的结果。',
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  goal.title,
+                  style: DesignTokens.textStyle(
+                    fontSize: DesignTokens.fontSizeTitleLarge,
+                    fontWeight: DesignTokens.fontWeightBold,
+                    color: isDark
+                        ? DesignTokens.onSurfaceDark
+                        : DesignTokens.onSurfaceLight,
+                  ),
+                ),
+                if (goal.description?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: DesignTokens.spacing2),
+                  Text(
+                    goal.description!,
+                    style: DesignTokens.textStyle(
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: DesignTokens.spacing4),
+                _buildProgressBlock(
+                  isDark: isDark,
+                  progress: goal.progress,
+                  meta:
+                      '${goal.status.displayName} · 截止 ${goal.targetDate.month}/${goal.targetDate.day}',
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildCurrentProjectCard(bool isDark) {
+    final project = _currentProject;
+    return _buildSectionCard(
+      isDark: isDark,
+      title: '当前推进项目',
+      actionLabel: project == null ? null : '查看详情',
+      onActionTap: project == null
+          ? null
+          : () async {
+              await Get.to(() => ProjectDetailPage(projectId: project.id));
+              await _loadData();
+            },
+      child: project == null
+          ? _buildEmptyState(
+              isDark: isDark,
+              text: '还没有进入具体项目推进，先把主目标拆成 1-3 个项目。',
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        project.name,
+                        style: DesignTokens.textStyle(
+                          fontSize: DesignTokens.fontSizeTitleLarge,
+                          fontWeight: DesignTokens.fontWeightBold,
+                          color: isDark
+                              ? DesignTokens.onSurfaceDark
+                              : DesignTokens.onSurfaceLight,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: DesignTokens.spacing3),
+                    _buildStatusChip(
+                      label: project.status.displayName,
+                      color: _projectStatusColor(project.status),
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+                if (project.description?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: DesignTokens.spacing2),
+                  Text(
+                    project.description!,
+                    style: DesignTokens.textStyle(
+                      color: isDark
+                          ? DesignTokens.textSecondaryDark
+                          : DesignTokens.textSecondaryLight,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: DesignTokens.spacing4),
+                _buildProgressBlock(
+                  isDark: isDark,
+                  progress: project.progress,
+                  meta: project.endDate == null
+                      ? '${_countOpenTodos(project)} 个待完成事项'
+                      : '截止 ${project.endDate!.month}/${project.endDate!.day} · ${_countOpenTodos(project)} 个待完成事项',
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildTodayTodoSection(bool isDark) {
+    return _buildSectionCard(
+      isDark: isDark,
+      title: '今日事项',
+      child: _todayTodos.isEmpty
+          ? _buildEmptyState(
+              isDark: isDark,
+              text: '今天还没有挂在当前项目下的事项，先去补充接下来要做的动作。',
+            )
+          : Column(
+              children: _todayTodos.map((todo) {
+                return _buildTodoRow(isDark, todo);
+              }).toList(),
+            ),
+    );
+  }
+
+  Widget _buildTodoRow(bool isDark, Todo todo) {
+    final project = todo.projectId == null
+        ? null
+        : ProjectRepository.getById(todo.projectId!);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: DesignTokens.spacing3),
+      child: InkWell(
+        onTap: () async {
+          await Get.to(() => TodoDetailPage(todoId: todo.id));
+          await _loadData();
+        },
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+        child: Container(
+          padding: const EdgeInsets.all(DesignTokens.spacing4),
+          decoration: BoxDecoration(
+            color: isDark
+                ? DesignTokens.surfaceDarkSecondary
+                : DesignTokens.surfaceLightSecondary,
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Checkbox(
+                value: todo.isDone,
+                onChanged: (_) => _toggleTodo(todo),
+              ),
+              const SizedBox(width: DesignTokens.spacing2),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      todo.title,
+                      style: DesignTokens.textStyle(
+                        fontSize: DesignTokens.fontSizeBodyLarge,
+                        fontWeight: DesignTokens.fontWeightSemiBold,
+                        color: isDark
+                            ? DesignTokens.onSurfaceDark
+                            : DesignTokens.onSurfaceLight,
+                      ),
+                    ),
+                    const SizedBox(height: DesignTokens.spacing2),
+                    Wrap(
+                      spacing: DesignTokens.spacing2,
+                      runSpacing: DesignTokens.spacing2,
+                      children: [
+                        _buildStatusChip(
+                          label: todo.priority.displayName,
+                          color: _priorityColor(todo.priority),
+                          isDark: isDark,
+                        ),
+                        if (project != null)
+                          _buildStatusChip(
+                            label: project.name,
+                            color: _parseHexColor(project.color),
+                            isDark: isDark,
+                          ),
+                        if (todo.dueDate != null)
+                          _buildStatusChip(
+                            label:
+                                '${todo.dueDate!.month}/${todo.dueDate!.day}',
+                            color: DesignTokens.secondaryPurple,
+                            isDark: isDark,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: isDark
+                    ? DesignTokens.textSecondaryDark
+                    : DesignTokens.textSecondaryLight,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildReviewCard(bool isDark) {
     final completed = _todayReview?.isCompleted ?? false;
     final projectName = _currentProject?.name;
@@ -1169,7 +1388,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   int _countOpenTodos(Project project) {
-    return DatabaseService.getTodosByProject(project.id)
+    return TodoRepository.getByProject(project.id)
         .where((todo) => !todo.isDone)
         .length;
   }

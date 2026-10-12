@@ -41,6 +41,9 @@ class UserProfile extends HiveObject {
   @HiveField(11)
   DateTime? lastSyncedAt;
 
+  @HiveField(12)
+  int praisePointsBalance = 0;
+
   UserProfile({
     String? id,
     this.focusedDomainId,
@@ -54,13 +57,15 @@ class UserProfile extends HiveObject {
     this.remoteUserId,
     this.rewardPreferenceSummary,
     this.lastSyncedAt,
+    int? praisePointsBalance,
   })  : id = id ?? const Uuid().v4(),
         totalXp = totalXp ?? 0,
         level = level ?? 1,
         streakDays = streakDays ?? 0,
         weeklyCapacityHours = weeklyCapacityHours ?? 5,
         createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+        updatedAt = updatedAt ?? DateTime.now(),
+        praisePointsBalance = praisePointsBalance ?? 0;
 
   UserProfile copyWith({
     String? id,
@@ -75,6 +80,7 @@ class UserProfile extends HiveObject {
     String? remoteUserId,
     String? rewardPreferenceSummary,
     DateTime? lastSyncedAt,
+    int? praisePointsBalance,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -90,6 +96,7 @@ class UserProfile extends HiveObject {
       rewardPreferenceSummary:
           rewardPreferenceSummary ?? this.rewardPreferenceSummary,
       lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      praisePointsBalance: praisePointsBalance ?? this.praisePointsBalance,
     );
   }
 }

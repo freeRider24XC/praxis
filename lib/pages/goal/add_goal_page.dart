@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:praxis/common/models/goal.dart';
-import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/repositories/index.dart';
 import 'package:praxis/common/services/domain_service.dart';
 import 'package:praxis/common/services/error_service.dart';
 import 'package:praxis/common/services/logger_service.dart';
@@ -30,7 +30,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
   final _krTitleController = TextEditingController();
   final _krTargetController = TextEditingController();
   final _krUnitController = TextEditingController();
-  
+
   DateTime? _targetDate;
   GoalType _type = GoalType.monthly;
   bool _isLoading = false;
@@ -134,8 +134,8 @@ class _AddGoalPageState extends State<AddGoalPage> {
         domainId: _selectedDomainId,
       );
 
-      await DatabaseService.addGoal(goal);
-      
+      await GoalRepository.add(goal);
+
       if (mounted) {
         Get.back(result: true);
         ErrorService.showSuccess('目标已创建');
@@ -158,16 +158,13 @@ class _AddGoalPageState extends State<AddGoalPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final domains = DomainService.getDomains();
-    
+
     return Scaffold(
-      backgroundColor: isDark
-          ? DesignTokens.backgroundDark
-          : DesignTokens.backgroundLight,
+      backgroundColor:
+          isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight,
       appBar: AppBar(
         title: const Text('创建目标'),
-        backgroundColor: isDark
-            ? DesignTokens.backgroundDark
-            : Colors.white,
+        backgroundColor: isDark ? DesignTokens.backgroundDark : Colors.white,
       ),
       body: Form(
         key: _formKey,
@@ -214,7 +211,8 @@ class _AddGoalPageState extends State<AddGoalPage> {
                     decoration: InputDecoration(
                       labelText: '目标类型',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusLarge),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: DesignTokens.spacing4,
@@ -241,7 +239,8 @@ class _AddGoalPageState extends State<AddGoalPage> {
                     decoration: InputDecoration(
                       labelText: '所属领域',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusLarge),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: DesignTokens.spacing4,
@@ -273,7 +272,8 @@ class _AddGoalPageState extends State<AddGoalPage> {
                       decoration: InputDecoration(
                         labelText: '目标日期',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusLarge),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: DesignTokens.spacing4,
@@ -296,9 +296,9 @@ class _AddGoalPageState extends State<AddGoalPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: DesignTokens.spacing6),
-            
+
             // 关键结果管理
             PraxisCard(
               padding: const EdgeInsets.all(DesignTokens.spacing5),
@@ -364,13 +364,15 @@ class _AddGoalPageState extends State<AddGoalPage> {
                     const SizedBox(height: DesignTokens.spacing4),
                     ..._keyResults.map((kr) {
                       return Container(
-                        margin: const EdgeInsets.only(bottom: DesignTokens.spacing3),
+                        margin: const EdgeInsets.only(
+                            bottom: DesignTokens.spacing3),
                         padding: const EdgeInsets.all(DesignTokens.spacing4),
                         decoration: BoxDecoration(
                           color: isDark
                               ? DesignTokens.surfaceDarkSecondary
                               : DesignTokens.surfaceLightSecondary,
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusLarge),
                           border: Border.all(
                             color: isDark
                                 ? DesignTokens.borderDark
@@ -395,11 +397,13 @@ class _AddGoalPageState extends State<AddGoalPage> {
                                     ),
                                   ),
                                   if (kr.targetValue != null) ...[
-                                    const SizedBox(height: DesignTokens.spacing1),
+                                    const SizedBox(
+                                        height: DesignTokens.spacing1),
                                     Text(
                                       '目标: ${kr.targetValue}${kr.unit ?? ''}',
                                       style: DesignTokens.textStyle(
-                                        fontSize: DesignTokens.fontSizeLabelSmall,
+                                        fontSize:
+                                            DesignTokens.fontSizeLabelSmall,
                                         color: isDark
                                             ? DesignTokens.textSecondaryDark
                                             : DesignTokens.textSecondaryLight,
@@ -413,6 +417,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
                               icon: const Icon(Icons.close),
                               onPressed: () => _removeKeyResult(kr),
                               iconSize: 18,
+                              tooltip: '删除关键结果',
                             ),
                           ],
                         ),
@@ -422,9 +427,9 @@ class _AddGoalPageState extends State<AddGoalPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: DesignTokens.spacing6),
-            
+
             // 里程碑管理
             PraxisCard(
               padding: const EdgeInsets.all(DesignTokens.spacing5),
@@ -460,7 +465,8 @@ class _AddGoalPageState extends State<AddGoalPage> {
                           decoration: InputDecoration(
                             hintText: '输入一个阶段节点并按回车',
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusLarge),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: DesignTokens.spacing4,
@@ -474,6 +480,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: _addMilestone,
+                        tooltip: '添加里程碑',
                       ),
                     ],
                   ),
@@ -494,7 +501,8 @@ class _AddGoalPageState extends State<AddGoalPage> {
                               color: isDark
                                   ? DesignTokens.surfaceDarkSecondary
                                   : DesignTokens.surfaceLightSecondary,
-                              borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusRound),
                               border: Border.all(
                                 color: isDark
                                     ? DesignTokens.borderDark
@@ -533,9 +541,9 @@ class _AddGoalPageState extends State<AddGoalPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: DesignTokens.spacing8),
-            
+
             PraxisButton(
               text: '确认这个目标',
               onPressed: _isLoading ? null : _saveGoal,

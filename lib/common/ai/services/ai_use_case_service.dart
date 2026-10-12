@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:praxis/common/ai/providers/ai_provider.dart';
 import 'package:praxis/common/ai/providers/openai_provider.dart';
 import 'package:praxis/common/ai/services/ai_config_service.dart';
 import 'package:praxis/common/models/index.dart';
@@ -50,12 +51,10 @@ class AiSuggestionResult {
 }
 
 class AiUseCaseService {
-  AiUseCaseService({OpenAIProvider? provider})
-      : _provider = provider ?? OpenAIProvider(),
-        _managedAiService = const ManagedAiService();
+  AiUseCaseService({AiProvider? provider})
+      : _provider = provider ?? OpenAIProvider();
 
-  final OpenAIProvider _provider;
-  final ManagedAiService _managedAiService;
+  final AiProvider _provider;
 
   Future<AiGoalPlanDraft> planGoal({
     required String goalText,

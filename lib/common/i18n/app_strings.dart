@@ -114,6 +114,36 @@ class AppStrings {
   static const String projectDaysRemaining = 'projectDaysRemaining';
   static const String adjustFilter = 'adjustFilter';
   static const String startCreatingProject = 'startCreatingProject';
+
+  // ==================== 奖励商店 ====================
+  static const String rewardShopTitle = 'rewardShopTitle';
+  static const String rewardShopBalance = 'rewardShopBalance';
+  static const String rewardShopEmptyHint = 'rewardShopEmptyHint';
+  static const String rewardShopPresetBadge = 'rewardShopPresetBadge';
+  static const String rewardTierSmall = 'rewardTierSmall';
+  static const String rewardTierMedium = 'rewardTierMedium';
+  static const String rewardTierLarge = 'rewardTierLarge';
+  static const String rewardTierFilterAll = 'rewardTierFilterAll';
+  static const String rewardExchangeAction = 'rewardExchangeAction';
+  static const String rewardExchangeConfirmTitle = 'rewardExchangeConfirmTitle';
+  static const String rewardExchangeConfirmBody = 'rewardExchangeConfirmBody';
+  static const String rewardExchangeSuccess = 'rewardExchangeSuccess';
+  static const String rewardInsufficientPoints = 'rewardInsufficientPoints';
+  static const String rewardEntryCta = 'rewardEntryCta';
+  static const String rewardBalanceLabel = 'rewardBalanceLabel';
+
+  // ==================== 奖励待办 ====================
+  static const String rewardTodoTitle = 'rewardTodoTitle';
+  static const String rewardEntryTodoCta = 'rewardEntryTodoCta';
+  static const String rewardShopMyTodosCta = 'rewardShopMyTodosCta';
+  static const String rewardTodoEmptyHint = 'rewardTodoEmptyHint';
+  static const String rewardTodoCompleteAction = 'rewardTodoCompleteAction';
+  static const String rewardTodoCompleteSuccess = 'rewardTodoCompleteSuccess';
+  static const String rewardTodoDueLabel = 'rewardTodoDueLabel';
+  static const String rewardTodoGroupPending = 'rewardTodoGroupPending';
+  static const String rewardTodoGroupCompleted = 'rewardTodoGroupCompleted';
+  static const String rewardTodoGroupExpired = 'rewardTodoGroupExpired';
+  static const String rewardTodoCount = 'rewardTodoCount';
 }
 
 /// 扩展方法：为字符串添加带命名参数的翻译方法

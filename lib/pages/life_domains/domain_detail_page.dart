@@ -180,6 +180,7 @@ class _DomainDetailPageState extends State<DomainDetailPage> {
         IconButton(
           onPressed: () => Get.back(),
           icon: const Icon(Icons.arrow_back),
+          tooltip: '返回',
         ),
         Expanded(
           child: Column(

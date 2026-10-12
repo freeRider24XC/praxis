@@ -48,29 +48,31 @@ class TodoListItem extends StatelessWidget {
       onDismissed: (direction) {
         if (direction == DismissDirection.endToStart && onDelete != null) {
           onDelete!();
-        } else if (direction == DismissDirection.startToEnd && onToggle != null) {
+        } else if (direction == DismissDirection.startToEnd &&
+            onToggle != null) {
           onToggle!();
         }
       },
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart) {
           return await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('删除待办事项'),
-              content: Text('确定要删除"${todo.title}"吗？'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('取消'),
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('删除待办事项'),
+                  content: Text('确定要删除"${todo.title}"吗？'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('取消'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('删除'),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('删除'),
-                ),
-              ],
-            ),
-          ) ?? false;
+              ) ??
+              false;
         }
         return true;
       },
@@ -94,7 +96,7 @@ class TodoListItem extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Content
             Expanded(
               child: Column(
@@ -108,9 +110,9 @@ class TodoListItem extends StatelessWidget {
                       color: isDone ? theme.disabledColor : null,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 4),
-                  
+
                   // Meta info
                   Wrap(
                     spacing: 8,
@@ -122,7 +124,7 @@ class TodoListItem extends StatelessWidget {
                           label: _formatDueDate(todo.dueDate!),
                           color: isOverdue ? DesignTokens.errorColor : null,
                         ),
-                      
+
                       // Priority
                       if (todo.priority != TodoPriority.medium)
                         _buildChip(
@@ -130,21 +132,21 @@ class TodoListItem extends StatelessWidget {
                           label: todo.priority.displayName,
                           color: _getPriorityColor(todo.priority),
                         ),
-                      
+
                       // Tags
                       if (todo.tags != null && todo.tags!.isNotEmpty)
                         ...todo.tags!.take(2).map((tag) => _buildChip(
-                          icon: Icons.label_outline,
-                          label: tag,
-                        )),
-                      
+                              icon: Icons.label_outline,
+                              label: tag,
+                            )),
+
                       // Has subtasks
                       if (todo.subTasks != null && todo.subTasks!.isNotEmpty)
                         _buildChip(
                           icon: Icons.checklist,
                           label: '${todo.subTasks!.length}',
                         ),
-                      
+
                       // Has reminder
                       if (todo.reminderTime != null)
                         _buildChip(
@@ -156,13 +158,14 @@ class TodoListItem extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Actions
             if (onDelete != null)
               IconButton(
                 icon: const Icon(Icons.delete_outline),
                 onPressed: onDelete,
                 color: theme.disabledColor,
+                tooltip: '删除',
               ),
           ],
         ),

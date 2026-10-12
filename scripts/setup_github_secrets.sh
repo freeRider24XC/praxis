@@ -1,54 +1,38 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# 设置 GitHub Secrets 的辅助脚本
-# 此脚本会生成 base64 编码的密钥库和证书，方便复制到 GitHub Secrets
+# Prepare Android signing values for GitHub Actions without storing passwords in git.
+set -euo pipefail
 
-set -e
+KEYSTORE_PATH="${KEYSTORE_PATH:-android/app/keystore.jks}"
+REQUIRED_VARS=(
+  ANDROID_KEYSTORE_PASSWORD
+  ANDROID_KEY_ALIAS
+  ANDROID_KEY_PASSWORD
+)
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+if [[ ! -f "$KEYSTORE_PATH" ]]; then
+  echo "错误: 找不到密钥库文件: $KEYSTORE_PATH" >&2
+  exit 1
+fi
 
-echo -e "${BLUE}=== GitHub Secrets 配置助手 ===${NC}\n"
-
-# 检查密钥库是否存在
-KEYSTORE_PATH="android/app/keystore.jks"
-if [ ! -f "$KEYSTORE_PATH" ]; then
-    echo -e "${RED}错误: 找不到密钥库文件 $KEYSTORE_PATH${NC}"
-    echo "请先运行密钥库生成命令或确保文件存在"
+for variable in "${REQUIRED_VARS[@]}"; do
+  if [[ -z "${!variable:-}" ]]; then
+    echo "错误: 请先在当前 shell 设置 $variable。脚本不会提供默认口令。" >&2
     exit 1
-fi
+  fi
+done
 
-echo -e "${GREEN}1. Android 密钥库配置${NC}"
-echo "----------------------------------------"
-echo -e "${YELLOW}密钥库路径:${NC} $KEYSTORE_PATH"
-echo ""
-echo -e "${YELLOW}请将以下内容添加到 GitHub Secrets:${NC}"
-echo ""
-echo -e "${BLUE}ANDROID_KEYSTORE_BASE64:${NC}"
-KEYSTORE_BASE64=$(base64 -i "$KEYSTORE_PATH")
-if command -v pbcopy &> /dev/null; then
-    echo "$KEYSTORE_BASE64" | pbcopy
-    echo -e "${GREEN}(已复制到剪贴板)${NC}"
-    echo "$KEYSTORE_BASE64"
+if base64 --help 2>&1 | grep -q -- "--input"; then
+  KEYSTORE_BASE64="$(base64 --input "$KEYSTORE_PATH" | tr -d "\n")"
 else
-    echo "$KEYSTORE_BASE64"
+  KEYSTORE_BASE64="$(base64 < "$KEYSTORE_PATH" | tr -d "\n")"
 fi
-echo ""
-echo -e "${BLUE}ANDROID_KEYSTORE_PASSWORD:${NC} praxis123"
-echo ""
-echo -e "${BLUE}ANDROID_KEY_ALIAS:${NC} praxis"
-echo ""
-echo -e "${BLUE}ANDROID_KEY_PASSWORD:${NC} praxis123"
-echo ""
-echo -e "${GREEN}=== 配置步骤 ===${NC}"
-echo "1. 访问您的 GitHub 仓库"
-echo "2. 进入 Settings > Secrets and variables > Actions"
-echo "3. 点击 'New repository secret'"
-echo "4. 添加上述各个 Secret"
-echo ""
-echo -e "${YELLOW}注意:${NC} 密钥库密码和密钥密码当前为默认值 'praxis123'"
-echo "建议在生产环境中使用更安全的密码"
 
+echo "GitHub Actions secrets 已就绪。请使用下列命令写入仓库 secrets："
+echo ""
+echo "printf '%s' '$KEYSTORE_BASE64' | gh secret set ANDROID_KEYSTORE_BASE64"
+echo "printf '%s' '\$ANDROID_KEYSTORE_PASSWORD' | gh secret set ANDROID_KEYSTORE_PASSWORD"
+echo "printf '%s' '\$ANDROID_KEY_ALIAS' | gh secret set ANDROID_KEY_ALIAS"
+echo "printf '%s' '\$ANDROID_KEY_PASSWORD' | gh secret set ANDROID_KEY_PASSWORD"
+echo ""
+echo "注意：请在可信终端执行这些命令；不要把命令输出或真实口令提交到仓库。"

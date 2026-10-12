@@ -10,5 +10,8 @@ export 'xp_event.dart';
 export 'daily_review.dart';
 export 'todo_schedule_slot.dart';
 export 'reward.dart';
+export 'reward_template.dart';
+export 'reward_redemption.dart';
+export 'reward_todo.dart';
 
 // export './xxxx.dart';

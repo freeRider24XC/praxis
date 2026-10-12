@@ -1,136 +1,171 @@
 import 'package:praxis/common/models/index.dart';
 import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/profile_service.dart';
+
+/// 异常：余额不足，无法兑换
+class InsufficientPraisePointsException implements Exception {
+  final int balance;
+  final int required;
+  InsufficientPraisePointsException(this.balance, this.required);
+
+  @override
+  String toString() => '余额不足：当前 $balance 犒赏点，需要 $required';
+}
 
 class RewardService {
-  static const int todoCompletedPraise = 1;
-  static const int projectCompletedPraise = 2;
-  static const int goalCompletedPraise = 3;
-  static const int dailyReviewPraise = 1;
+  static const int smallPrice = 5;
+  static const int mediumPrice = 15;
+  static const int largePrice = 50;
+  static const Duration redemptionValidity = Duration(days: 7);
 
-  static Future<void> ensureSeededTemplates() async {
-    if (DatabaseService.getRewardTemplates().isNotEmpty) {
-      return;
+  /// 首次启动时种入蓝图 §11.1 的 15 个预设奖励模板。已存在则跳过，幂等。
+  static Future<void> seedPresetTemplatesIfEmpty() async {
+    final box = DatabaseService.rewardTemplateBox;
+    final hasPreset = box.values.any((t) => t.isSystemPreset);
+    if (hasPreset) return;
+
+    final now = DateTime.now();
+    final presets = <RewardTemplate>[
+      // 小奖励
+      RewardTemplate(title: '摸鱼卡', tier: RewardTier.small, priceInPraisePoints: smallPrice, isSystemPreset: true, sortOrder: 10, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '奶茶卡', tier: RewardTier.small, priceInPraisePoints: smallPrice, isSystemPreset: true, sortOrder: 11, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '游戏时间卡', tier: RewardTier.small, priceInPraisePoints: smallPrice, isSystemPreset: true, sortOrder: 12, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '泡澡卡', tier: RewardTier.small, priceInPraisePoints: smallPrice, isSystemPreset: true, sortOrder: 13, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '散步卡', tier: RewardTier.small, priceInPraisePoints: smallPrice, isSystemPreset: true, sortOrder: 14, createdAt: now, updatedAt: now),
+      // 中奖励
+      RewardTemplate(title: '购物卡', tier: RewardTier.medium, priceInPraisePoints: mediumPrice, isSystemPreset: true, sortOrder: 20, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '电影夜', tier: RewardTier.medium, priceInPraisePoints: mediumPrice, isSystemPreset: true, sortOrder: 21, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '一顿想吃的', tier: RewardTier.medium, priceInPraisePoints: mediumPrice, isSystemPreset: true, sortOrder: 22, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '买一本书', tier: RewardTier.medium, priceInPraisePoints: mediumPrice, isSystemPreset: true, sortOrder: 23, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '周末半天放空', tier: RewardTier.medium, priceInPraisePoints: mediumPrice, isSystemPreset: true, sortOrder: 24, createdAt: now, updatedAt: now),
+      // 大奖励
+      RewardTemplate(title: '按摩卡', tier: RewardTier.large, priceInPraisePoints: largePrice, isSystemPreset: true, sortOrder: 30, createdAt: now, updatedAt: now),
+      RewardTemplate(title: 'SPA 卡', tier: RewardTier.large, priceInPraisePoints: largePrice, isSystemPreset: true, sortOrder: 31, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '短途旅行卡', tier: RewardTier.large, priceInPraisePoints: largePrice, isSystemPreset: true, sortOrder: 32, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '装备升级卡', tier: RewardTier.large, priceInPraisePoints: largePrice, isSystemPreset: true, sortOrder: 33, createdAt: now, updatedAt: now),
+      RewardTemplate(title: '预算型购物奖励', tier: RewardTier.large, priceInPraisePoints: largePrice, isSystemPreset: true, sortOrder: 34, createdAt: now, updatedAt: now),
+    ];
+
+    for (final tpl in presets) {
+      await box.add(tpl);
     }
-
-    await DatabaseService.addRewardTemplate(
-      RewardTemplate(
-        title: '散步 20 分钟',
-        description: '立刻离开屏幕，轻量恢复一下。',
-        priceInPraisePoints: 3,
-        tier: RewardTier.small,
-      ),
-    );
-    await DatabaseService.addRewardTemplate(
-      RewardTemplate(
-        title: '一顿喜欢的正餐',
-        description: '阶段性庆祝，不赶时间地好好吃一顿。',
-        priceInPraisePoints: 8,
-        tier: RewardTier.medium,
-      ),
-    );
-    await DatabaseService.addRewardTemplate(
-      RewardTemplate(
-        title: '半天完全放松',
-        description: '为自己留出半天恢复和庆祝时间。',
-        priceInPraisePoints: 15,
-        tier: RewardTier.large,
-      ),
-    );
   }
 
-  static int getPraisePointsBalance() {
-    return DatabaseService.getPraisePointBalance();
+  static List<RewardTemplate> getEnabledTemplates() {
+    final list = DatabaseService.rewardTemplateBox.values
+        .where((t) => t.isEnabled)
+        .toList();
+    list.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return list;
   }
 
-  static Future<void> awardForTodo(Todo todo) async {
-    await DatabaseService.addPraisePointLedger(
-      PraisePointLedger(
-        delta: todoCompletedPraise,
-        source: PraisePointSource.todoCompleted,
-        sourceId: todo.id,
-        description: '完成事项：${todo.title}',
-      ),
-    );
-  }
-
-  static Future<void> awardForProject(Project project) async {
-    await DatabaseService.addPraisePointLedger(
-      PraisePointLedger(
-        delta: projectCompletedPraise,
-        source: PraisePointSource.projectCompleted,
-        sourceId: project.id,
-        description: '完成项目：${project.name}',
-      ),
-    );
-  }
-
-  static Future<void> awardForGoal(Goal goal) async {
-    await DatabaseService.addPraisePointLedger(
-      PraisePointLedger(
-        delta: goalCompletedPraise,
-        source: PraisePointSource.goalCompleted,
-        sourceId: goal.id,
-        description: '完成目标：${goal.title}',
-      ),
-    );
-  }
-
-  static Future<void> awardForDailyReview(DailyReview review) async {
-    await DatabaseService.addPraisePointLedger(
-      PraisePointLedger(
-        delta: dailyReviewPraise,
-        source: PraisePointSource.dailyReview,
-        sourceId: review.id,
-        description: '完成每日复盘',
-      ),
-    );
-  }
-
-  static Future<RewardRedemption> redeemReward(RewardTemplate template) async {
-    final balance = getPraisePointsBalance();
+  /// 兑换流程：余额校验 → 扣点 → 创建 redemption + rewardTodo，返回 Redemption。
+  /// 若余额不足抛 InsufficientPraisePointsException，不改任何状态。
+  static Future<RewardRedemption> exchange(RewardTemplate template) async {
+    final balance = DatabaseService.getUserProfile().praisePointsBalance;
     if (balance < template.priceInPraisePoints) {
-      throw StateError('犒赏点不足');
+      throw InsufficientPraisePointsException(
+        balance,
+        template.priceInPraisePoints,
+      );
     }
+
+    await ProfileService.incrementPraisePoints(-template.priceInPraisePoints);
+
+    final now = DateTime.now();
+    final dueDate = now.add(redemptionValidity);
+
+    final todo = RewardTodo(
+      redemptionId: '', // 占位，下面 redemptionBox.add 之后再回填
+      title: '兑现：${template.title}',
+      status: RewardTodoStatus.pending,
+      dueDate: dueDate,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await DatabaseService.rewardTodoBox.add(todo);
 
     final redemption = RewardRedemption(
       rewardTemplateId: template.id,
-      priceInPraisePoints: template.priceInPraisePoints,
+      titleSnapshot: template.title,
+      tierSnapshot: template.tier,
+      priceSnapshot: template.priceInPraisePoints,
+      redeemedAt: now,
+      status: RewardRedemptionStatus.redeemed,
+      rewardTodoId: todo.id,
+      createdAt: now,
+      updatedAt: now,
     );
-    await DatabaseService.addRewardRedemption(redemption);
+    await DatabaseService.rewardRedemptionBox.add(redemption);
 
-    await DatabaseService.addPraisePointLedger(
-      PraisePointLedger(
-        delta: -template.priceInPraisePoints,
-        source: PraisePointSource.rewardRedemption,
-        sourceId: redemption.id,
-        description: '兑换奖励：${template.title}',
-      ),
-    );
+    todo.redemptionId = redemption.id;
+    todo.updatedAt = now;
+    await todo.save();
 
-    final rewardTodo = RewardTodo(
-      rewardTemplateId: template.id,
-      redemptionId: redemption.id,
-      title: '兑现奖励：${template.title}',
-      description: template.description,
-      dueDate: DateTime.now().add(const Duration(days: 2)),
-    );
-    await DatabaseService.addRewardTodo(rewardTodo);
-
-    redemption.rewardTodoId = rewardTodo.id;
-    await DatabaseService.updateRewardRedemption(redemption);
     return redemption;
   }
 
-  static Future<void> completeRewardTodo(RewardTodo rewardTodo) async {
-    rewardTodo.status = RewardTodoStatus.completed;
-    rewardTodo.completedAt = DateTime.now();
-    await DatabaseService.updateRewardTodo(rewardTodo);
-
-    final redemption =
-        DatabaseService.getRewardRedemptionById(rewardTodo.redemptionId);
-    if (redemption != null) {
-      redemption.status = RewardRedemptionStatus.fulfilled;
-      await DatabaseService.updateRewardRedemption(redemption);
+  /// 标记 RewardTodo 为已兑现。同步把关联的 Redemption 状态也推进。
+  /// pending / expired 允许完成；completed / cancelled 时幂等。
+  static Future<void> completeRewardTodo(RewardTodo todo) async {
+    if (todo.status == RewardTodoStatus.completed ||
+        todo.status == RewardTodoStatus.cancelled) {
+      return;
     }
+    final now = DateTime.now();
+    todo.status = RewardTodoStatus.completed;
+    todo.completedAt = now;
+    todo.updatedAt = now;
+    await todo.save();
+
+    for (final redemption in DatabaseService.rewardRedemptionBox.values) {
+      if (redemption.rewardTodoId == todo.id) {
+        redemption.status = RewardRedemptionStatus.completed;
+        redemption.updatedAt = now;
+        await redemption.save();
+        break;
+      }
+    }
+  }
+
+  /// 当前所有 RewardTodo（按状态分组、按创建时间倒序）。
+  static Map<RewardTodoStatus, List<RewardTodo>> getTodosByStatus() {
+    final all = DatabaseService.rewardTodoBox.values.toList();
+    all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final byStatus = <RewardTodoStatus, List<RewardTodo>>{};
+    for (final todo in all) {
+      byStatus.putIfAbsent(todo.status, () => []).add(todo);
+    }
+    return byStatus;
+  }
+
+  /// 把所有 dueDate &lt; now 的 pending RewardTodo 标为 expired，
+  /// 同步把关联的 Redemption 也标 expired。completed/cancelled 不动。
+  /// 用于启动时 + AppLifecycleState.resumed 时扫描。
+  /// 返回本次扫描变更为 expired 的 todo 数量。
+  static Future<int> scanExpiredTodos() async {
+    final now = DateTime.now();
+    int changed = 0;
+    for (final todo in DatabaseService.rewardTodoBox.values) {
+      if (todo.status != RewardTodoStatus.pending) continue;
+      final due = todo.dueDate;
+      if (due == null || !now.isAfter(due)) continue;
+
+      todo.status = RewardTodoStatus.expired;
+      todo.updatedAt = now;
+      await todo.save();
+      changed += 1;
+
+      for (final redemption in DatabaseService.rewardRedemptionBox.values) {
+        if (redemption.rewardTodoId == todo.id &&
+            redemption.status == RewardRedemptionStatus.redeemed) {
+          redemption.status = RewardRedemptionStatus.expired;
+          redemption.updatedAt = now;
+          await redemption.save();
+          break;
+        }
+      }
+    }
+    return changed;
   }
 }

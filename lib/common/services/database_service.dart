@@ -1,5 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:praxis/common/models/index.dart';
+import 'package:praxis/common/services/data_change_notifier.dart';
 
 class DatabaseService {
   static const String todoBoxName = 'todos';
@@ -12,7 +14,6 @@ class DatabaseService {
   static const String xpEventBoxName = 'xp_events';
   static const String dailyReviewBoxName = 'daily_reviews';
   static const String scheduleSlotBoxName = 'todo_schedule_slots';
-  static const String praisePointLedgerBoxName = 'praise_point_ledgers';
   static const String rewardTemplateBoxName = 'reward_templates';
   static const String rewardRedemptionBoxName = 'reward_redemptions';
   static const String rewardTodoBoxName = 'reward_todos';
@@ -27,7 +28,6 @@ class DatabaseService {
   static late Box<XpEvent> xpEventBox;
   static late Box<DailyReview> dailyReviewBox;
   static late Box<TodoScheduleSlot> scheduleSlotBox;
-  static late Box<PraisePointLedger> praisePointLedgerBox;
   static late Box<RewardTemplate> rewardTemplateBox;
   static late Box<RewardRedemption> rewardRedemptionBox;
   static late Box<RewardTodo> rewardTodoBox;
@@ -49,14 +49,79 @@ class DatabaseService {
 
     // Open boxes
     await _openBoxes();
+    await _runMigrations();
     await _seedDefaults();
-    await normalizeBlueprintStructure();
 
     _isInitialized = true;
   }
 
   // Check if database is initialized
   static bool get isInitialized => _isInitialized;
+
+  /// Deletes all locally stored Praxis data after an explicit user confirmation.
+  /// Callers must never invoke this automatically during bootstrap recovery.
+  static Future<void> resetLocalData() async {
+    const boxNames = [
+      todoBoxName,
+      goalBoxName,
+      projectBoxName,
+      settingsBoxName,
+      focusSessionBoxName,
+      lifeDomainBoxName,
+      userProfileBoxName,
+      xpEventBoxName,
+      dailyReviewBoxName,
+      rewardTemplateBoxName,
+      rewardRedemptionBoxName,
+      rewardTodoBoxName,
+    ];
+
+    for (final boxName in boxNames) {
+      if (Hive.isBoxOpen(boxName)) {
+        await Hive.box(boxName).close();
+      }
+      await Hive.deleteBoxFromDisk(boxName);
+    }
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.clear();
+    _isInitialized = false;
+  }
+
+  static const _schemaVersionKey = 'praxis_schema_version';
+  static const _currentSchemaVersion = 1;
+
+  /// Performs additive, idempotent migrations only. Existing legacy relation
+  /// fields are retained for read compatibility and are never destructively cleared.
+  static Future<void> _runMigrations() async {
+    final version = settingsBox.get(_schemaVersionKey, defaultValue: 0) as int;
+    if (version >= _currentSchemaVersion) return;
+
+    for (final goal in goalBox.values) {
+      for (final projectId in goal.projectIds ?? const <String>[]) {
+        final project = getProjectById(projectId);
+        if (project == null) continue;
+        final goalIds = <String>{...?project.goalIds, goal.id}.toList();
+        if (goalIds.length != project.goalIds?.length) {
+          project.goalIds = goalIds;
+          await project.save();
+        }
+      }
+    }
+
+    for (final project in projectBox.values) {
+      for (final todoId in project.todoIds ?? const <String>[]) {
+        final todo = getTodoById(todoId);
+        if (todo != null && todo.projectId == null) {
+          todo.projectId = project.id;
+          todo.domainId ??= project.domainId;
+          await todo.save();
+        }
+      }
+    }
+
+    await settingsBox.put(_schemaVersionKey, _currentSchemaVersion);
+  }
 
   static void _registerAdapters() {
     // Todo adapters
@@ -122,37 +187,37 @@ class DatabaseService {
       Hive.registerAdapter(DailyReviewAdapter());
     }
     if (!Hive.isAdapterRegistered(18)) {
-      Hive.registerAdapter(TodoScheduleSlotAdapter());
+      Hive.registerAdapter(ImportanceLevelAdapter());
     }
     if (!Hive.isAdapterRegistered(19)) {
-      Hive.registerAdapter(ScheduleSlotStatusAdapter());
+      Hive.registerAdapter(DifficultyLevelAdapter());
     }
     if (!Hive.isAdapterRegistered(20)) {
-      Hive.registerAdapter(ScheduleSlotSourceAdapter());
-    }
-    if (!Hive.isAdapterRegistered(21)) {
-      Hive.registerAdapter(PraisePointLedgerAdapter());
-    }
-    if (!Hive.isAdapterRegistered(22)) {
-      Hive.registerAdapter(PraisePointSourceAdapter());
-    }
-    if (!Hive.isAdapterRegistered(23)) {
       Hive.registerAdapter(RewardTierAdapter());
     }
-    if (!Hive.isAdapterRegistered(24)) {
+    if (!Hive.isAdapterRegistered(21)) {
       Hive.registerAdapter(RewardTemplateAdapter());
     }
-    if (!Hive.isAdapterRegistered(25)) {
+    if (!Hive.isAdapterRegistered(22)) {
       Hive.registerAdapter(RewardRedemptionStatusAdapter());
     }
-    if (!Hive.isAdapterRegistered(26)) {
+    if (!Hive.isAdapterRegistered(23)) {
       Hive.registerAdapter(RewardRedemptionAdapter());
     }
-    if (!Hive.isAdapterRegistered(27)) {
+    if (!Hive.isAdapterRegistered(24)) {
       Hive.registerAdapter(RewardTodoStatusAdapter());
     }
-    if (!Hive.isAdapterRegistered(28)) {
+    if (!Hive.isAdapterRegistered(25)) {
       Hive.registerAdapter(RewardTodoAdapter());
+    }
+    if (!Hive.isAdapterRegistered(26)) {
+      Hive.registerAdapter(TodoScheduleSlotAdapter());
+    }
+    if (!Hive.isAdapterRegistered(27)) {
+      Hive.registerAdapter(ScheduleSlotStatusAdapter());
+    }
+    if (!Hive.isAdapterRegistered(28)) {
+      Hive.registerAdapter(ScheduleSlotSourceAdapter());
     }
   }
 
@@ -167,9 +232,8 @@ class DatabaseService {
     xpEventBox = await Hive.openBox<XpEvent>(xpEventBoxName);
     dailyReviewBox = await Hive.openBox<DailyReview>(dailyReviewBoxName);
     scheduleSlotBox = await Hive.openBox<TodoScheduleSlot>(scheduleSlotBoxName);
-    praisePointLedgerBox =
-        await Hive.openBox<PraisePointLedger>(praisePointLedgerBoxName);
-    rewardTemplateBox = await Hive.openBox<RewardTemplate>(rewardTemplateBoxName);
+    rewardTemplateBox =
+        await Hive.openBox<RewardTemplate>(rewardTemplateBoxName);
     rewardRedemptionBox =
         await Hive.openBox<RewardRedemption>(rewardRedemptionBoxName);
     rewardTodoBox = await Hive.openBox<RewardTodo>(rewardTodoBoxName);
@@ -198,185 +262,26 @@ class DatabaseService {
     }
   }
 
-  static String? getProjectPrimaryGoalId(Project project) {
-    final goalIds = project.goalIds;
-    if (goalIds == null || goalIds.isEmpty) {
-      return null;
-    }
-    return goalIds.first;
-  }
-
-  static Goal? getProjectPrimaryGoal(Project project) {
-    final goalId = getProjectPrimaryGoalId(project);
-    if (goalId == null) return null;
-    return getGoalById(goalId);
-  }
-
-  static List<Project> getProjectsByGoal(String goalId) {
-    return projectBox.values
-        .where((project) => getProjectPrimaryGoalId(project) == goalId)
-        .toList();
-  }
-
-  static String? resolveGoalIdForTodo(Todo todo) {
-    if (todo.projectId != null) {
-      final project = getProjectById(todo.projectId!);
-      final goalId = project == null ? null : getProjectPrimaryGoalId(project);
-      if (goalId != null && goalId.isNotEmpty) {
-        return goalId;
-      }
-    }
-    if (todo.goalId != null && todo.goalId!.isNotEmpty) {
-      return todo.goalId;
-    }
-    return null;
-  }
-
-  static Future<void> normalizeBlueprintStructure() async {
-    final goalToProjectIds = <String, List<String>>{};
-
-    for (final project in projectBox.values) {
-      final previousGoalIds = List<String>.from(project.goalIds ?? const []);
-      final primaryGoalId =
-          previousGoalIds.isNotEmpty ? previousGoalIds.first : null;
-
-      if (previousGoalIds.length > 1) {
-        project.goalIds = [primaryGoalId!];
-      }
-
-      if ((project.domainId == null || project.domainId!.isEmpty) &&
-          primaryGoalId != null) {
-        project.domainId = getGoalById(primaryGoalId)?.domainId;
-      }
-
-      if (primaryGoalId != null) {
-        goalToProjectIds.putIfAbsent(primaryGoalId, () => <String>[]).add(project.id);
-      }
-
-      if (previousGoalIds.length > 1) {
-        project.updatedAt = DateTime.now();
-        await project.save();
-      }
-    }
-
-    for (final todo in todoBox.values) {
-      await _prepareTodoForBlueprint(todo);
-    }
-
-    for (final goal in goalBox.values) {
-      final projectIds = goalToProjectIds[goal.id] ?? <String>[];
-      goal.projectIds = projectIds.isEmpty ? null : projectIds;
-      goal.updatedAt = DateTime.now();
-      await goal.save();
-    }
-
-    for (final project in projectBox.values) {
-      final todoIds = getTodosByProject(project.id).map((todo) => todo.id).toList();
-      project.todoIds = todoIds.isEmpty ? null : todoIds;
-      project.updatedAt = DateTime.now();
-      await project.save();
-    }
-
-    for (final project in projectBox.values) {
-      await recalculateProjectProgress(project.id);
-    }
-    for (final goal in goalBox.values) {
-      await recalculateGoalProgress(goal.id);
-    }
-  }
-
-  static Future<void> _prepareTodoForBlueprint(Todo todo) async {
-    if (todo.projectId == null || todo.projectId!.isEmpty) {
-      final fallbackProject = await _ensureFallbackProjectForTodo(todo);
-      todo.projectId = fallbackProject.id;
-    }
-
-    final project =
-        todo.projectId == null ? null : getProjectById(todo.projectId!);
-    final projectGoalId =
-        project == null ? null : getProjectPrimaryGoalId(project);
-
-    if (projectGoalId != null) {
-      todo.goalId = projectGoalId;
-    }
-
-    todo.domainId =
-        project?.domainId ?? getGoalById(todo.goalId ?? '')?.domainId ?? todo.domainId;
-    todo.updatedAt = DateTime.now();
-    if (todo.isInBox) {
-      await todo.save();
-    }
-  }
-
-  static Future<Project> _ensureFallbackProjectForTodo(Todo todo) async {
-    final goal = todo.goalId == null ? null : getGoalById(todo.goalId!);
-    final domainId = goal?.domainId ?? todo.domainId ?? getUserProfile().focusedDomainId;
-
-    if (goal != null) {
-      for (final project in getProjectsByGoal(goal.id)) {
-        if (project.metadata?['systemKind'] == 'goal_inbox') {
-          return project;
-        }
-      }
-    } else {
-      for (final project in projectBox.values) {
-        if (project.metadata?['systemKind'] == 'domain_inbox' &&
-            project.domainId == domainId) {
-          return project;
-        }
-      }
-    }
-
-    final project = Project(
-      name: goal != null ? '${goal.title} 收纳项目' : '待整理事项项目',
-      description: '系统自动创建，用于收纳旧结构下未挂项目的事项。',
-      status: ProjectStatus.active,
-      goalIds: goal != null ? [goal.id] : null,
-      domainId: domainId,
-      metadata: {
-        'systemManaged': true,
-        'systemKind': goal != null ? 'goal_inbox' : 'domain_inbox',
-      },
-    );
-    await projectBox.add(project);
-
-    if (goal != null) {
-      final projectIds = List<String>.from(goal.projectIds ?? const []);
-      if (!projectIds.contains(project.id)) {
-        projectIds.add(project.id);
-        goal.projectIds = projectIds;
-        goal.updatedAt = DateTime.now();
-        await goal.save();
-      }
-    }
-
-    return project;
-  }
-
   // Todo operations
   static Future<void> addTodo(Todo todo) async {
-    await _prepareTodoForBlueprint(todo);
+    todo.domainId ??= resolveDomainIdForTodo(todo);
     await todoBox.add(todo);
-    if (todo.projectId != null) {
-      await recalculateProjectProgress(todo.projectId!);
-    }
-    if (todo.goalId != null) {
-      await recalculateGoalProgress(todo.goalId!);
-    }
+    await _recalculateTodoRelations(todo);
+    DataChangeNotifier.notifyChange();
   }
 
   // 批量添加待办事项
   static Future<void> addTodos(List<Todo> todos) async {
+    final affectedProjectIds = <String>{};
+    final affectedGoalIds = <String>{};
     for (final todo in todos) {
-      await _prepareTodoForBlueprint(todo);
+      todo.domainId ??= resolveDomainIdForTodo(todo);
       await todoBox.add(todo);
-      if (todo.projectId != null) {
-        await recalculateProjectProgress(todo.projectId!);
-      }
-      if (todo.goalId != null) {
-        await recalculateGoalProgress(todo.goalId!);
-      }
+      if (todo.projectId != null) affectedProjectIds.add(todo.projectId!);
+      if (todo.goalId != null) affectedGoalIds.add(todo.goalId!);
     }
+    await _recalculateRelations(affectedProjectIds, affectedGoalIds);
+    DataChangeNotifier.notifyChange();
   }
 
   static List<Todo> getAllTodos() {
@@ -399,10 +304,7 @@ class DatabaseService {
   }
 
   static List<Todo> getTodosByGoal(String goalId) {
-    final projectIds = getProjectsByGoal(goalId).map((project) => project.id).toSet();
-    return todoBox.values
-        .where((todo) => todo.projectId != null && projectIds.contains(todo.projectId))
-        .toList();
+    return todoBox.values.where((todo) => todo.goalId == goalId).toList();
   }
 
   static List<Todo> getOverdueTodos() {
@@ -418,23 +320,28 @@ class DatabaseService {
   }
 
   static Future<void> updateTodo(Todo todo) async {
-    await _prepareTodoForBlueprint(todo);
-    if (todo.projectId != null) {
-      await recalculateProjectProgress(todo.projectId!);
-    }
-    if (todo.goalId != null) {
-      await recalculateGoalProgress(todo.goalId!);
-    }
+    todo.domainId ??= resolveDomainIdForTodo(todo);
+    await todo.save();
+    await _recalculateTodoRelations(todo);
+    DataChangeNotifier.notifyChange();
   }
 
   static Future<void> deleteTodo(Todo todo) async {
+    final projectId = todo.projectId;
+    final goalId = todo.goalId;
     await todo.delete();
+    await _recalculateRelations(
+      projectId == null ? const {} : {projectId},
+      goalId == null ? const {} : {goalId},
+    );
+    DataChangeNotifier.notifyChange();
   }
 
   // Goal operations
   static Future<void> addGoal(Goal goal) async {
     goal.domainId ??= getUserProfile().focusedDomainId;
     await goalBox.add(goal);
+    DataChangeNotifier.notifyChange();
   }
 
   static List<Goal> getAllGoals() {
@@ -461,10 +368,12 @@ class DatabaseService {
 
   static Future<void> updateGoal(Goal goal) async {
     await goal.save();
+    DataChangeNotifier.notifyChange();
   }
 
   static Future<void> deleteGoal(Goal goal) async {
     await goal.delete();
+    DataChangeNotifier.notifyChange();
   }
 
   /// 重新计算目标进度（优先使用数值，其次关联项目平均值）
@@ -479,9 +388,7 @@ class DatabaseService {
     if (hasValueTarget) {
       newProgress = (goal.currentValue! / goal.targetValue!).clamp(0.0, 1.0);
     } else {
-      final linkedProjects = getProjectsByGoal(goalId);
-      goal.projectIds =
-          linkedProjects.isEmpty ? null : linkedProjects.map((item) => item.id).toList();
+      final linkedProjects = _getProjectsForGoal(goalId);
       if (linkedProjects.isNotEmpty) {
         final total = linkedProjects.fold<double>(
           0,
@@ -500,15 +407,15 @@ class DatabaseService {
 
   // Project operations
   static Future<void> addProject(Project project) async {
-    final primaryGoalId = getProjectPrimaryGoalId(project);
-    if (primaryGoalId != null) {
-      project.goalIds = [primaryGoalId];
-    }
-    if (primaryGoalId != null && project.domainId == null) {
-      final primaryGoal = getGoalById(primaryGoalId);
+    if ((project.goalIds?.isNotEmpty ?? false) && project.domainId == null) {
+      final primaryGoal = getGoalById(project.goalIds!.first);
       project.domainId = primaryGoal?.domainId ?? project.domainId;
     }
     await projectBox.add(project);
+    for (final goalId in project.goalIds ?? const <String>[]) {
+      await recalculateGoalProgress(goalId);
+    }
+    DataChangeNotifier.notifyChange();
   }
 
   static List<Project> getAllProjects() {
@@ -531,10 +438,19 @@ class DatabaseService {
 
   static Future<void> updateProject(Project project) async {
     await project.save();
+    for (final goalId in project.goalIds ?? const <String>[]) {
+      await recalculateGoalProgress(goalId);
+    }
+    DataChangeNotifier.notifyChange();
   }
 
   static Future<void> deleteProject(Project project) async {
+    final goalIds = List<String>.from(project.goalIds ?? const <String>[]);
     await project.delete();
+    for (final goalId in goalIds) {
+      await recalculateGoalProgress(goalId);
+    }
+    DataChangeNotifier.notifyChange();
   }
 
   /// 根据关联任务完成度重新计算项目进度
@@ -550,13 +466,40 @@ class DatabaseService {
       progress = (completedCount / todos.length).clamp(0.0, 1.0);
     }
 
-    project.todoIds = todos.isEmpty ? null : todos.map((todo) => todo.id).toList();
     project.progress = progress;
     project.updatedAt = DateTime.now();
     await project.save();
 
-    final goalId = getProjectPrimaryGoalId(project);
-    if (goalId != null) {
+    if (project.goalIds != null) {
+      for (final goalId in project.goalIds!) {
+        await recalculateGoalProgress(goalId);
+      }
+    }
+  }
+
+  static List<Project> _getProjectsForGoal(String goalId) {
+    return projectBox.values
+        .where((project) =>
+            (project.goalIds?.contains(goalId) ?? false) ||
+            (getGoalById(goalId)?.projectIds?.contains(project.id) ?? false))
+        .toList();
+  }
+
+  static Future<void> _recalculateTodoRelations(Todo todo) {
+    return _recalculateRelations(
+      todo.projectId == null ? const {} : {todo.projectId!},
+      todo.goalId == null ? const {} : {todo.goalId!},
+    );
+  }
+
+  static Future<void> _recalculateRelations(
+    Set<String> projectIds,
+    Set<String> goalIds,
+  ) async {
+    for (final projectId in projectIds) {
+      await recalculateProjectProgress(projectId);
+    }
+    for (final goalId in goalIds) {
       await recalculateGoalProgress(goalId);
     }
   }
@@ -569,37 +512,26 @@ class DatabaseService {
     final goal = getGoalById(goalId);
     if (goal == null) return;
 
-    goal.projectIds = projectIds.isEmpty ? null : projectIds;
-    await goal.save();
-
+    // Project.goalIds is the canonical owner. Goal.projectIds remains read-only
+    // legacy data until a separately approved destructive cleanup.
     for (final project in projectBox.values) {
+      final goalIds = List<String>.from(project.goalIds ?? []);
       final shouldContain = projectIds.contains(project.id);
-      final currentGoalId = getProjectPrimaryGoalId(project);
+      final contains = goalIds.contains(goalId);
 
-      if (shouldContain && currentGoalId != goalId) {
-        if (currentGoalId != null) {
-          final previousGoal = getGoalById(currentGoalId);
-          if (previousGoal != null) {
-            final previousProjectIds =
-                List<String>.from(previousGoal.projectIds ?? const []);
-            previousProjectIds.remove(project.id);
-            previousGoal.projectIds =
-                previousProjectIds.isEmpty ? null : previousProjectIds;
-            previousGoal.updatedAt = DateTime.now();
-            await previousGoal.save();
-          }
-        }
-
-        project.goalIds = [goalId];
-        project.domainId = goal.domainId ?? project.domainId;
+      if (shouldContain && !contains) {
+        goalIds.add(goalId);
+        project.goalIds = goalIds;
         await project.save();
-      } else if (!shouldContain && currentGoalId == goalId) {
-        project.goalIds = null;
+      } else if (!shouldContain && contains) {
+        goalIds.remove(goalId);
+        project.goalIds = goalIds.isEmpty ? null : goalIds;
         await project.save();
       }
     }
 
     await recalculateGoalProgress(goalId);
+    DataChangeNotifier.notifyChange();
   }
 
   /// 将任务分配给项目（或取消）
@@ -610,7 +542,8 @@ class DatabaseService {
     final project = getProjectById(projectId);
     if (project == null) return;
 
-    final previousIds = List<String>.from(project.todoIds ?? []);
+    final previousIds =
+        getTodosByProject(projectId).map((todo) => todo.id).toList();
     final affectedProjectIds = <String>{projectId};
 
     // 需要移除的任务
@@ -619,7 +552,12 @@ class DatabaseService {
         final todo = getTodoById(id);
         if (todo != null && todo.projectId == projectId) {
           todo.projectId = null;
-          await _prepareTodoForBlueprint(todo);
+          todo.domainId =
+              todo.goalId != null ? getGoalById(todo.goalId!)?.domainId : null;
+          await todo.save();
+          if (todo.goalId != null) {
+            await recalculateGoalProgress(todo.goalId!);
+          }
         }
       }
     }
@@ -630,23 +568,16 @@ class DatabaseService {
       if (todo == null) continue;
 
       if (todo.projectId != null && todo.projectId != projectId) {
-        final oldProject = getProjectById(todo.projectId!);
-        if (oldProject != null) {
-          final oldTodoIds = List<String>.from(oldProject.todoIds ?? []);
-          if (oldTodoIds.remove(id)) {
-            oldProject.todoIds = oldTodoIds.isEmpty ? null : oldTodoIds;
-            await oldProject.save();
-            affectedProjectIds.add(oldProject.id);
-          }
-        }
+        affectedProjectIds.add(todo.projectId!);
       }
 
       todo.projectId = projectId;
-      await _prepareTodoForBlueprint(todo);
+      todo.domainId = project.domainId ?? todo.domainId;
+      await todo.save();
+      if (todo.goalId != null) {
+        await recalculateGoalProgress(todo.goalId!);
+      }
     }
-
-    project.todoIds = todoIds.isEmpty ? null : todoIds;
-    await project.save();
 
     for (final id in affectedProjectIds) {
       await recalculateProjectProgress(id);
@@ -684,8 +615,6 @@ class DatabaseService {
     await userProfileBox.clear();
     await xpEventBox.clear();
     await dailyReviewBox.clear();
-    await scheduleSlotBox.clear();
-    await praisePointLedgerBox.clear();
     await rewardTemplateBox.clear();
     await rewardRedemptionBox.clear();
     await rewardTodoBox.clear();
@@ -703,8 +632,6 @@ class DatabaseService {
     await userProfileBox.close();
     await xpEventBox.close();
     await dailyReviewBox.close();
-    await scheduleSlotBox.close();
-    await praisePointLedgerBox.close();
     await rewardTemplateBox.close();
     await rewardRedemptionBox.close();
     await rewardTodoBox.close();
@@ -728,11 +655,6 @@ class DatabaseService {
               })
           .toList(),
       'settings': settingsBox.toMap(),
-      'scheduleSlots':
-          scheduleSlotBox.values.map((slot) => _scheduleSlotToMap(slot)).toList(),
-      'rewardTemplates': rewardTemplateBox.values
-          .map((template) => _rewardTemplateToMap(template))
-          .toList(),
       'backupDate': DateTime.now().toIso8601String(),
     };
   }
@@ -772,18 +694,6 @@ class DatabaseService {
         await settingsBox.put(entry.key, entry.value);
       }
     }
-
-    if (data['scheduleSlots'] != null) {
-      for (final slotMap in data['scheduleSlots']) {
-        await scheduleSlotBox.add(_mapToScheduleSlot(slotMap));
-      }
-    }
-
-    if (data['rewardTemplates'] != null) {
-      for (final templateMap in data['rewardTemplates']) {
-        await rewardTemplateBox.add(_mapToRewardTemplate(templateMap));
-      }
-    }
   }
 
   // Helper methods for backup/restore
@@ -805,6 +715,11 @@ class DatabaseService {
       'parentId': todo.parentId,
       'updatedAt': todo.updatedAt.toIso8601String(),
       'domainId': todo.domainId,
+      'importanceLevel': todo.importanceLevel?.index,
+      'difficultyLevel': todo.difficultyLevel?.index,
+      'isCoreTask': todo.isCoreTask,
+      'estimatedMinutes': todo.estimatedMinutes,
+      'praisePointsEarned': todo.praisePointsEarned,
     };
   }
 
@@ -831,6 +746,15 @@ class DatabaseService {
       parentId: map['parentId'],
       updatedAt: DateTime.parse(map['updatedAt']),
       domainId: map['domainId'] as String?,
+      importanceLevel: map['importanceLevel'] != null
+          ? ImportanceLevel.values[map['importanceLevel'] as int]
+          : null,
+      difficultyLevel: map['difficultyLevel'] != null
+          ? DifficultyLevel.values[map['difficultyLevel'] as int]
+          : null,
+      isCoreTask: map['isCoreTask'] as bool? ?? false,
+      estimatedMinutes: map['estimatedMinutes'] as int?,
+      praisePointsEarned: map['praisePointsEarned'] as int?,
     );
   }
 
@@ -914,61 +838,6 @@ class DatabaseService {
       'metadata': project.metadata,
       'domainId': project.domainId,
     };
-  }
-
-  static Map<String, dynamic> _scheduleSlotToMap(TodoScheduleSlot slot) {
-    return {
-      'id': slot.id,
-      'todoId': slot.todoId,
-      'scheduledDate': slot.scheduledDate.toIso8601String(),
-      'scheduledStart': slot.scheduledStart?.toIso8601String(),
-      'scheduledEnd': slot.scheduledEnd?.toIso8601String(),
-      'status': slot.status.index,
-      'source': slot.source.index,
-      'createdAt': slot.createdAt.toIso8601String(),
-      'updatedAt': slot.updatedAt.toIso8601String(),
-    };
-  }
-
-  static TodoScheduleSlot _mapToScheduleSlot(Map<String, dynamic> map) {
-    return TodoScheduleSlot(
-      id: map['id'],
-      todoId: map['todoId'],
-      scheduledDate: DateTime.parse(map['scheduledDate']),
-      scheduledStart: map['scheduledStart'] != null
-          ? DateTime.parse(map['scheduledStart'])
-          : null,
-      scheduledEnd:
-          map['scheduledEnd'] != null ? DateTime.parse(map['scheduledEnd']) : null,
-      status: ScheduleSlotStatus.values[map['status']],
-      source: ScheduleSlotSource.values[map['source']],
-      createdAt: DateTime.parse(map['createdAt']),
-      updatedAt: DateTime.parse(map['updatedAt']),
-    );
-  }
-
-  static Map<String, dynamic> _rewardTemplateToMap(RewardTemplate template) {
-    return {
-      'id': template.id,
-      'title': template.title,
-      'description': template.description,
-      'priceInPraisePoints': template.priceInPraisePoints,
-      'tier': template.tier.index,
-      'isSystemTemplate': template.isSystemTemplate,
-      'createdAt': template.createdAt.toIso8601String(),
-    };
-  }
-
-  static RewardTemplate _mapToRewardTemplate(Map<String, dynamic> map) {
-    return RewardTemplate(
-      id: map['id'],
-      title: map['title'],
-      description: map['description'],
-      priceInPraisePoints: map['priceInPraisePoints'],
-      tier: RewardTier.values[map['tier']],
-      isSystemTemplate: map['isSystemTemplate'],
-      createdAt: DateTime.parse(map['createdAt']),
-    );
   }
 
   static Project _mapToProject(Map<String, dynamic> map) {
@@ -1066,6 +935,18 @@ class DatabaseService {
     await xpEventBox.add(event);
   }
 
+  /// 按 source + sourceId 查找 XP 事件，用于结算动作的幂等校验。
+  static XpEvent? findXpEvent(
+      {required String source, required String sourceId}) {
+    try {
+      return xpEventBox.values.firstWhere(
+        (event) => event.source == source && event.sourceId == sourceId,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   static List<DailyReview> getAllDailyReviews() {
     final reviews = dailyReviewBox.values.toList();
     reviews.sort((a, b) => b.date.compareTo(a.date));
@@ -1097,116 +978,6 @@ class DatabaseService {
     await existing.save();
   }
 
-  static List<TodoScheduleSlot> getScheduleSlotsForDate(DateTime date) {
-    return scheduleSlotBox.values.where((slot) {
-      return slot.scheduledDate.year == date.year &&
-          slot.scheduledDate.month == date.month &&
-          slot.scheduledDate.day == date.day;
-    }).toList()
-      ..sort((a, b) {
-        final aStart = a.scheduledStart ?? a.scheduledDate;
-        final bStart = b.scheduledStart ?? b.scheduledDate;
-        return aStart.compareTo(bStart);
-      });
-  }
-
-  static List<TodoScheduleSlot> getScheduleSlotsBetween(
-    DateTime start,
-    DateTime end,
-  ) {
-    return scheduleSlotBox.values.where((slot) {
-      return !slot.scheduledDate.isBefore(start) && slot.scheduledDate.isBefore(end);
-    }).toList();
-  }
-
-  static Future<void> addOrUpdateScheduleSlot(TodoScheduleSlot slot) async {
-    final existing = scheduleSlotBox.values.where((item) => item.todoId == slot.todoId);
-    if (existing.isEmpty) {
-      await scheduleSlotBox.add(slot);
-      return;
-    }
-    final first = existing.first;
-    first.scheduledDate = slot.scheduledDate;
-    first.scheduledStart = slot.scheduledStart;
-    first.scheduledEnd = slot.scheduledEnd;
-    first.status = slot.status;
-    first.source = slot.source;
-    first.updatedAt = DateTime.now();
-    await first.save();
-  }
-
-  static List<PraisePointLedger> getAllPraisePointLedgers() {
-    final items = praisePointLedgerBox.values.toList();
-    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return items;
-  }
-
-  static Future<void> addPraisePointLedger(PraisePointLedger ledger) async {
-    await praisePointLedgerBox.add(ledger);
-  }
-
-  static int getPraisePointBalance() {
-    return praisePointLedgerBox.values.fold<int>(0, (sum, item) => sum + item.delta);
-  }
-
-  static List<RewardTemplate> getRewardTemplates() {
-    final items = rewardTemplateBox.values.toList();
-    items.sort((a, b) => a.priceInPraisePoints.compareTo(b.priceInPraisePoints));
-    return items;
-  }
-
-  static Future<void> addRewardTemplate(RewardTemplate template) async {
-    await rewardTemplateBox.add(template);
-  }
-
-  static List<RewardRedemption> getRewardRedemptions() {
-    final items = rewardRedemptionBox.values.toList();
-    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return items;
-  }
-
-  static RewardRedemption? getRewardRedemptionById(String id) {
-    try {
-      return rewardRedemptionBox.values.firstWhere((item) => item.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  static Future<void> addRewardRedemption(RewardRedemption redemption) async {
-    await rewardRedemptionBox.add(redemption);
-  }
-
-  static Future<void> updateRewardRedemption(RewardRedemption redemption) async {
-    await redemption.save();
-  }
-
-  static List<RewardTodo> getPendingRewardTodos() {
-    final items = rewardTodoBox.values
-        .where((item) => item.status == RewardTodoStatus.pending)
-        .toList();
-    items.sort((a, b) {
-      final aDue = a.dueDate ?? a.createdAt;
-      final bDue = b.dueDate ?? b.createdAt;
-      return aDue.compareTo(bDue);
-    });
-    return items;
-  }
-
-  static List<RewardTodo> getAllRewardTodos() {
-    final items = rewardTodoBox.values.toList();
-    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return items;
-  }
-
-  static Future<void> addRewardTodo(RewardTodo rewardTodo) async {
-    await rewardTodoBox.add(rewardTodo);
-  }
-
-  static Future<void> updateRewardTodo(RewardTodo rewardTodo) async {
-    await rewardTodo.save();
-  }
-
   static List<Todo> getTodosByDomain(String domainId) {
     return todoBox.values.where((todo) => todo.domainId == domainId).toList();
   }
@@ -1223,15 +994,8 @@ class DatabaseService {
 
   static List<Todo> getTopTodosForToday({int limit = 3}) {
     final now = DateTime.now();
-    final scheduledIds =
-        getScheduleSlotsForDate(now).map((slot) => slot.todoId).toSet();
     final todos = todoBox.values.where((todo) => !todo.isDone).toList();
     todos.sort((a, b) {
-      final aScheduled = scheduledIds.contains(a.id);
-      final bScheduled = scheduledIds.contains(b.id);
-      if (aScheduled != bScheduled) {
-        return aScheduled ? -1 : 1;
-      }
       final aScore = _todoSortScore(a, now);
       final bScore = _todoSortScore(b, now);
       if (aScore != bScore) {
@@ -1260,9 +1024,8 @@ class DatabaseService {
         return project!.domainId;
       }
     }
-    final goalId = resolveGoalIdForTodo(todo);
-    if (goalId != null) {
-      final goal = getGoalById(goalId);
+    if (todo.goalId != null) {
+      final goal = getGoalById(todo.goalId!);
       if (goal?.domainId != null) {
         return goal!.domainId;
       }

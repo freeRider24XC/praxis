@@ -13,6 +13,8 @@ import 'package:praxis/pages/main/main_page.dart';
 import 'package:praxis/pages/notifications/notifications_page.dart';
 import 'package:praxis/pages/onboarding/onboarding_page.dart';
 import 'package:praxis/pages/project/project_detail_page.dart';
+import 'package:praxis/pages/reward/reward_shop_page.dart';
+import 'package:praxis/pages/reward/reward_todo_page.dart';
 import 'package:praxis/pages/todo/add_todo_page.dart';
 import 'package:praxis/pages/goal/add_goal_page.dart';
 import 'package:praxis/pages/project/add_project_page.dart';
@@ -22,25 +24,34 @@ import 'package:praxis/pages/rewards/reward_center_page.dart';
 import 'package:praxis/pages/rewards/reward_todos_page.dart';
 import 'package:praxis/pages/schedule/schedule_page.dart';
 
-void main() async {
+void main() {
+  _bootstrapAndLaunch();
+}
+
+Future<void> _bootstrapAndLaunch() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // 加载本地API配置
     await loadLocalApiConfig();
     await SupabaseService.init();
 
     // Initialize database
     await DatabaseService.init();
-    await RewardService.ensureSeededTemplates();
-    await ScheduleService.ensureWeeklySchedule();
+    await RewardService.seedPresetTemplatesIfEmpty();
+    await RewardService.scanExpiredTodos();
 
-    // Initialize services
-    await Get.putAsync(() => LocaleService().onInit().then((_) => LocaleService()));
-    await Get.putAsync(() => ThemeService().onInit().then((_) => ThemeService()));
+    await Get.putAsync<LocaleService>(() async {
+      final service = LocaleService();
+      await service.onInit();
+      return service;
+    });
+    await Get.putAsync<ThemeService>(() async {
+      final service = ThemeService();
+      await service.onInit();
+      return service;
+    });
     await CalendarSyncService.init();
 
-    // Lock orientation only on native mobile platforms.
     if (!kIsWeb) {
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
@@ -49,11 +60,31 @@ void main() async {
     }
 
     _launchPraxisApp(const MyApp());
-  } catch (e, stackTrace) {
-    // Log error and show error screen
-    debugPrint('初始化失败: $e');
+  } catch (error, stackTrace) {
+    debugPrint('初始化失败: $error');
     debugPrint('堆栈跟踪: $stackTrace');
-    _launchPraxisApp(const ErrorApp());
+    _launchPraxisApp(
+      ErrorApp(
+        onRetry: _bootstrapAndLaunch,
+        onResetLocalData: _resetLocalDataAndLaunch,
+      ),
+    );
+  }
+}
+
+Future<void> _resetLocalDataAndLaunch() async {
+  try {
+    await DatabaseService.resetLocalData();
+    await _bootstrapAndLaunch();
+  } catch (error, stackTrace) {
+    debugPrint('重置本地数据失败: $error');
+    debugPrint('堆栈跟踪: $stackTrace');
+    _launchPraxisApp(
+      ErrorApp(
+        onRetry: _bootstrapAndLaunch,
+        onResetLocalData: _resetLocalDataAndLaunch,
+      ),
+    );
   }
 }
 
@@ -86,13 +117,41 @@ void _launchPraxisApp(Widget app) {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      RewardService.scanExpiredTodos();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final localeService = Get.find<LocaleService>();
     final themeService = Get.find<ThemeService>();
+
+    // 仅允许在 debug 构建中通过 dart-define 临时绕过 onboarding。
+    const skipOnboardingForDebug = kDebugMode &&
+        bool.fromEnvironment('SKIP_ONBOARDING', defaultValue: false);
 
     return Obx(() => GetMaterialApp(
           title: "Praxis",
@@ -109,20 +168,26 @@ class MyApp extends StatelessWidget {
           theme: themeService.lightTheme,
           darkTheme: themeService.darkTheme,
           themeMode: themeService.themeMode,
-          home: FutureBuilder<bool>(
-            future: OnboardingChecker.shouldShowOnboarding(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-              return snapshot.data == true ? const OnboardingPage() : const MainPage();
-            },
-          ),
+          home: skipOnboardingForDebug
+              ? const MainPage()
+              // ignore: dead_code  调试开关：skipOnboardingForDebug=true 时不执行
+              : FutureBuilder<bool>(
+                  future: OnboardingChecker.shouldShowOnboarding(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Scaffold(
+                        body: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    return snapshot.data == true
+                        ? const OnboardingPage()
+                        : const MainPage();
+                  },
+                ),
           getPages: [
             GetPage(name: '/MainPage', page: () => const MainPage()),
-            GetPage(name: '/OnboardingPage', page: () => const OnboardingPage()),
+            GetPage(
+                name: '/OnboardingPage', page: () => const OnboardingPage()),
             GetPage(name: '/todo/add', page: () => const AddTodoPage()),
             GetPage(name: '/goal/add', page: () => const AddGoalPage()),
             GetPage(name: '/project/add', page: () => const AddProjectPage()),
@@ -134,10 +199,13 @@ class MyApp extends StatelessWidget {
                   return ProjectDetailPage(projectId: id);
                 }),
             GetPage(name: '/focus', page: () => const FocusPage()),
-            GetPage(name: '/notifications', page: () => const NotificationsPage()),
+            GetPage(
+                name: '/notifications', page: () => const NotificationsPage()),
             GetPage(name: '/sign-in', page: () => const SignInPage()),
             GetPage(name: '/schedule', page: () => const SchedulePage()),
             GetPage(name: '/rewards', page: () => const RewardCenterPage()),
+            GetPage(name: '/reward/shop', page: () => const RewardShopPage()),
+            GetPage(name: '/reward/todo', page: () => const RewardTodoPage()),
             GetPage(
               name: '/reward-todos',
               page: () => const RewardTodosPage(),
@@ -147,8 +215,51 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class ErrorApp extends StatelessWidget {
-  const ErrorApp({super.key});
+class ErrorApp extends StatefulWidget {
+  const ErrorApp({
+    required this.onRetry,
+    required this.onResetLocalData,
+    super.key,
+  });
+
+  final Future<void> Function() onRetry;
+  final Future<void> Function() onResetLocalData;
+
+  @override
+  State<ErrorApp> createState() => _ErrorAppState();
+}
+
+class _ErrorAppState extends State<ErrorApp> {
+  bool _isWorking = false;
+
+  Future<void> _retry() async {
+    setState(() => _isWorking = true);
+    await widget.onRetry();
+  }
+
+  Future<void> _confirmAndReset() async {
+    final shouldReset = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('重置本地数据？'),
+        content: const Text('这会删除本机保存的目标、项目、待办、专注和设置数据，且无法恢复。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('确认重置'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldReset != true || !mounted) return;
+    setState(() => _isWorking = true);
+    await widget.onResetLocalData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -157,36 +268,31 @@ class ErrorApp extends StatelessWidget {
       home: Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.red,
-                ),
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
                 const SizedBox(height: 16),
                 const Text(
                   '应用初始化失败',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '请检查控制台日志以获取详细信息',
+                  '请先重试。若持续失败，可重置本地数据后重新开始。',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
-                    // 尝试重新启动应用
-                    main();
-                  },
+                  onPressed: _isWorking ? null : _retry,
                   child: const Text('重试'),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _isWorking ? null : _confirmAndReset,
+                  child: const Text('重置本地数据'),
                 ),
               ],
             ),

@@ -13,6 +13,16 @@ class ProfileService {
     await DatabaseService.saveUserProfile(profile);
   }
 
+  /// 增加或扣减犒赏点余额。允许负值（如兑换奖励），但余额不会低于 0。
+  static Future<int> incrementPraisePoints(int delta) async {
+    final profile = getProfile();
+    final next = (profile.praisePointsBalance + delta).clamp(0, 1 << 31);
+    profile.praisePointsBalance = next;
+    profile.updatedAt = DateTime.now();
+    await DatabaseService.saveUserProfile(profile);
+    return next;
+  }
+
   static Future<void> markActiveForDate(DateTime date) async {
     final profile = getProfile();
     final normalized = DateTime(date.year, date.month, date.day);

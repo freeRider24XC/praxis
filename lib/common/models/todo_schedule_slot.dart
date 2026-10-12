@@ -3,7 +3,7 @@ import 'package:uuid/uuid.dart';
 
 part 'todo_schedule_slot.g.dart';
 
-@HiveType(typeId: 18)
+@HiveType(typeId: 26)
 class TodoScheduleSlot extends HiveObject {
   @HiveField(0)
   late String id;
@@ -73,7 +73,7 @@ class TodoScheduleSlot extends HiveObject {
   }
 }
 
-@HiveType(typeId: 19)
+@HiveType(typeId: 27)
 enum ScheduleSlotStatus {
   @HiveField(0)
   scheduled,
@@ -83,7 +83,7 @@ enum ScheduleSlotStatus {
   skipped,
 }
 
-@HiveType(typeId: 20)
+@HiveType(typeId: 28)
 enum ScheduleSlotSource {
   @HiveField(0)
   ai,

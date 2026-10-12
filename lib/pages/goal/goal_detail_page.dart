@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:praxis/common/models/goal.dart';
 import 'package:praxis/common/models/project.dart';
 import 'package:praxis/common/models/todo.dart';
-import 'package:praxis/common/services/database_service.dart';
+import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
 import 'package:praxis/pages/project/project_detail_page.dart';
 import 'package:praxis/pages/todo/todo_detail_page.dart';
@@ -29,8 +29,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
   }
 
   Future<void> _loadData() async {
-    await DatabaseService.recalculateGoalProgress(widget.goalId);
-    final goal = DatabaseService.getGoalById(widget.goalId);
+    await GoalRepository.recalculateProgress(widget.goalId);
+    final goal = GoalRepository.getById(widget.goalId);
     if (goal == null) {
       setState(() {
         _goal = null;
@@ -40,9 +40,11 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
       return;
     }
 
-    final projects = DatabaseService.getProjectsByGoal(goal.id);
+    final projects = ProjectRepository.getAll()
+        .where((project) => project.goalIds?.contains(goal.id) ?? false)
+        .toList();
 
-    final todos = DatabaseService.getTodosByGoal(goal.id);
+    final todos = TodoRepository.getByGoal(goal.id);
 
     setState(() {
       _goal = goal;
@@ -71,6 +73,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                       await _loadData();
                     }
                   },
+            tooltip: '编辑目标',
           ),
         ],
       ),
@@ -144,6 +147,22 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                   ),
                 ),
               ),
+              const SizedBox(width: DesignTokens.spacing2),
+              if (goal.status == GoalStatus.notStarted ||
+                  goal.status == GoalStatus.inProgress ||
+                  goal.status == GoalStatus.paused)
+                TextButton.icon(
+                  onPressed: () => _confirmMarkGoalCompleted(goal),
+                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                  label: const Text('标记完成'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: DesignTokens.statusCompleted,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: DesignTokens.spacing2,
+                    ),
+                  ),
+                ),
               const Spacer(),
               Text(
                 goal.type.displayName,
@@ -161,8 +180,9 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
             style: DesignTokens.textStyle(
               fontSize: DesignTokens.fontSizeHeadlineSmall,
               fontWeight: DesignTokens.fontWeightBold,
-              color:
-                  isDark ? DesignTokens.onSurfaceDark : DesignTokens.onSurfaceLight,
+              color: isDark
+                  ? DesignTokens.onSurfaceDark
+                  : DesignTokens.onSurfaceLight,
             ),
           ),
           if (goal.description?.isNotEmpty ?? false) ...[
@@ -636,8 +656,16 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                       ),
                     ],
                   ),
-                );
-              },
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () async {
+                    await Get.to(
+                        () => ProjectDetailPage(projectId: project.id));
+                    await _loadData();
+                  },
+                ),
+              ),
             ),
         ],
       ),
@@ -828,6 +856,43 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
     );
   }
 
+  Future<void> _confirmMarkGoalCompleted(Goal goal) async {
+    if (goal.status == GoalStatus.completed ||
+        goal.status == GoalStatus.cancelled) {
+      return;
+    }
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('标记目标完成'),
+        content: Text(
+          '完成「${goal.title}」后将发放 +${XpService.goalCompletedXp} XP 和 '
+          '+${PraisePointsCalculator.forGoal()} 犒赏点，且不能撤销。确认继续？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            style: TextButton.styleFrom(
+              foregroundColor: DesignTokens.statusCompleted,
+            ),
+            child: const Text('确认完成'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    goal.status = GoalStatus.completed;
+    goal.progress = 1.0;
+    goal.updatedAt = DateTime.now();
+    await GoalRepository.update(goal);
+    await XpService.awardGoalCompleted(goal);
+    await _loadData();
+  }
+
   void _showUpdateGoalValue(Goal goal) {
     final currentController = TextEditingController(
       text: goal.currentValue?.toString() ?? '',
@@ -907,8 +972,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                           goal.currentValue = currentValue;
                         }
 
-                        await DatabaseService.updateGoal(goal);
-                        await DatabaseService.recalculateGoalProgress(goal.id);
+                        await GoalRepository.update(goal);
+                        await GoalRepository.recalculateProgress(goal.id);
                         Get.back();
                         await _loadData();
                       },
@@ -947,14 +1012,12 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final maxHeight = MediaQuery.of(context).size.height * 0.7;
-        final projects = DatabaseService.getAllProjects();
+        final projects = ProjectRepository.getAll();
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return Container(
               decoration: BoxDecoration(
-                color: isDark
-                    ? DesignTokens.surfaceDark
-                    : Colors.white,
+                color: isDark ? DesignTokens.surfaceDark : Colors.white,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(DesignTokens.radiusXLarge),
                   topRight: Radius.circular(DesignTokens.radiusXLarge),
@@ -972,7 +1035,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                         color: isDark
                             ? DesignTokens.borderDark
                             : DesignTokens.borderLight,
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusRound),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusRound),
                       ),
                     ),
                     Padding(
@@ -995,8 +1059,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                             _buildEmptyHint('暂无项目可关联', isDark)
                           else
                             ConstrainedBox(
-                              constraints:
-                                  BoxConstraints(maxHeight: maxHeight),
+                              constraints: BoxConstraints(maxHeight: maxHeight),
                               child: ListView(
                                 shrinkWrap: true,
                                 children: projects.map((project) {
@@ -1023,7 +1086,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () async {
-                                await DatabaseService.setGoalProjectLinks(
+                                await GoalRepository.setProjectLinks(
                                   goal.id,
                                   selectedIds.toList(),
                                 );
@@ -1037,8 +1100,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                                   vertical: DesignTokens.spacing3,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(DesignTokens.radiusXLarge),
+                                  borderRadius: BorderRadius.circular(
+                                      DesignTokens.radiusXLarge),
                                 ),
                               ),
                               child: const Text('完成'),

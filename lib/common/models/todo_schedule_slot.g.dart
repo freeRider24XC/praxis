@@ -8,7 +8,7 @@ part of 'todo_schedule_slot.dart';
 
 class TodoScheduleSlotAdapter extends TypeAdapter<TodoScheduleSlot> {
   @override
-  final int typeId = 18;
+  final int typeId = 26;
 
   @override
   TodoScheduleSlot read(BinaryReader reader) {
@@ -66,7 +66,7 @@ class TodoScheduleSlotAdapter extends TypeAdapter<TodoScheduleSlot> {
 
 class ScheduleSlotStatusAdapter extends TypeAdapter<ScheduleSlotStatus> {
   @override
-  final int typeId = 19;
+  final int typeId = 27;
 
   @override
   ScheduleSlotStatus read(BinaryReader reader) {
@@ -110,7 +110,7 @@ class ScheduleSlotStatusAdapter extends TypeAdapter<ScheduleSlotStatus> {
 
 class ScheduleSlotSourceAdapter extends TypeAdapter<ScheduleSlotSource> {
   @override
-  final int typeId = 20;
+  final int typeId = 28;
 
   @override
   ScheduleSlotSource read(BinaryReader reader) {
