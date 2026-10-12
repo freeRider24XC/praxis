@@ -11,9 +11,9 @@ class AiGoalPlanDraft {
   final String domainId;
   final Goal goal;
   final Project project;
-  final List<String> milestones;
-  final List<Todo> todos;
-  final List<String> followUpQuestions;
+  List<String> milestones;
+  List<Todo> todos;
+  List<String> followUpQuestions;
   final bool isMock;
 
   AiGoalPlanDraft({
@@ -62,31 +62,21 @@ class AiUseCaseService {
     required String focusedDomainId,
     required int weeklyCapacityHours,
   }) async {
-    final fallback = _buildMockGoalPlan(
-      goalText: goalText,
-      focusedDomainId: focusedDomainId,
-      weeklyCapacityHours: weeklyCapacityHours,
-    );
-
     if (_managedAiService.isConfigured) {
-      try {
-        return await _managedAiService.planGoal(
-          goalText: goalText,
-          focusedDomainId: focusedDomainId,
-          weeklyCapacityHours: weeklyCapacityHours,
-        );
-      } catch (_) {
-        // Fall through to local provider and mock fallback.
-      }
+      return await _managedAiService.planGoal(
+        goalText: goalText,
+        focusedDomainId: focusedDomainId,
+        weeklyCapacityHours: weeklyCapacityHours,
+      );
     }
 
     if (!await _provider.isConfigured()) {
-      return fallback;
+      throw StateError('AI_PROVIDER_NOT_CONFIGURED');
     }
 
     final focusedDomain = DomainService.getDomainById(focusedDomainId);
     if (focusedDomain == null) {
-      return fallback;
+      throw StateError('AI_PROVIDER_NOT_CONFIGURED');
     }
 
     final prompt = '''
@@ -134,7 +124,7 @@ class AiUseCaseService {
         fallbackDomainId: focusedDomainId,
       );
     } catch (_) {
-      return fallback;
+      rethrow;
     }
   }
 
@@ -272,64 +262,6 @@ class AiUseCaseService {
     } catch (_) {
       return fallback;
     }
-  }
-
-  AiGoalPlanDraft _buildMockGoalPlan({
-    required String goalText,
-    required String focusedDomainId,
-    required int weeklyCapacityHours,
-  }) {
-    final domain = DomainService.getDomainById(focusedDomainId) ??
-        DatabaseService.getAllLifeDomains().first;
-    final now = DateTime.now();
-    final targetDate = DateTime(now.year, now.month + 2, now.day);
-    final projectName = '$goalText 行动计划';
-    final todos = List.generate(3, (index) {
-      final dueDate = DateTime(now.year, now.month, now.day + index + 1);
-      return Todo(
-        title: _mockTodoTitle(goalText, index),
-        description: '围绕“$goalText”的第${index + 1}个最小行动，按本周节奏推进。',
-        dueDate: dueDate,
-        priority: index == 0 ? TodoPriority.high : TodoPriority.medium,
-        domainId: domain.id,
-      );
-    });
-
-    return AiGoalPlanDraft(
-      domainId: domain.id,
-      goal: Goal(
-        title: goalText,
-        description: '在接下来 1-3 个月内稳定推进“$goalText”。',
-        type: GoalType.monthly,
-        targetDate: targetDate,
-        milestones: [
-          '明确起点与成功标准',
-          '完成第一周连续推进',
-          '完成一个可量化的小成果',
-        ],
-        domainId: domain.id,
-      ),
-      project: Project(
-        name: projectName,
-        description: '围绕目标“$goalText”的首轮执行项目。',
-        color: domain.color,
-        domainId: domain.id,
-      ),
-      milestones: const [
-        '明确起点与成功标准',
-        '完成第一周连续推进',
-        '完成一个可量化的小成果',
-      ],
-      todos: todos,
-      followUpQuestions:
-          weeklyCapacityHours <= 3 ? ['你本周最容易挤出来的固定时间段是什么？'] : const [],
-      isMock: true,
-    );
-  }
-
-  String _mockTodoTitle(String goalText, int index) {
-    const verbs = ['定义', '安排', '执行'];
-    return '${verbs[index.clamp(0, verbs.length - 1)]}$goalText的第${index + 1}步';
   }
 
   AiReviewFeedback _buildMockReview(DailyReview review) {

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:praxis/common/models/todo.dart';
 import 'package:praxis/common/services/index.dart';
 import 'package:praxis/common/style/design_tokens.dart';
+import 'package:praxis/pages/settings/settings_page.dart';
 
 class AiPlanPage extends StatefulWidget {
   final String initialGoalText;
@@ -29,12 +30,7 @@ class _AiPlanPageState extends State<AiPlanPage> {
   void initState() {
     super.initState();
     _goalController = TextEditingController(text: widget.initialGoalText);
-    _loadAvailability();
-    if (widget.initialGoalText.trim().isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _generatePlan();
-      });
-    }
+    _loadAvailabilityAndMaybeGenerate();
   }
 
   @override
@@ -43,17 +39,28 @@ class _AiPlanPageState extends State<AiPlanPage> {
     super.dispose();
   }
 
-  Future<void> _loadAvailability() async {
+  Future<void> _loadAvailabilityAndMaybeGenerate() async {
     final availability = await AiUseCaseService().getAvailability();
     if (!mounted) return;
     setState(() {
       _availability = availability;
     });
+    if (availability.isConfigured &&
+        widget.initialGoalText.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _generatePlan();
+      });
+    }
   }
 
   Future<void> _generatePlan() async {
     final goalText = _goalController.text.trim();
     if (goalText.isEmpty) return;
+
+    if (_availability?.isConfigured != true) {
+      Get.snackbar('AI 还没接通', '请先在设置里配置 AI 提供方后再生成草稿。');
+      return;
+    }
 
     final profile = ProfileService.getProfile();
     final focusedDomainId =
@@ -63,20 +70,28 @@ class _AiPlanPageState extends State<AiPlanPage> {
       _isLoading = true;
     });
 
-    final draft = await AiUseCaseService().planGoal(
-      goalText: goalText,
-      focusedDomainId: focusedDomainId,
-      weeklyCapacityHours: profile.weeklyCapacityHours,
-    );
+    try {
+      final draft = await AiUseCaseService().planGoal(
+        goalText: goalText,
+        focusedDomainId: focusedDomainId,
+        weeklyCapacityHours: profile.weeklyCapacityHours,
+      );
 
-    if (!mounted) return;
-    setState(() {
-      _draft = draft;
-      _draftGoalText = goalText;
-      _confirmedDomainId = draft.domainId;
-      _showTodoDrafts = false;
-      _isLoading = false;
-    });
+      if (!mounted) return;
+      setState(() {
+        _draft = draft;
+        _draftGoalText = goalText;
+        _confirmedDomainId = draft.domainId;
+        _showTodoDrafts = false;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      Get.snackbar('AI 生成失败', e.toString());
+    }
   }
 
   void _handleGoalChanged(String value) {
@@ -110,26 +125,20 @@ class _AiPlanPageState extends State<AiPlanPage> {
       draft.project.description = null;
     }
 
-    draft.milestones.replaceRange(
-      0,
-      draft.milestones.length,
-      draft.milestones.map((item) => item.trim()).where((item) => item.isNotEmpty),
-    );
+    draft.milestones = draft.milestones
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
 
-    draft.todos
-      ..removeWhere((todo) => todo.title.trim().isEmpty)
-      ..replaceRange(
-        0,
-        draft.todos.length,
-        draft.todos.map((todo) {
-          todo.title = todo.title.trim();
-          todo.description = todo.description?.trim();
-          if (todo.description?.isEmpty ?? false) {
-            todo.description = null;
-          }
-          return todo;
-        }),
-      );
+    draft.todos.removeWhere((todo) => todo.title.trim().isEmpty);
+    draft.todos = draft.todos.map((todo) {
+      todo.title = todo.title.trim();
+      todo.description = todo.description?.trim();
+      if (todo.description?.isEmpty ?? false) {
+        todo.description = null;
+      }
+      return todo;
+    }).toList();
   }
 
   Future<void> _confirmPlan() async {
@@ -478,29 +487,47 @@ class _AiPlanPageState extends State<AiPlanPage> {
           : ListView(
               padding: const EdgeInsets.all(DesignTokens.spacing6),
               children: [
+                if (_availability != null &&
+                    !_availability!.isConfigured &&
+                    _draft == null) ...[
+                  _buildUnconfiguredEmptyState(isDark),
+                  const SizedBox(height: DesignTokens.spacing4),
+                ],
                 if (_availability != null) ...[
                   _buildCard(
                     isDark: isDark,
-                    title: 'AI 状态',
+                    title: _availability!.isConfigured ? 'AI 状态' : 'AI 还没配置',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           _availability!.isConfigured
                               ? '当前使用 ${_availability!.providerLabel} 在线生成'
-                              : '当前未配置模型，使用本地 Mock 规划兜底',
+                              : '点下方按钮前往设置，连接 AI 后再回到这里生成草稿。',
                         ),
                         const SizedBox(height: DesignTokens.spacing2),
                         Text(
                           _availability!.isConfigured
-                              ? '如果在线调用失败，也会自动回退到 Mock，保证流程可继续。'
-                              : '你仍然可以完整演示闭环；配置 API 后，界面行为保持一致，只是数据来源会切到 live。',
+                              ? '如果在线调用失败，也会自动回退到本地兜底，保证流程可继续。'
+                              : '暂时不接 AI 也能走完整个规划页；填好 API 之后，下方按钮会启用并发起真实生成。',
                           style: DesignTokens.textStyle(
                             color: isDark
                                 ? DesignTokens.textSecondaryDark
                                 : DesignTokens.textSecondaryLight,
                           ),
                         ),
+                        if (!_availability!.isConfigured) ...[
+                          const SizedBox(height: DesignTokens.spacing3),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              icon: const Icon(Icons.settings_outlined),
+                              label: const Text('去设置'),
+                              onPressed: () =>
+                                  Get.to(() => const SettingsPage()),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -537,7 +564,10 @@ class _AiPlanPageState extends State<AiPlanPage> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _generatePlan,
+                          onPressed:
+                              (_availability?.isConfigured == true && !_isLoading)
+                                  ? _generatePlan
+                                  : null,
                           child: const Text('生成目标与项目草稿'),
                         ),
                       ),
@@ -789,6 +819,28 @@ class _AiPlanPageState extends State<AiPlanPage> {
                 ],
               ],
             ),
+    );
+  }
+
+  Widget _buildUnconfiguredEmptyState(bool isDark) {
+    return _buildCard(
+      isDark: isDark,
+      title: 'AI 还没接通',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('前往设置连接一个 AI 提供方后，这里就能直接生成你的目标和事项草稿。'),
+          const SizedBox(height: DesignTokens.spacing3),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.settings_outlined),
+              label: const Text('去设置 AI'),
+              onPressed: () => Get.to(() => const SettingsPage()),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
